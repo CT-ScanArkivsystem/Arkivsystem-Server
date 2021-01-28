@@ -1,0 +1,57 @@
+version: "3.7"
+services:
+  database:
+    image: "postgres:13"
+    container_name: CT-Scan-Arkiv-database
+    restart: on-failure
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${DB_BASE}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWD}
+    volumes:
+      - database-data:/var/lib/postgresql/data
+
+  api:
+    container_name: CT-Scan-Arkiv-api
+    restart: on-failure
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: run-only
+    ports:
+      - "8080:8080"
+      - "8181:8181"
+      - "4848:4848"
+    depends_on:
+      - "database"
+    environment:
+      DB_HOST: CT-Scan-Arkiv-database
+      DB_BASE: ${DB_BASE}
+      DB_USER: ${DB_USER} 
+      DB_PASSWD: ${DB_PASSWD}
+    labels:
+      - "traefik.http.services.api.loadbalancer.server.port=8080"
+      - "traefik.http.routers.api.rule=Host(`localhost`)"
+      - "traefik.http.routers.api.middlewares=api-add-prefix@docker"
+      - "traefik.http.middlewares.api-add-prefix.addprefix.prefix=/ctscanarkivsystemserver-0.0.1-SNAPSHOT"
+#    volumes:
+#      - ./deploy:/opt/payara/deployments
+
+  reverse-proxy:
+    container_name: CT-Scan-Arkiv-proxy
+    # The official v2 Traefik docker image
+    image: traefik:v2.2
+    # Enables the web UI and tells Traefik to listen to docker
+    command: --api.insecure=true --providers.docker
+    ports:
+      # The HTTP port
+      - "80:80"
+      # The Web UI (enabled by --api.insecure=true)
+      - "8088:8080"
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
+volumes:
+  database-data:
