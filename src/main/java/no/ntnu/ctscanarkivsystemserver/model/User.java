@@ -42,8 +42,8 @@ public class User {
      * @param email The users e-mail, cannot be empty, must be in e-mail format.
      * @param password The users password, cannot be empty, minimum 6 characters.
      */
-    public User(String firstName, String lastName, String email, String password) {
-        this.userID = UUID.randomUUID();
+    public User(UUID userID, String firstName, String lastName, String email, String password) {
+        this.userID = userID;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
