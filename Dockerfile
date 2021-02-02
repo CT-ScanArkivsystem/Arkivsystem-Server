@@ -8,16 +8,16 @@ COPY src ./src
 RUN --mount=type=cache,target=/root/.m2 mvn -f pom.xml clean package
 
 ## Copy isolated build from intermediate container(useful on server)
-FROM payara/micro AS prod
+FROM tomcat:10.0-jdk15 AS prod
 ## Fixes clock in payara log
 ENV TZ Europe/Oslo
 COPY --from=build /app/target/ctscanarkivsystemserver-0.0.1-SNAPSHOT.war $DEPLOY_DIR/ctscanarkivsystemserver-0.0.1-SNAPSHOT.war
-RUN mkdir /opt/payara/images
-RUN chown payara:payara /opt/payara/images
-USER payara
+# RUN mkdir /opt/payara/images
+# RUN chown payara:payara /opt/payara/images
+USER tomcat
 
 
 ## Local build from IDE; only copy (no docker build) from exising .war file built by IDE
-FROM payara/micro AS run-only
+FROM tomcat:10.0-jdk15 AS run-only
 ENV TZ Europe/Oslo
 COPY ./target/ctscanarkivsystemserver-0.0.1-SNAPSHOT.war $DEPLOY_DIR/ctscanarkivsystemserver-0.0.1-SNAPSHOT.war
