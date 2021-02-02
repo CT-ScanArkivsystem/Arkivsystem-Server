@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.transaction.Transactional;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,6 +21,7 @@ public class UserDataAccessService implements UserDao{
      * @param user to be added to the database.
      * @return the added user.
      */
+    @Transactional
     @Override
     public User insertUser(User user) {
         User newUser = new User(user.getFirstName(), user.getLastName(), user.getEmail(), user.getPassword());
