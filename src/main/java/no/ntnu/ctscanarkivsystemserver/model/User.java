@@ -26,7 +26,7 @@ public class User {
     private UUID userID;
 
     @NotEmpty
-    @Column(name="fist_name")
+    @Column(name="first_name")
     private String firstName;
 
     @NotEmpty
