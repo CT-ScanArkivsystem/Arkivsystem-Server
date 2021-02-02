@@ -29,7 +29,13 @@ public class UserController {
     }
 
     @GetMapping(path = "/allUsers")
-    public List<User> getAllUsers() {
-        return userService.getAllUsers();
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getAllUsers() {
+        List<User> allUsers = userService.getAllUsers();
+        if(allUsers == null || allUsers.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        } else {
+            return Response.ok(allUsers).build();
+        }
     }
 }

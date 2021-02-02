@@ -7,6 +7,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
+import javax.persistence.NamedQuery;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
@@ -16,7 +17,9 @@ import java.util.UUID;
 @Entity(name = "users")
 @Data
 @NoArgsConstructor
+@NamedQuery(name = User.FIND_ALL_USERS, query = "SELECT u FROM users u ORDER BY u.email")
 public class User {
+    public static final String FIND_ALL_USERS = "User.findAllUsers";
 
     @Id
     @Column(name="user_id")
