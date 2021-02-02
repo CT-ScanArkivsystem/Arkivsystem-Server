@@ -1,8 +1,12 @@
 package no.ntnu.ctscanarkivsystemserver;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+
+import org.apache.commons.lang3.StringUtils;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -36,16 +40,18 @@ public class DicomTestClass {
         // Watch the process
         String result = watch(process);
 
-        System.out.println(result);
+        //System.out.println(result);
 
-        stringToDom(result);
+        // https://stackoverflow.com/questions/9125241/remove-the-last-chars-of-the-java-string-variable
+        String xmlFileName = StringUtils.removeEnd(command[command.length-1], ".IMA");
+        stringToDom(result, xmlFileName);
 
 
 
 
     }
 
-    public static String watch(final Process process) {
+    public static String watch(Process process) {
 
         String returnString;
         StringBuilder strBuilder = new StringBuilder();
@@ -70,7 +76,7 @@ public class DicomTestClass {
 
 
     // https://stackoverflow.com/questions/17853541/java-how-to-convert-a-xml-string-into-an-xml-file
-    public static void stringToDom(String xmlSource)
+    public static void stringToDom(String xmlSource, String fileName)
             throws SAXException, ParserConfigurationException, IOException {
 
         // Parse the given input
@@ -86,9 +92,30 @@ public class DicomTestClass {
         } catch (TransformerConfigurationException e) {
             e.printStackTrace();
         }
+
+
+        /*
+                TESTING PARSING
+         */
+
+        Node rootElement = doc.getFirstChild();
+        //System.out.println(rootElement.toString());
+
+        NodeList nlist = rootElement.getChildNodes();
+        for (int i = 0 ; i < nlist.getLength() ; i++) {
+            Node child = nlist.item(i);
+
+            System.out.println("node...: " + child.getParentNode().getUserData("keyword"));
+            System.out.println("Value: " + child.getTextContent());
+            System.out.println();
+        }
+
+        /*
+                --------------------------------
+         */
         DOMSource source = new DOMSource(doc);
 
-        StreamResult result =  new StreamResult(new File("my-file.xml"));
+        StreamResult result =  new StreamResult(new File("" + fileName + ".xml"));
         try {
             transformer.transform(source, result);
         } catch (TransformerException e) {
