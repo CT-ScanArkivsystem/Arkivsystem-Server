@@ -7,12 +7,9 @@ import java.util.UUID;
 
 public interface UserDao {
 
-    int insertUser(UUID userID, User user);
-
-    default int insertUser(User user) {
-        UUID userID = UUID.randomUUID();
-        return insertUser(userID, user);
-    }
+    User insertUser(User user);
 
     List<User> selectAllUsers();
+
+    User getUserById(UUID id);
 }
