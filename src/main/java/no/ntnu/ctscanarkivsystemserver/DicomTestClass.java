@@ -1,12 +1,12 @@
 package no.ntnu.ctscanarkivsystemserver;
 
+import org.apache.commons.lang3.StringUtils;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-
-import org.apache.commons.lang3.StringUtils;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -18,6 +18,8 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.*;
+import java.util.Arrays;
+import java.util.List;
 
 public class DicomTestClass {
 
@@ -53,9 +55,7 @@ public class DicomTestClass {
 
     public static String watch(Process process) {
 
-        String returnString;
         StringBuilder strBuilder = new StringBuilder();
-
 
         BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()));
         String line = null;
@@ -63,7 +63,6 @@ public class DicomTestClass {
             while ((line = input.readLine()) != null) {
                 strBuilder.append(line);
             }
-            // returnString = strBuilder.toString();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -99,23 +98,49 @@ public class DicomTestClass {
          */
 
         Node rootElement = doc.getFirstChild();
-        //System.out.println(rootElement.toString());
+
+        System.out.println(rootElement.toString());
+        System.out.println(rootElement.getNodeName());
+        System.out.println(rootElement.getAttributes().getNamedItem("xml:space").getNodeValue());
 
         NodeList nlist = rootElement.getChildNodes();
-        for (int i = 0 ; i < nlist.getLength() ; i++) {
-            Node child = nlist.item(i);
 
-            System.out.println("node...: " + child.getParentNode().getUserData("keyword"));
-            System.out.println("Value: " + child.getTextContent());
-            System.out.println();
+        if(false) {
+            for (int i = 0 ; i < nlist.getLength() ; i++) {
+                Node child = nlist.item(i);
+
+                if (!child.getAttributes().getNamedItem("keyword").getNodeValue().equals("Manufacturer")) {
+                    child.getParentNode().removeChild(child);
+                }
+
+
+
+                if (child.hasChildNodes() && !child.getFirstChild().getTextContent().isEmpty()) {
+
+                    System.out.println("Name: " + child.getAttributes().getNamedItem("keyword").getNodeValue());
+                    System.out.println("Value: " + child.getFirstChild().getTextContent());
+                    System.out.println();
+                }
+
+            }
+
         }
 
         /*
                 --------------------------------
          */
+
+        String[] attributesIWantToKeep = new String[] {
+                "Manufacturer",
+                "ManufacturerModelName"
+        };
+
+        deleteAttributeThatAreNot(doc, attributesIWantToKeep);
+
         DOMSource source = new DOMSource(doc);
 
         StreamResult result =  new StreamResult(new File("" + fileName + ".xml"));
+
         try {
             transformer.transform(source, result);
         } catch (TransformerException e) {
@@ -123,5 +148,32 @@ public class DicomTestClass {
         }
     }
 
+    public static void deleteAttributeThatAreNot(Document doc, String[] attributeKeywordList) {
 
+        NodeList allDicomAttributeNodes = doc.getElementsByTagName("DicomAttribute");
+
+
+        for (int i = allDicomAttributeNodes.getLength() - 1; i >= 0; i--) {
+
+            Element e = (Element)allDicomAttributeNodes.item(i);
+
+            // Node child = allDicomAttributeNodes.item(i);
+
+
+            List<String> wordList = Arrays.asList(attributeKeywordList);
+
+            // If the list of attributes we want to keep DOES NOT contains the one we are currently at in the for loop
+            // delete it
+            if (!wordList.contains(e.getAttributes().getNamedItem("keyword").getNodeValue())) {
+                e.getParentNode().removeChild(e);
+                System.out.println("Delete");
+            } else {
+                System.out.println("Keep");
+            }
+
+
+
+
+        }
+    }
 }
