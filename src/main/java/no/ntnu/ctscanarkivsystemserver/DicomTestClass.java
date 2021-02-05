@@ -27,7 +27,6 @@ public class DicomTestClass {
     public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
 
 
-
         String[] command = new String[] {
                 "dcm4che-5.22.6-bin\\dcm4che-5.22.6\\bin\\dcm2xml.bat",
                 "TIIN_KOND.CT.SPECIALS_TIINS80S_(ADULT).1.1.2017.12.04.10.12.25.734375.30992199.IMA"
@@ -42,14 +41,10 @@ public class DicomTestClass {
         // Watch the process
         String result = watch(process);
 
-        //System.out.println(result);
 
         // https://stackoverflow.com/questions/9125241/remove-the-last-chars-of-the-java-string-variable
         String xmlFileName = StringUtils.removeEnd(command[command.length-1], ".IMA");
         stringToDom(result, xmlFileName);
-
-
-
 
     }
 
@@ -66,8 +61,6 @@ public class DicomTestClass {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
 
         return strBuilder.toString();
     }
@@ -93,49 +86,12 @@ public class DicomTestClass {
         }
 
 
-        /*
-                TESTING PARSING
-         */
-
-        Node rootElement = doc.getFirstChild();
-
-        System.out.println(rootElement.toString());
-        System.out.println(rootElement.getNodeName());
-        System.out.println(rootElement.getAttributes().getNamedItem("xml:space").getNodeValue());
-
-        NodeList nlist = rootElement.getChildNodes();
-
-        if(false) {
-            for (int i = 0 ; i < nlist.getLength() ; i++) {
-                Node child = nlist.item(i);
-
-                if (!child.getAttributes().getNamedItem("keyword").getNodeValue().equals("Manufacturer")) {
-                    child.getParentNode().removeChild(child);
-                }
-
-
-
-                if (child.hasChildNodes() && !child.getFirstChild().getTextContent().isEmpty()) {
-
-                    System.out.println("Name: " + child.getAttributes().getNamedItem("keyword").getNodeValue());
-                    System.out.println("Value: " + child.getFirstChild().getTextContent());
-                    System.out.println();
-                }
-
-            }
-
-        }
-
-        /*
-                --------------------------------
-         */
-
         String[] attributesIWantToKeep = new String[] {
                 "Manufacturer",
                 "ManufacturerModelName"
         };
 
-        deleteAttributeThatAreNot(doc, attributesIWantToKeep);
+        deleteAttributesThatAreNot(doc, attributesIWantToKeep);
 
         DOMSource source = new DOMSource(doc);
 
@@ -148,7 +104,7 @@ public class DicomTestClass {
         }
     }
 
-    public static void deleteAttributeThatAreNot(Document doc, String[] attributeKeywordList) {
+    public static void deleteAttributesThatAreNot(Document doc, String[] attributeKeywordList) {
 
         NodeList allDicomAttributeNodes = doc.getElementsByTagName("DicomAttribute");
 
@@ -156,8 +112,6 @@ public class DicomTestClass {
         for (int i = allDicomAttributeNodes.getLength() - 1; i >= 0; i--) {
 
             Element e = (Element)allDicomAttributeNodes.item(i);
-
-            // Node child = allDicomAttributeNodes.item(i);
 
 
             List<String> wordList = Arrays.asList(attributeKeywordList);
@@ -170,9 +124,6 @@ public class DicomTestClass {
             } else {
                 System.out.println("Keep");
             }
-
-
-
 
         }
     }
