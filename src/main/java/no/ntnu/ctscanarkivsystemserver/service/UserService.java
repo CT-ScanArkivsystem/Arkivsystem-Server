@@ -38,15 +38,16 @@ public class UserService implements UserDetailsService {
      * If user is not found this returns null.
      * @param userName email of the user to find.
      * @return a new UserDetails with userName and password like found User in database.
-     * @throws UsernameNotFoundException
+     * @throws UsernameNotFoundException if no user with userName is found in the database.
      */
     @Override
     public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
         User user = userDao.getUserByEmail(userName);
-        if(user != null) {
-            return new MyUserDetails(user.getEmail(), user.getPassword());
-        } else {
-            return null;
+
+        if(user == null) {
+            throw new UsernameNotFoundException("User with userName: " + userName + " not found!");
         }
+
+        return new MyUserDetails(user.getEmail(), user.getPassword());
     }
 }
