@@ -45,4 +45,27 @@ public class UserDataAccessService implements UserDao{
     public User getUserById(UUID id) {
         return null;
     }
+
+    /**
+     * Search the database for a user with the email parameter. If found the user will be returned.
+     * @param email of the user to find in the database.
+     * @return user with email equal to parameter.
+     */
+    @Override
+    public User getUserByEmail(String email) {
+        Query query = em.createNamedQuery(User.FIND_USER_BY_EMAIL);
+        if(email == null) {
+            return null;
+        }
+        email = email.toLowerCase();
+        query.setParameter("email", email);
+        List<User> queryResult = query.getResultList();
+        if(queryResult.size() == 1) {
+            System.out.println("Found a user with email: " + email);
+            return queryResult.get(0);
+        } else {
+            System.out.println("Found no users with email: " + email);
+            return null;
+        }
+    }
 }
