@@ -18,8 +18,10 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @NamedQuery(name = User.FIND_ALL_USERS, query = "SELECT u FROM users u ORDER BY u.email")
+@NamedQuery(name = User.FIND_USER_BY_EMAIL, query = "SELECT u FROM users u WHERE u.email LIKE: email")
 public class User {
     public static final String FIND_ALL_USERS = "User.findAllUsers";
+    public static final String FIND_USER_BY_EMAIL = "User.findUserByEmail";
 
     @Id
     @Column(name="user_id")
@@ -53,7 +55,7 @@ public class User {
         this.userID = UUID.randomUUID();
         this.firstName = firstName;
         this.lastName = lastName;
-        this.email = email;
+        this.email = email.toLowerCase();
         this.password = password;
     }
 }
