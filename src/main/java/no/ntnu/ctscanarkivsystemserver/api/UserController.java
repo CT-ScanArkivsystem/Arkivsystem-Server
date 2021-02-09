@@ -11,7 +11,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
-@RequestMapping("api/v1/user")
+@RequestMapping("/api")
 @RestController
 public class UserController {
 
