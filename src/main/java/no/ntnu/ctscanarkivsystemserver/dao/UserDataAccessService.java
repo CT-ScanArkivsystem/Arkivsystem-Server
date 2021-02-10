@@ -24,11 +24,10 @@ public class UserDataAccessService implements UserDao{
     @Transactional
     @Override
     public User insertUser(User user) {
-        User newUser = new User(user.getFirstName(), user.getLastName(), user.getEmail(), user.getPassword());
-        em.persist(newUser);
+        em.persist(user);
         em.flush();
-        System.out.println("New user id: " + newUser.getUserID());
-        return newUser;
+        System.out.println("New user id: " + user.getUserID());
+        return user;
     }
 
     /**
@@ -41,8 +40,45 @@ public class UserDataAccessService implements UserDao{
         return query.getResultList();
     }
 
+    /**
+     * Return true if user with email is found in database.
+     * @param email to see if already exists in database.
+     * @return true if user with email already exist in database.
+     */
+    @Override
+    public boolean doesEmailExist(String email) {
+        Query query = em.createNamedQuery(User.FIND_USER_BY_EMAIL);
+        email = email.toLowerCase();
+        query.setParameter("email", email);
+        List<User> queryResult = query.getResultList();
+        return !queryResult.isEmpty();
+    }
+
     @Override
     public User getUserById(UUID id) {
         return null;
+    }
+
+    /**
+     * Search the database for a user with the email parameter. If found the user will be returned.
+     * @param email of the user to find in the database.
+     * @return user with email equal to parameter.
+     */
+    @Override
+    public User getUserByEmail(String email) {
+        Query query = em.createNamedQuery(User.FIND_USER_BY_EMAIL);
+        if(email == null) {
+            return null;
+        }
+        email = email.toLowerCase();
+        query.setParameter("email", email);
+        List<User> queryResult = query.getResultList();
+        if(queryResult.size() == 1) {
+            System.out.println("Found a user with email: " + email);
+            return queryResult.get(0);
+        } else {
+            System.out.println("Found no users with email: " + email);
+            return null;
+        }
     }
 }
