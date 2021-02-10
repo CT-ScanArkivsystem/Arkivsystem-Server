@@ -19,6 +19,7 @@ import java.io.IOException;
 /**
  * This class acts as the first filter in the chain to look in the header for the Bearer token.
  * If found this class will check if it is valid.
+ *
  * @author koushikkothagal
  * @source https://github.com/koushikkothagal/spring-security-jwt/blob/master/src/main/java/io/javabrains/springsecurityjwt/filters/JwtRequestFilter.java
  */

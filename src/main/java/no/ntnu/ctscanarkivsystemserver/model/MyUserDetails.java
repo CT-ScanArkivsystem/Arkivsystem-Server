@@ -11,8 +11,8 @@ import java.util.Collection;
  */
 public class MyUserDetails implements UserDetails {
 
-    private String userEmail;
-    private String userPassword;
+    private final String userEmail;
+    private final String userPassword;
 
     public MyUserDetails(String userEmail, String userPassword) {
         this.userEmail = userEmail;
