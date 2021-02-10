@@ -24,11 +24,10 @@ public class UserDataAccessService implements UserDao{
     @Transactional
     @Override
     public User insertUser(User user) {
-        User newUser = new User(user.getFirstName(), user.getLastName(), user.getEmail(), user.getPassword());
-        em.persist(newUser);
+        em.persist(user);
         em.flush();
-        System.out.println("New user id: " + newUser.getUserID());
-        return newUser;
+        System.out.println("New user id: " + user.getUserID());
+        return user;
     }
 
     /**
@@ -39,6 +38,20 @@ public class UserDataAccessService implements UserDao{
     public List<User> selectAllUsers() {
         Query query = em.createNamedQuery(User.FIND_ALL_USERS);
         return query.getResultList();
+    }
+
+    /**
+     * Return true if user with email is found in database.
+     * @param email to see if already exists in database.
+     * @return true if user with email already exist in database.
+     */
+    @Override
+    public boolean doesEmailExist(String email) {
+        Query query = em.createNamedQuery(User.FIND_USER_BY_EMAIL);
+        email = email.toLowerCase();
+        query.setParameter("email", email);
+        List<User> queryResult = query.getResultList();
+        return !queryResult.isEmpty();
     }
 
     @Override

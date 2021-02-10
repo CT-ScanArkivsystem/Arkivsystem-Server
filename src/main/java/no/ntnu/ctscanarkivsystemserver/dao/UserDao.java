@@ -14,4 +14,6 @@ public interface UserDao {
     User getUserById(UUID id);
 
     User getUserByEmail(String email);
+
+    boolean doesEmailExist(String email);
 }
