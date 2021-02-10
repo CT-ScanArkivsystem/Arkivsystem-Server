@@ -5,6 +5,8 @@ import no.ntnu.ctscanarkivsystemserver.Exception.EmailExistsException;
 import no.ntnu.ctscanarkivsystemserver.model.User;
 import no.ntnu.ctscanarkivsystemserver.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.ws.rs.core.Response;
@@ -22,19 +24,19 @@ public class UserController {
     }
 
     @PostMapping(path = "/newUser")
-    public Response addUser(@RequestBody User user) {
+    public ResponseEntity<?> addUser(@RequestBody User user) {
         if(user == null) {
             //User cannot be null!
-            return Response.status(Response.Status.BAD_REQUEST).build();
+            return ResponseEntity.badRequest().build();
         }
         try {
             user = userService.addUser(user);
         } catch (EmailExistsException e) {
             System.out.println(e.toString());
-            //Email already exists in the database!
-            return Response.status(Response.Status.CONFLICT).build();
+            //Email already exists in the database! (409 = Conflict)
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
-        return Response.ok(user).build();
+        return ResponseEntity.ok(user);
     }
 
     @GetMapping(path = "/allUsers")
