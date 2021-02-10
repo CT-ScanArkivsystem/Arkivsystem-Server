@@ -1,103 +1,74 @@
 package no.ntnu.ctscanarkivsystemserver;
 
-import javax.xml.namespace.QName;
-import javax.xml.stream.XMLEventReader;
+import org.codehaus.staxmate.SMInputFactory;
+import org.codehaus.staxmate.in.SMHierarchicCursor;
+import org.codehaus.staxmate.in.SMInputCursor;
+
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.events.Attribute;
-import javax.xml.stream.events.EndElement;
-import javax.xml.stream.events.StartElement;
-import javax.xml.stream.events.XMLEvent;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.util.Iterator;
-
+import java.util.ArrayList;
 
 /*
-This class is heavily inspired by the tutorial from https://www.baeldung.com/java-stax
-
-This class should
+This class is from http://blog.palominolabs.com/2013/03/06/parsing-xml-with-java-and-staxmate/index.html
+Should print a list of
  */
 public class StaxMateReader {
 
     public static void main(String[] args) throws FileNotFoundException, XMLStreamException {
-
+        SMInputFactory factory = new SMInputFactory(XMLInputFactory.newFactory());
         String path = "..\\ExampleFiles\\FORMAS\\BMM.CT.THORAX_FORMAS_SOLID3_(ADULT).2.414.2017.11.08.12.26.03.232500.27001744.xml";
-
-        XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
-        XMLEventReader reader = xmlInputFactory.createXMLEventReader(new FileInputStream(path));
-
-        //Attributes you want the program to read
-        String[] attributesToRead = new String[] {
-                "Manufacturer",
-                "ManufacturerModelName",
-                "StudyDate",
-                "InstanceNumber"
-        };
-
-        String attributeValue = getAttributeValue(attributesToRead, reader);
-        System.out.println("Type " + attributeValue);
-        System.out.println("Value: " + attributeValue);
-
-    }
-
-    private static String getAttributeValue(String[] attributesToRead, XMLEventReader reader) throws XMLStreamException {
-        //Begin reading of given xml-file
-        String desiredValue = "Not found!";
-        boolean getNextValue = false;
-        int iteratorForStringList = 0;
-
-        while (reader.hasNext()) {
-            XMLEvent nextEvent = reader.nextEvent();
-
-            //Checks if the next element in the xml-file is a start element (<DicomAttribute>)
-            if (nextEvent.isStartElement()) {
-                StartElement startElement = nextEvent.asStartElement();
-
-
-                switch (startElement.getName().getLocalPart()) {
-                    case "DicomAttribute":
-                        String attributeValue = startElement.getAttributeByName(new QName("keyword")).getValue();
-                        if (attributeValue.equals(attributesToRead[iteratorForStringList])) {
-                            getNextValue = true;
-                        } else {
-                            getNextValue = false;
-                        }
-                        break;
-                    case "Value":
-                        if (getNextValue) {
-                            desiredValue = reader.getElementText();
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            }
+        ArrayList<String> strings = new ArrayList<>();
+        strings.add("test");
+        strings = parse(path, factory);
+        for (int i = 0; i < strings.size(); i++) {
+            System.out.println("List item " + i + ": " + strings.get(i));
         }
-        return desiredValue;
     }
 
+    public static ArrayList<String> parse(String path, SMInputFactory factory) throws XMLStreamException, FileNotFoundException {
+        ArrayList<String> stringList = new ArrayList<>();
 
+        SMHierarchicCursor rootC = factory.rootElementCursor(new FileInputStream(path));
 
+        try {
+            rootC.advance();
 
+            SMInputCursor rootChildCursor = rootC.childElementCursor();
+
+            while (rootChildCursor.getNext() != null) {
+                handleRootChildElement(stringList, rootChildCursor);
+            }
+        } finally {
+            rootC.getStreamReader().closeCompletely();
+        }
+        
+        return stringList;
+    }
     /*
-    Uses an iterator to go through the attributes of the DicomAttribute element.
-    Stops when list has no more attributes or if the keyword attribute is found.
+    rootChildCursor points at the <dicomAttribute> element
+    rootChildCursor.childElementCursor() points at <Value> elements
     */
-    private static String getAttribute(StartElement startElement, String wantedAttributeValue) {
-        String attributeValue = "No attribute value found!";
-        Iterator<Attribute> attributeIterator = startElement.getAttributes();
-
-        boolean attributeValueFound = false;
-        while (attributeIterator.hasNext() || !attributeValueFound) {
-            Attribute myAttribute = attributeIterator.next();
-            //Prints the value of the keyword
-            if (myAttribute.getName().toString().equals(wantedAttributeValue)) {
-                attributeValueFound = true;
-                attributeValue = myAttribute.getValue();
-            }
+    private static void handleRootChildElement(ArrayList<String> stringList, SMInputCursor rootChildCursor) throws XMLStreamException {
+        switch (rootChildCursor.getLocalName()) {
+            case "DicomAttribute":
+                stringList.add(rootChildCursor.getAttrValue("keyword"));
+                handleValueElement(stringList, rootChildCursor.childElementCursor());
+                break;
+                //TODO: Figure out if this needs implementing
+            case "Item":
+                System.out.println("Inside Item. Shouldn't be here yet :)");
+                break;
+            default:
+                break;
         }
-        return attributeValue;
     }
 
+    private static void handleValueElement(ArrayList<String> stringList, SMInputCursor valueCursor) throws XMLStreamException {
+        while (valueCursor.getNext() != null) {
+            String v = valueCursor.getElemStringValue();
+            stringList.add(v);
+        }
+    }
 }
