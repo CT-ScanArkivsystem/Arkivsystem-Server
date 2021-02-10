@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class CtScanArkivsystemServerApplication {
 
     public static void main(String[] args) {
-        System.out.println("Starting CT-Scan-Application!! :O");
+        System.out.println("Starting CT-Scan-Application!! :D");
         SpringApplication.run(CtScanArkivsystemServerApplication.class, args);
     }
 

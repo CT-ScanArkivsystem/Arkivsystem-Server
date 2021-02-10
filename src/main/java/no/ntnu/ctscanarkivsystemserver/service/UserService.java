@@ -1,5 +1,6 @@
 package no.ntnu.ctscanarkivsystemserver.service;
 
+import no.ntnu.ctscanarkivsystemserver.Exception.EmailExistsException;
 import no.ntnu.ctscanarkivsystemserver.dao.UserDao;
 import no.ntnu.ctscanarkivsystemserver.model.MyUserDetails;
 import no.ntnu.ctscanarkivsystemserver.model.User;
@@ -8,6 +9,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,8 +28,21 @@ public class UserService implements UserDetailsService {
         this.userDao = userDao;
     }
 
-    public User addUser(User user) {
-        return userDao.insertUser(user);
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+
+    /**
+     * Adds a new user into the database.
+     * @param user to be added into the database.
+     * @return user which was added into the database.
+     * @throws EmailExistsException if a user with given email already exists in the database.
+     */
+    public User addUser(User user) throws EmailExistsException{
+        if(userDao.doesEmailExist(user.getEmail())) {
+            throw new EmailExistsException(user.getEmail());
+        }
+        User newUser = new User(user.getFirstName(), user.getLastName(), user.getEmail(), passwordEncoder.encode(user.getPassword()));
+        return userDao.insertUser(newUser);
     }
 
     public List<User> getAllUsers() {
