@@ -17,11 +17,6 @@ public class Role {
     public static final String USER = "user";
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "role_id")
-    private UUID id;
-
-    @NotEmpty
     @Column(name = "role_name")
     private String roleName;
 }

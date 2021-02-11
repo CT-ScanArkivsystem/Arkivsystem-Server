@@ -45,9 +45,9 @@ public class User {
                     name = "user_id",
                     referencedColumnName = "user_id"),
             inverseJoinColumns = @JoinColumn(
-                    name = "role_id",
-                    referencedColumnName = "role_id"))
-    private Set<Role> roles = new HashSet<>();
+                    name = "role_name",
+                    referencedColumnName = "role_name"))
+    private List<Role> roles = new ArrayList<>();
 
     /**
      * Constructor.
