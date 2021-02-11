@@ -50,23 +50,21 @@ public class StaxMateReader {
     /**
      * rootChildCursor points at the <dicomAttribute> element
      * rootChildCursor.childElementCursor() points at <Value> elements
-     * Will check if the cursor is pointing at a valid element (In this case, <DicomAttribute> or <Item>)
+     * Will check if the cursor is pointing at a valid element (In this case, <DicomAttribute> or <Item> *Item not implemented)
      * If the cursor is pointing at a valid element it will go into the corresponding case in the switch
      * and get the information we want.
      *
-     * @param stringList A list of the information we want saved as strings.
+     * @param DicomAttributeObjectList The list which we want to put our DicomAttributeObjects in, so that we can access it further up
      * @param rootChildCursor A cursor that points at the DicomAttribute elements.
      * @throws XMLStreamException If something goes wrong with the iterating over the document.
      */
     private static void handleRootChildElement(ArrayList<DicomAttributeObject> DicomAttributeObjectList, SMInputCursor rootChildCursor) throws XMLStreamException {
         switch (rootChildCursor.getLocalName()) {
             case "DicomAttribute":
-                //Gets the attribute value of the attribute keyword in a DicomAttribute element.
-                DicomAttributeObject dicomAttributeObject = new DicomAttributeObject();
-                dicomAttributeObject.setKeyword(rootChildCursor.getAttrValue("keyword"));
-                //Gets the element value of the child elements (usually <Value>)
-                handleValueElement(dicomAttributeObject, rootChildCursor.childElementCursor());
-                DicomAttributeObjectList.add(dicomAttributeObject);
+                DicomAttributeObject dicomAttributeObject = new DicomAttributeObject(); // Create a new DicomAttributeObject
+                dicomAttributeObject.setKeyword(rootChildCursor.getAttrValue("keyword")); // Set the keyword variable in DicomAttributeObject
+                handleValueElement(dicomAttributeObject, rootChildCursor.childElementCursor()); // Get all the value elements of the DicomAttribute the cursor is pointing at
+                DicomAttributeObjectList.add(dicomAttributeObject); // Add the dicomAttributeObject to the list
                 break;
                 //TODO: Figure out if this needs implementing
             case "Item":
