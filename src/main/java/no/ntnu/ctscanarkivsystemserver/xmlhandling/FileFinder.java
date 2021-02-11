@@ -1,4 +1,4 @@
-package no.ntnu.ctscanarkivsystemserver.xmlTestClasses;
+package no.ntnu.ctscanarkivsystemserver.xmlhandling;
 
 import java.io.File;
 import java.util.ArrayList;

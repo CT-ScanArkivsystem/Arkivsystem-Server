@@ -1,4 +1,4 @@
-package no.ntnu.ctscanarkivsystemserver.xmlTestClasses;
+package no.ntnu.ctscanarkivsystemserver.xmlhandling;
 
 import javax.xml.stream.XMLStreamException;
 import java.io.FileNotFoundException;
@@ -18,11 +18,11 @@ public class XmlReaderMain {
         ArrayList<String> listOfXmlFiles = new FileFinder().findFilesInFolder("..\\ExampleFiles\\FORMAS\\");
         ArrayList<DicomAttributeObject> dicomAttributeObjectList = new ArrayList<>();
         // Loop that reads elements from xml files.
-        for (int j = 0; j < listOfXmlFiles.size(); j++) {
-            dicomAttributeObjectList = new StaxMateReader().parse("..\\ExampleFiles\\FORMAS\\" + listOfXmlFiles.get(j));
+        for (String listOfXmlFile : listOfXmlFiles) {
+            dicomAttributeObjectList = new StaxMateReader().parse("..\\ExampleFiles\\FORMAS\\" + listOfXmlFile);
 
-            for (int i = 0; i < dicomAttributeObjectList.size(); i++) {
-                System.out.println("Keyword: " + dicomAttributeObjectList.get(i).keyword + " Value: " + dicomAttributeObjectList.get(i).getAllValues());
+            for (DicomAttributeObject dicomAttributeObject : dicomAttributeObjectList) {
+                System.out.println("Keyword: " + dicomAttributeObject.keyword + " Value: " + dicomAttributeObject.getAllValues());
             }
         }
     }

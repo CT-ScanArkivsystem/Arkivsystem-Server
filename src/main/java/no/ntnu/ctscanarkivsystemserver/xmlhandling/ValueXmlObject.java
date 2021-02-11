@@ -1,4 +1,4 @@
-package no.ntnu.ctscanarkivsystemserver.xmlTestClasses;
+package no.ntnu.ctscanarkivsystemserver.xmlhandling;
 
 
 public class ValueXmlObject {
