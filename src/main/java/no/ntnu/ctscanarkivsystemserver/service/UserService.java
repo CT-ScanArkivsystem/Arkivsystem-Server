@@ -63,6 +63,6 @@ public class UserService implements UserDetailsService {
             throw new UsernameNotFoundException("User with userName: " + userName + " not found!");
         }
 
-        return new MyUserDetails(user.getEmail(), user.getPassword());
+        return new MyUserDetails(user);
     }
 }
