@@ -10,5 +10,4 @@ public class CtScanArkivsystemServerApplication {
         System.out.println("Starting CT-Scan-Application!! :D");
         SpringApplication.run(CtScanArkivsystemServerApplication.class, args);
     }
-
 }
