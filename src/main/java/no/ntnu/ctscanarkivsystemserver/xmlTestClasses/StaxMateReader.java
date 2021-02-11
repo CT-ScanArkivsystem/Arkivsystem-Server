@@ -26,9 +26,9 @@ public class StaxMateReader {
      * @throws XMLStreamException If something goes wrong with the iterating over the document.
      * @throws FileNotFoundException If the file from path is not found.
      */
-    public static ArrayList<String> parse(String path) throws XMLStreamException, FileNotFoundException  {
+    public static ArrayList<DicomAttributeObject> parse(String path) throws XMLStreamException, FileNotFoundException  {
         SMInputFactory factory = new SMInputFactory(XMLInputFactory.newFactory());
-        ArrayList<String> stringList = new ArrayList<>();
+        ArrayList<DicomAttributeObject> DicomAttributeObjectList = new ArrayList<>();
 
         SMHierarchicCursor rootC = factory.rootElementCursor(new FileInputStream(path));
 
@@ -38,13 +38,13 @@ public class StaxMateReader {
             SMInputCursor rootChildCursor = rootC.childElementCursor();
 
             while (rootChildCursor.getNext() != null) {
-                handleRootChildElement(stringList, rootChildCursor);
+                handleRootChildElement(DicomAttributeObjectList, rootChildCursor);
             }
         } finally {
             rootC.getStreamReader().closeCompletely();
         }
         
-        return stringList;
+        return DicomAttributeObjectList;
     }
 
     /**
@@ -58,13 +58,15 @@ public class StaxMateReader {
      * @param rootChildCursor A cursor that points at the DicomAttribute elements.
      * @throws XMLStreamException If something goes wrong with the iterating over the document.
      */
-    private static void handleRootChildElement(ArrayList<String> stringList, SMInputCursor rootChildCursor) throws XMLStreamException {
+    private static void handleRootChildElement(ArrayList<DicomAttributeObject> DicomAttributeObjectList, SMInputCursor rootChildCursor) throws XMLStreamException {
         switch (rootChildCursor.getLocalName()) {
             case "DicomAttribute":
                 //Gets the attribute value of the attribute keyword in a DicomAttribute element.
-                stringList.add(rootChildCursor.getAttrValue("keyword"));
+                DicomAttributeObject dicomAttributeObject = new DicomAttributeObject();
+                dicomAttributeObject.setKeyword(rootChildCursor.getAttrValue("keyword"));
                 //Gets the element value of the child elements (usually <Value>)
-                handleValueElement(stringList, rootChildCursor.childElementCursor());
+                handleValueElement(dicomAttributeObject, rootChildCursor.childElementCursor());
+                DicomAttributeObjectList.add(dicomAttributeObject);
                 break;
                 //TODO: Figure out if this needs implementing
             case "Item":
@@ -79,14 +81,16 @@ public class StaxMateReader {
      * Loops as long as there is a child element of the parent cursor. Gets the element string value
      * and adds it to the list of information.
      *
-     * @param stringList List which will hold the information we want.
+     * @param DicomAttributeObject List which will hold the information we want.
      * @param valueCursor Cursor which will iterate over the child elements of a DicomAttribute. This means mainly <Value>.
      * @throws XMLStreamException If something goes wrong with the iterating over the document.
      */
-    private static void handleValueElement(ArrayList<String> stringList, SMInputCursor valueCursor) throws XMLStreamException {
+    private static void handleValueElement(DicomAttributeObject DicomAttributeObject, SMInputCursor valueCursor) throws XMLStreamException {
         while (valueCursor.getNext() != null) {
-            String v = valueCursor.getElemStringValue();
-            stringList.add(v);
+            ValueXmlObject valueXmlObject = new ValueXmlObject();
+            valueXmlObject.setNumber(Integer.parseInt(valueCursor.getAttrValue("number")));
+            valueXmlObject.setElementContent(valueCursor.getElemStringValue());
+            DicomAttributeObject.valueList.add(valueXmlObject);
         }
     }
 }

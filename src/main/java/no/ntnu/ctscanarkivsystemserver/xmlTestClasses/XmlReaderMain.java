@@ -14,14 +14,15 @@ public class XmlReaderMain {
      * @throws XMLStreamException
      */
     public static void main(String[] args) throws FileNotFoundException, XMLStreamException {
+        // Creates a list that holds all the xml files that are to be read from in the given directory
         ArrayList<String> listOfXmlFiles = new FileFinder().findFilesInFolder("..\\ExampleFiles\\FORMAS\\");
+        ArrayList<DicomAttributeObject> dicomAttributeObjectList = new ArrayList<>();
+        // Loop that reads elements from xml files.
+        for (int j = 0; j < listOfXmlFiles.size(); j++) {
+            dicomAttributeObjectList = new StaxMateReader().parse("..\\ExampleFiles\\FORMAS\\" + listOfXmlFiles.get(j));
 
-        for (int listIterator = 0; listIterator < listOfXmlFiles.size(); listIterator++) {
-            ArrayList<String> usefulInfoList;
-            usefulInfoList = new StaxMateReader().parse("..\\ExampleFiles\\FORMAS\\" + listOfXmlFiles.get(listIterator));
-
-            for (int i = 0; i < usefulInfoList.size(); i++) {
-                System.out.println("List item " + i + ": " + usefulInfoList.get(i));
+            for (int i = 0; i < dicomAttributeObjectList.size(); i++) {
+                System.out.println("Keyword: " + dicomAttributeObjectList.get(i).keyword + " Value: " + dicomAttributeObjectList.get(i).getAllValues());
             }
         }
     }

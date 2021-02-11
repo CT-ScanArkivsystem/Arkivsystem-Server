@@ -7,7 +7,7 @@ public class DicomAttributeObject {
     String keyword;
     String tag;
     String vr;
-    ArrayList<ValueXmlObject> valueList;
+    ArrayList<ValueXmlObject> valueList = new ArrayList<>();
 
     /**
      * Constructor
@@ -41,6 +41,19 @@ public class DicomAttributeObject {
 
     public ArrayList<ValueXmlObject> getValueList() {
         return valueList;
+    }
+
+    public String getAllValues() {
+        StringBuilder allValues = new StringBuilder("");
+        for (int i = 0; i < valueList.size(); i++) {
+            allValues.append(valueList.get(i).elementContent);
+            //allValues = allValues + valueList.get(i).elementContent;
+            if (i != 0 || i != (valueList.size() - 1)) {
+                allValues.append(", ");
+            }
+        }
+
+        return allValues.toString();
     }
 
     public void setValueList(ArrayList<ValueXmlObject> valueList) {
