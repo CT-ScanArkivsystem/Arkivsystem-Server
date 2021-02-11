@@ -16,28 +16,27 @@ Should print a list of DicomAttributes' keywords and the DicomAttributes value.
 For now only prints to the log, but will probably in the future use the information gathered for something more useful.
  */
 public class StaxMateReader {
-
-    public static void main(String[] args) throws FileNotFoundException, XMLStreamException {
+    /*public static void main(String[] args) throws FileNotFoundException, XMLStreamException {
         String path = "..\\ExampleFiles\\FORMAS\\BMM.CT.THORAX_FORMAS_SOLID3_(ADULT).2.414.2017.11.08.12.26.03.232500.27001744.xml";
-        SMInputFactory factory = new SMInputFactory(XMLInputFactory.newFactory());
+
         ArrayList<String> strings;
         strings = parse(path, factory);
         for (int i = 0; i < strings.size(); i++) {
             System.out.println("List item " + i + ": " + strings.get(i));
         }
-    }
+    }*/
 
     /**
      * Creates a root cursor and starts a while loop that continues as long as there are
      * elements to iterate over.
      *
      * @param path the path to the file you want to read from.
-     * @param factory a StaxMate input factory. Is used to create a cursor which iterates through the xml file.
      * @return stringList a list which should contain DicomAttributes' keywords and their values.
      * @throws XMLStreamException If something goes wrong with the iterating over the document.
      * @throws FileNotFoundException If the file from path is not found.
      */
-    public static ArrayList<String> parse(String path, SMInputFactory factory) throws XMLStreamException, FileNotFoundException {
+    public static ArrayList<String> parse(String path) throws XMLStreamException, FileNotFoundException  {
+        SMInputFactory factory = new SMInputFactory(XMLInputFactory.newFactory());
         ArrayList<String> stringList = new ArrayList<>();
 
         SMHierarchicCursor rootC = factory.rootElementCursor(new FileInputStream(path));
