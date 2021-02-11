@@ -1,4 +1,4 @@
-package no.ntnu.ctscanarkivsystemserver;
+package no.ntnu.ctscanarkivsystemserver.xmlTestClasses;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;
