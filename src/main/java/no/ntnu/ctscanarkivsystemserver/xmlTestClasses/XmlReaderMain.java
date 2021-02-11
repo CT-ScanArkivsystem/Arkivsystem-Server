@@ -19,6 +19,7 @@ public class XmlReaderMain {
         for (int listIterator = 0; listIterator < listOfXmlFiles.size(); listIterator++) {
             ArrayList<String> usefulInfoList;
             usefulInfoList = new StaxMateReader().parse("..\\ExampleFiles\\FORMAS\\" + listOfXmlFiles.get(listIterator));
+
             for (int i = 0; i < usefulInfoList.size(); i++) {
                 System.out.println("List item " + i + ": " + usefulInfoList.get(i));
             }

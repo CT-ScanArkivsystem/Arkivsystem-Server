@@ -16,15 +16,6 @@ Should print a list of DicomAttributes' keywords and the DicomAttributes value.
 For now only prints to the log, but will probably in the future use the information gathered for something more useful.
  */
 public class StaxMateReader {
-    /*public static void main(String[] args) throws FileNotFoundException, XMLStreamException {
-        String path = "..\\ExampleFiles\\FORMAS\\BMM.CT.THORAX_FORMAS_SOLID3_(ADULT).2.414.2017.11.08.12.26.03.232500.27001744.xml";
-
-        ArrayList<String> strings;
-        strings = parse(path, factory);
-        for (int i = 0; i < strings.size(); i++) {
-            System.out.println("List item " + i + ": " + strings.get(i));
-        }
-    }*/
 
     /**
      * Creates a root cursor and starts a while loop that continues as long as there are

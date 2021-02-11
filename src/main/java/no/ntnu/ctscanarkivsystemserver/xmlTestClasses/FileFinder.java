@@ -6,6 +6,8 @@ import java.util.Objects;
 
 /**
  * This class helps find the names of xml files in a given directory.
+ * Class taken mostly from the answer in this stackoverflow thread:
+ * https://stackoverflow.com/questions/20565333/retrieve-all-xml-file-names-from-a-directory-using-java
  */
 public class FileFinder {
     ArrayList<String> listOfWantedFileNames = new ArrayList<>();
