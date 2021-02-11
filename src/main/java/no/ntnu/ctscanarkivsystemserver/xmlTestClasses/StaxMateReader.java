@@ -1,4 +1,4 @@
-package no.ntnu.ctscanarkivsystemserver;
+package no.ntnu.ctscanarkivsystemserver.xmlTestClasses;
 
 import org.codehaus.staxmate.SMInputFactory;
 import org.codehaus.staxmate.in.SMHierarchicCursor;
