@@ -25,7 +25,7 @@ public class UserDataAccessService implements UserDao{
     @Transactional
     @Override
     public User insertUser(User user) {
-        Role userRole = em.find(Role.class, Role.USER);
+        Role userRole = em.find(Role.class, "ROLE_" + Role.USER);
         user.getRoles().add(userRole);
         em.persist(user);
         em.flush();

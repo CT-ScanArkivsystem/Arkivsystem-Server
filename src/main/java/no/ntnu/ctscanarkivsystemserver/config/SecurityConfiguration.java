@@ -5,6 +5,7 @@ import no.ntnu.ctscanarkivsystemserver.model.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -12,6 +13,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
@@ -58,14 +60,14 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         //TODO Fix this when developing the role system.
         http.csrf().disable().authorizeRequests()
-                .antMatchers("/admin").hasRole(Role.ADMIN)
-                .antMatchers("/professor").hasAnyRole(Role.ADMIN, Role.PROFESSOR)
-                .antMatchers("/user").hasAnyRole(Role.ADMIN, Role.PROFESSOR, Role.USER)
-                .antMatchers("/auth").permitAll()
-                .antMatchers("/api").permitAll()
-                .and().formLogin().permitAll()
-                .and().logout().permitAll()
-                .and().addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+                .antMatchers("/admin/**").hasRole(Role.ADMIN)
+                .antMatchers("/professor/**").hasAnyRole(Role.ADMIN, Role.PROFESSOR)
+                .antMatchers("/user/**").hasAnyRole(Role.ADMIN, Role.PROFESSOR, Role.USER)
+                .antMatchers("/auth/**").permitAll()
+                .antMatchers("/api/**").permitAll()
+                .anyRequest().authenticated()
+                .and().addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling().authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
     }
 
     @Override
