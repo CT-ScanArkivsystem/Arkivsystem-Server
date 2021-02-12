@@ -1,5 +1,6 @@
 package no.ntnu.ctscanarkivsystemserver.dao;
 
+import no.ntnu.ctscanarkivsystemserver.model.Role;
 import no.ntnu.ctscanarkivsystemserver.model.User;
 import org.springframework.stereotype.Repository;
 
@@ -24,9 +25,11 @@ public class UserDataAccessService implements UserDao{
     @Transactional
     @Override
     public User insertUser(User user) {
+        Role userRole = em.find(Role.class, "ROLE_" + Role.USER);
+        user.getRoles().add(userRole);
         em.persist(user);
         em.flush();
-        System.out.println("New user id: " + user.getUserID());
+        System.out.println("New user id: " + user.getUserId());
         return user;
     }
 

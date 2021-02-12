@@ -1,18 +1,15 @@
 package no.ntnu.ctscanarkivsystemserver.api;
 
 
-import no.ntnu.ctscanarkivsystemserver.Exception.EmailExistsException;
 import no.ntnu.ctscanarkivsystemserver.model.User;
 import no.ntnu.ctscanarkivsystemserver.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.ws.rs.core.Response;
 import java.util.List;
 
-@RequestMapping("/api")
+@RequestMapping("/user")
 @RestController
 public class UserController {
 
@@ -23,29 +20,14 @@ public class UserController {
         this.userService = userService;
     }
 
-    @PostMapping(path = "/newUser")
-    public ResponseEntity<?> addUser(@RequestBody User user) {
-        if(user == null) {
-            //User cannot be null!
-            return ResponseEntity.badRequest().build();
-        }
-        try {
-            user = userService.addUser(user);
-        } catch (EmailExistsException e) {
-            System.out.println(e.toString());
-            //Email already exists in the database! (409 = Conflict)
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
-        return ResponseEntity.ok(user);
-    }
-
     @GetMapping(path = "/allUsers")
-    public Response getAllUsers() {
+    public ResponseEntity<?> getAllUsers() {
+        System.out.println("Getting all users!");
         List<User> allUsers = userService.getAllUsers();
         if(allUsers == null || allUsers.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND).build();
+            return ResponseEntity.notFound().build();
         } else {
-            return Response.ok(allUsers).build();
+            return ResponseEntity.ok(allUsers);
         }
     }
 }

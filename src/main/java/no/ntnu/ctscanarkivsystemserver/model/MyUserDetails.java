@@ -1,9 +1,12 @@
 package no.ntnu.ctscanarkivsystemserver.model;
 
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author TrymV
@@ -11,17 +14,25 @@ import java.util.Collection;
  */
 public class MyUserDetails implements UserDetails {
 
-    private final String userEmail;
-    private final String userPassword;
+    private final User user;
 
-    public MyUserDetails(String userEmail, String userPassword) {
-        this.userEmail = userEmail;
-        this.userPassword = userPassword;
+    public MyUserDetails(User user) {
+        this.user = user;
     }
 
+    /**
+     * Returns a list of the users granted authorities.
+     * @return a list of the users granted authorities.
+     * @source https://www.youtube.com/watch?v=i21h6ThUiWc&t=994s
+     */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return null;
+        List<Role> roles = user.getRoles();
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        for(Role role:roles) {
+            authorities.add(new SimpleGrantedAuthority(role.getRoleName()));
+        }
+        return authorities;
     }
 
     /**
@@ -30,7 +41,7 @@ public class MyUserDetails implements UserDetails {
      */
     @Override
     public String getPassword() {
-        return this.userPassword;
+        return this.user.getPassword();
     }
 
     /**
@@ -39,7 +50,7 @@ public class MyUserDetails implements UserDetails {
      */
     @Override
     public String getUsername() {
-        return this.userEmail;
+        return this.user.getEmail();
     }
 
     @Override
