@@ -272,7 +272,4 @@
     <Value number="1">WINDOW1</Value>
     <Value number="2">WINDOW2</Value>
   </DicomAttribute>
-  <DicomAttribute keyword="PixelData" tag="7FE00010" vr="OW">
-    <BulkData uri="file:/C:/Users/Brage/Documents/NTNU/Bachelor/Github/Arkivsystem-Server/TIIN_KOND.CT.SPECIALS_TIINS80S_(ADULT).1.1.2017.12.04.10.12.25.734375.30992199.IMA?offset=1956&amp;length=524288"/>
-  </DicomAttribute>
 </NativeDicomModel>
