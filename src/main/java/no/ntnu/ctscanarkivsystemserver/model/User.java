@@ -3,27 +3,25 @@ package no.ntnu.ctscanarkivsystemserver.model;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.persistence.*;
 
-import javax.persistence.NamedQuery;
 import javax.validation.constraints.Email;
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 
-import java.util.UUID;
+import java.util.*;
 
 @Entity(name = "users")
 @Data
 @NoArgsConstructor
 @NamedQuery(name = User.FIND_ALL_USERS, query = "SELECT u FROM users u ORDER BY u.email")
+@NamedQuery(name = User.FIND_USER_BY_EMAIL, query = "SELECT u FROM users u WHERE u.email LIKE: email")
 public class User {
     public static final String FIND_ALL_USERS = "User.findAllUsers";
+    public static final String FIND_USER_BY_EMAIL = "User.findUserByEmail";
 
     @Id
     @Column(name="user_id")
-    private UUID userID;
+    private UUID userId;
 
     @NotEmpty
     @Column(name="first_name")
@@ -41,7 +39,16 @@ public class User {
     @NotEmpty
     private String password;
 
-    //private final List<> roles;
+    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JoinTable(name = "user_roles",
+            joinColumns = @JoinColumn(
+                    name = "user_id",
+                    referencedColumnName = "user_id"),
+            inverseJoinColumns = @JoinColumn(
+                    name = "role_name",
+                    referencedColumnName = "role_name"))
+    private List<Role> roles = new ArrayList<>();
+
     /**
      * Constructor.
      * @param firstName The users first name, cannot be empty.
@@ -50,10 +57,10 @@ public class User {
      * @param password The users password, cannot be empty, minimum 6 characters.
      */
     public User(String firstName, String lastName, String email, String password) {
-        this.userID = UUID.randomUUID();
+        this.userId = UUID.randomUUID();
         this.firstName = firstName;
         this.lastName = lastName;
-        this.email = email;
+        this.email = email.toLowerCase();
         this.password = password;
     }
 }
