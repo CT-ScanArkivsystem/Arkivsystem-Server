@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public interface UserDao {
 
-    User insertUser(User user);
+    User insertUser(User user, String role);
 
     List<User> selectAllUsers();
 

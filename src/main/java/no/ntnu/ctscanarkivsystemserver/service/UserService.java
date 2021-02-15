@@ -3,6 +3,7 @@ package no.ntnu.ctscanarkivsystemserver.service;
 import no.ntnu.ctscanarkivsystemserver.Exception.EmailExistsException;
 import no.ntnu.ctscanarkivsystemserver.dao.UserDao;
 import no.ntnu.ctscanarkivsystemserver.model.MyUserDetails;
+import no.ntnu.ctscanarkivsystemserver.model.Role;
 import no.ntnu.ctscanarkivsystemserver.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -36,12 +37,12 @@ public class UserService implements UserDetailsService {
      * @return user which was added into the database.
      * @throws EmailExistsException if a user with given email already exists in the database.
      */
-    public User addUser(User user) throws EmailExistsException{
+    public User addUser(User user, String role) throws EmailExistsException{
         if(userDao.doesEmailExist(user.getEmail())) {
             throw new EmailExistsException(user.getEmail());
         }
         User newUser = new User(user.getFirstName(), user.getLastName(), user.getEmail(), passwordEncoder.encode(user.getPassword()));
-        return userDao.insertUser(newUser);
+        return userDao.insertUser(newUser, role);
     }
 
     public List<User> getAllUsers() {
@@ -64,5 +65,14 @@ public class UserService implements UserDetailsService {
         }
 
         return new MyUserDetails(user);
+    }
+
+    /**
+     * Checks if parameter is a valid role.
+     * @param role to be check if is valid.
+     * @return true if parameter is a valid role.
+     */
+    public boolean isRoleValid(String role) {
+        return role.equals(Role.ADMIN) || role.equals(Role.PROFESSOR) || role.equals(Role.USER);
     }
 }
