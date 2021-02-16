@@ -1,4 +1,4 @@
-package no.ntnu.ctscanarkivsystemserver.Exception;
+package no.ntnu.ctscanarkivsystemserver.exception;
 
 /**
  * This should be thrown if a new user tries to use an email which already exists in the database.

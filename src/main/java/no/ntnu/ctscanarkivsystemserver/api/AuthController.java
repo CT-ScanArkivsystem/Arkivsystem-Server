@@ -12,9 +12,13 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * The job of this class is to be the endpoint for all authentication and authorization
+ * requests which is accessible for all user. (With or without an account)
+ */
 @RequestMapping("/auth")
 @RestController
-public class Authentication {
+public class AuthController {
 
     @Autowired
     private AuthenticationManager authManager;

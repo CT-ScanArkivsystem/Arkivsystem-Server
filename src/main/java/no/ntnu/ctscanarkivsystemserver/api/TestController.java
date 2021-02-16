@@ -1,6 +1,6 @@
 package no.ntnu.ctscanarkivsystemserver.api;
 
-import no.ntnu.ctscanarkivsystemserver.Exception.EmailExistsException;
+import no.ntnu.ctscanarkivsystemserver.exception.EmailExistsException;
 import no.ntnu.ctscanarkivsystemserver.model.Role;
 import no.ntnu.ctscanarkivsystemserver.model.User;
 import no.ntnu.ctscanarkivsystemserver.service.UserService;
