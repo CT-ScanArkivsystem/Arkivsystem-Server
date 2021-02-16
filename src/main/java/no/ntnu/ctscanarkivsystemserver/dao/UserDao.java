@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public interface UserDao {
 
-    User insertUser(User user);
+    User insertUser(User user, String role);
 
     List<User> selectAllUsers();
 
@@ -16,4 +16,6 @@ public interface UserDao {
     User getUserByEmail(String email);
 
     boolean doesEmailExist(String email);
+
+    User editUser(User userToBeChanged, User changes, String role);
 }

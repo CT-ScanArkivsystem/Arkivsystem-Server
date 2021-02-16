@@ -3,6 +3,7 @@ package no.ntnu.ctscanarkivsystemserver.util;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -18,8 +19,8 @@ import java.util.function.Function;
 @Service
 public class JwtUtil {
 
-    //TODO This key MUST be hidden in gitignore file with passwords and not in plain text here!
-    private static final String SECRET_KEY = "mySuperSecretKey";
+    @Value("${random.uuid:DefaultValue}")
+    private String SECRET_KEY;
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -50,7 +51,7 @@ public class JwtUtil {
     private String createToken(Map<String, Object> claims, String subject) {
 
         return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60)) //Token will expire in 1 hour!
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 12)) //Token will expire in 12 hours!
                 .signWith(SignatureAlgorithm.HS256, SECRET_KEY).compact();
     }
 
