@@ -1,6 +1,7 @@
 package no.ntnu.ctscanarkivsystemserver.api;
 
-import no.ntnu.ctscanarkivsystemserver.Exception.EmailExistsException;
+import no.ntnu.ctscanarkivsystemserver.exception.EmailExistsException;
+import no.ntnu.ctscanarkivsystemserver.model.Role;
 import no.ntnu.ctscanarkivsystemserver.model.User;
 import no.ntnu.ctscanarkivsystemserver.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,7 @@ public class TestController {
         this.userService = userService;
     }
 
+    //TODO Remove this method! Only admin should be able to make a new user.
     @PostMapping(path = "/newUser")
     public ResponseEntity<?> addUser(@RequestBody User user) {
         if(user == null) {
@@ -29,7 +31,7 @@ public class TestController {
             return ResponseEntity.badRequest().build();
         }
         try {
-            user = userService.addUser(user);
+            user = userService.addUser(user, Role.USER);
         } catch (EmailExistsException e) {
             System.out.println(e.toString());
             //Email already exists in the database! (409 = Conflict)

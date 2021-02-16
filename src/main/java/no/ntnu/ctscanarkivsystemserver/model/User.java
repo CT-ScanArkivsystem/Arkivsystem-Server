@@ -15,9 +15,11 @@ import java.util.*;
 @NoArgsConstructor
 @NamedQuery(name = User.FIND_ALL_USERS, query = "SELECT u FROM users u ORDER BY u.email")
 @NamedQuery(name = User.FIND_USER_BY_EMAIL, query = "SELECT u FROM users u WHERE u.email LIKE: email")
+@NamedQuery(name = User.FIND_USER_BY_ID, query = "SELECT u FROM users u WHERE u.userId =: userId")
 public class User {
     public static final String FIND_ALL_USERS = "User.findAllUsers";
     public static final String FIND_USER_BY_EMAIL = "User.findUserByEmail";
+    public static final String FIND_USER_BY_ID = "User.findUserById";
 
     @Id
     @Column(name="user_id")

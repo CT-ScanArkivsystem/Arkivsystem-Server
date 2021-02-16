@@ -5,6 +5,7 @@ import no.ntnu.ctscanarkivsystemserver.model.User;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
+import javax.persistence.LockModeType;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.transaction.Transactional;
@@ -24,8 +25,8 @@ public class UserDataAccessService implements UserDao{
      */
     @Transactional
     @Override
-    public User insertUser(User user) {
-        Role userRole = em.find(Role.class, "ROLE_" + Role.USER);
+    public User insertUser(User user, String role) {
+        Role userRole = em.find(Role.class, "ROLE_" + role);
         user.getRoles().add(userRole);
         em.persist(user);
         em.flush();
@@ -57,15 +58,103 @@ public class UserDataAccessService implements UserDao{
         return !queryResult.isEmpty();
     }
 
+    /**
+     *
+     * @param userToBeChanged user in the database to be changed.
+     * @param changes a user object with the changes. If a variable is empty there will
+     *                be no changes on that variable.
+     * @param role to change the current users role to. If empty role wont be changed.
+     * @return the changed user.
+     */
+    @Transactional
     @Override
-    public User getUserById(UUID id) {
+    public User editUser(User userToBeChanged, User changes, String role) {
+        em.refresh(userToBeChanged);
+        prepareUserForEdit(userToBeChanged);
+        if(!role.isEmpty()) {
+            Role userRole = em.find(Role.class, "ROLE_" + role);
+            if (!userToBeChanged.getRoles().get(0).getRoleName().equals(userRole.getRoleName())) {
+                userToBeChanged.getRoles().remove(0);
+                userToBeChanged.getRoles().add(userRole);
+            }
+        }
+        if(!changes.getEmail().trim().isEmpty()) {
+            userToBeChanged.setEmail(changes.getEmail().trim().toLowerCase());
+        }
+        if(!changes.getFirstName().trim().isEmpty()) {
+            userToBeChanged.setFirstName(changes.getFirstName().trim());
+        }
+        if(!changes.getLastName().trim().isEmpty()) {
+            userToBeChanged.setLastName(changes.getLastName().trim());
+        }
+        if(!changes.getPassword().trim().isEmpty()) {
+            userToBeChanged.setPassword(changes.getPassword().trim());
+        }
+
+        return saveUser(userToBeChanged);
+    }
+
+    /**
+     * Prepares the database for change.
+     * @param user to be changed in the database.
+     */
+    private void prepareUserForEdit(User user) {
+        System.out.println("user getting ready for edit.");
+        if(user != null) {
+            try {
+                em.lock(user, LockModeType.PESSIMISTIC_WRITE);
+            } catch (Exception e) {
+                System.out.println("Exception in prepare user for edit: " + e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Merge a user into the database and then lock it.
+     * @param userToSave group to be merged.
+     * @return user if merge was successful else null.
+     */
+    private User saveUser(User userToSave) {
+        System.out.println("Trying to save user.");
+        if(userToSave != null) {
+            try {
+                em.merge(userToSave);
+                em.lock(userToSave, LockModeType.NONE);
+                em.flush();
+                return userToSave;
+            } catch (Exception e) {
+                System.out.println("Exception in save user: " + e.getMessage());
+            }
+        }
         return null;
     }
 
     /**
-     * Search the database for a user with the email parameter. If found the user will be returned.
+     * Search the database for a user with the id. If found the user will be returned.
+     * @param id of the user to be found.
+     * @return user with id.
+     */
+    @Override
+    public User getUserById(UUID id) {
+        Query query = em.createNamedQuery(User.FIND_USER_BY_ID);
+        if(id == null) {
+            return null;
+        }
+        query.setParameter("userId", id);
+        List<User> queryResult = query.getResultList();
+        if(queryResult.size() == 1) {
+            System.out.println("Found a user with id: " + id);
+            return queryResult.get(0);
+        } else {
+            System.out.println("Found no users with id: " + id);
+            return null;
+        }
+    }
+
+    /**
+     * Search the database for a user with the email. If found the user will be returned.
      * @param email of the user to find in the database.
-     * @return user with email equal to parameter.
+     * @return user with email.
      */
     @Override
     public User getUserByEmail(String email) {

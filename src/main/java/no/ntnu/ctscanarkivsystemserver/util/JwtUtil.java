@@ -19,7 +19,6 @@ import java.util.function.Function;
 @Service
 public class JwtUtil {
 
-    //TODO This key MUST be hidden in gitignore file with passwords and not in plain text here!
     @Value("${random.uuid:DefaultValue}")
     private String SECRET_KEY;
 
