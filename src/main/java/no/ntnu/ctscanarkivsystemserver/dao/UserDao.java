@@ -16,4 +16,6 @@ public interface UserDao {
     User getUserByEmail(String email);
 
     boolean doesEmailExist(String email);
+
+    User editUser(User userToBeChanged, User changes, String role);
 }

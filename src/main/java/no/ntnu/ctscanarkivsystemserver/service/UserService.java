@@ -2,6 +2,7 @@ package no.ntnu.ctscanarkivsystemserver.service;
 
 import no.ntnu.ctscanarkivsystemserver.exception.EmailExistsException;
 import no.ntnu.ctscanarkivsystemserver.dao.UserDao;
+import no.ntnu.ctscanarkivsystemserver.exception.UserNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.model.MyUserDetails;
 import no.ntnu.ctscanarkivsystemserver.model.Role;
 import no.ntnu.ctscanarkivsystemserver.model.User;
@@ -14,6 +15,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * @author TrymV
@@ -65,6 +67,61 @@ public class UserService implements UserDetailsService {
         }
 
         return new MyUserDetails(user);
+    }
+
+    /**
+     * Gets a user by email.
+     * @param email of user to get.
+     * @return user with email in database.
+     * @throws UserNotFoundException if no user was found.
+     */
+    private User getUserByEmail(String email) throws UserNotFoundException {
+        User user = userDao.getUserByEmail(email);
+
+        if(user == null) {
+            throw new UserNotFoundException(email);
+        }
+        return user;
+    }
+
+    /**
+     * Gets a user by id.
+     * @param id of user to get.
+     * @return user with id in database.
+     * @throws UserNotFoundException if no user was found.
+     */
+    private User getUserById(UUID id) throws UserNotFoundException {
+        User user = userDao.getUserById(id);
+
+        if(user == null) {
+            throw new UserNotFoundException(id);
+        }
+        return user;
+    }
+
+    /**
+     * Find and change a user.
+     * @param changes user object with the changes to be done to the user.
+     *                Id or email will be used to find the user.
+     * @param role to give user. No changes will happen if role is empty.
+     * @return changed user.
+     * @throws UserNotFoundException if no user was found with id or email.
+     * @throws EmailExistsException if you try to change email to one which already exist.
+     */
+    public User editUser(User changes, String role) throws UserNotFoundException, EmailExistsException{
+        User user;
+        if(!changes.getUserId().toString().isEmpty()) {
+            user = getUserById(changes.getUserId());
+            if(!user.getEmail().equals(changes.getEmail()) && userDao.doesEmailExist(changes.getEmail())) {
+                throw new EmailExistsException(changes.getEmail());
+            }
+        } else {
+            user = getUserByEmail(changes.getEmail());
+        }
+        if(!changes.getPassword().trim().isEmpty()) {
+            changes.setPassword(passwordEncoder.encode(changes.getPassword()));
+        }
+        return userDao.editUser(user, changes, role);
     }
 
     /**
