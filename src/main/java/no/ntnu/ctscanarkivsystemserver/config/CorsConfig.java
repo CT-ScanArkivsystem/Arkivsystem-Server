@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+//This class was taken from this guide: https://www.youtube.com/watch?v=PovQ6aUeRgg
 @Configuration
 public class CorsConfig {
 
