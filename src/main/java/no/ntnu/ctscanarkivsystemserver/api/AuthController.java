@@ -1,7 +1,6 @@
 package no.ntnu.ctscanarkivsystemserver.api;
 
 import no.ntnu.ctscanarkivsystemserver.model.AuthenticationRequest;
-import no.ntnu.ctscanarkivsystemserver.model.AuthenticationResponse;
 import no.ntnu.ctscanarkivsystemserver.service.UserService;
 import no.ntnu.ctscanarkivsystemserver.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
