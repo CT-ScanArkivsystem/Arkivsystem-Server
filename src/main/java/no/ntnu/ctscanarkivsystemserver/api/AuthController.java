@@ -3,6 +3,7 @@ package no.ntnu.ctscanarkivsystemserver.api;
 import no.ntnu.ctscanarkivsystemserver.model.AuthenticationRequest;
 import no.ntnu.ctscanarkivsystemserver.service.UserService;
 import no.ntnu.ctscanarkivsystemserver.util.JwtUtil;
+import org.apache.catalina.connector.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -12,6 +13,10 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * The job of this class is to be the endpoint for all authentication and authorization
@@ -31,7 +36,7 @@ public class AuthController {
     private JwtUtil jwtTokenUtil;
 
     @PostMapping(path = "/login")
-    public ResponseEntity<?> login(@RequestBody AuthenticationRequest authenticationRequest) throws BadCredentialsException {
+    public ResponseEntity<?> login(@RequestBody AuthenticationRequest authenticationRequest, HttpServletResponse response) throws BadCredentialsException {
         try {
             authManager.authenticate(
                     new UsernamePasswordAuthenticationToken(authenticationRequest.getUsername(), authenticationRequest.getPassword())
@@ -43,9 +48,19 @@ public class AuthController {
                 .loadUserByUsername(authenticationRequest.getUsername());
         final String jwt = jwtTokenUtil.generateToken(userDetails);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Set-Cookie", jwt);
 
-        return new ResponseEntity<>("", headers, HttpStatus.OK);
+        Cookie cookie = new Cookie("token", jwt);
+        cookie.setMaxAge(1800);
+        cookie.setPath("/");
+        cookie.setDomain("127.0.0.1");
+        cookie.setSecure(false);
+        //cookie1.setHttpOnly(true);
+        response.addCookie(cookie);
+
+        //HttpHeaders headers = new HttpHeaders();
+        //headers.add("Set-Cookie", jwt);
+        //headers.remove(headers.getPragma());
+
+        return new ResponseEntity<>("{\"success\": true}", HttpStatus.OK);
     }
 }
