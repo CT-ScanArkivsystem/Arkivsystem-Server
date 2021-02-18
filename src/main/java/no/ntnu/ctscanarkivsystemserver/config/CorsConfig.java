@@ -18,8 +18,9 @@ public class CorsConfig {
                 registry.addMapping("/**")
                         .allowedMethods("GET", "POST", "PUT", "DELETE")
                         .allowedHeaders("*")
-                        .allowedOrigins("*")
-                        .exposedHeaders("Set-Cookie");
+                        .allowedOrigins("http://localhost:3000", "http://127.0.0.1:3000")
+                        .exposedHeaders("Set-Cookie")
+                        .allowCredentials(true);
             }
         };
     }

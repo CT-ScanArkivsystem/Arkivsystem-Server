@@ -48,18 +48,13 @@ public class AuthController {
                 .loadUserByUsername(authenticationRequest.getUsername());
         final String jwt = jwtTokenUtil.generateToken(userDetails);
 
-
         Cookie cookie = new Cookie("token", jwt);
         cookie.setMaxAge(1800);
         cookie.setPath("/");
         cookie.setDomain("127.0.0.1");
-        cookie.setSecure(false);
-        //cookie1.setHttpOnly(true);
+        cookie.setSecure(false); // TODO: When the connection becomes secure (HTTPS) change this to true!
+        cookie.setHttpOnly(true);
         response.addCookie(cookie);
-
-        //HttpHeaders headers = new HttpHeaders();
-        //headers.add("Set-Cookie", jwt);
-        //headers.remove(headers.getPragma());
 
         return new ResponseEntity<>("{\"success\": true}", HttpStatus.OK);
     }
