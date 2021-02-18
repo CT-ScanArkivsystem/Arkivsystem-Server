@@ -1,4 +1,4 @@
-package dcm4che;
+package no.ntnu.ctscanarkivsystemserver.xml;
 
 import org.apache.commons.lang3.StringUtils;
 import org.dcm4che3.io.DicomInputStream;
@@ -18,13 +18,10 @@ import java.io.*;
 import java.util.Arrays;
 import java.util.List;
 
-public class Main {
-    public static void main(String[] args) throws IOException, TransformerException, SAXException, ParserConfigurationException {
+public class SaveXmlFromIML {
+    public static void convert(String inputFile) throws IOException, TransformerException, SAXException, ParserConfigurationException {
 
         Dcm2Xml dcm2XmlObject = new Dcm2Xml();
-
-        String inputFile =
-                new String("TIIN_KOND.CT.SPECIALS_TIINS80S_(ADULT).1.1.2017.12.04.10.12.25.734375.30992199.IMA");
 
         DicomInputStream dis = new DicomInputStream(new File(inputFile));
 

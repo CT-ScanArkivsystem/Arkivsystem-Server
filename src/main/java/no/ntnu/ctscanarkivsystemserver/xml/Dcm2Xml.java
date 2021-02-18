@@ -36,7 +36,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package dcm4che;
+package no.ntnu.ctscanarkivsystemserver.xml;
 
 import org.apache.commons.cli.*;
 import org.dcm4che3.io.BasicBulkDataDescriptor;
