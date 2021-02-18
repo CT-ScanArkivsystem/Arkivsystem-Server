@@ -34,7 +34,7 @@ public class Project {
     @Column(name="creation")
     private Date creation;
 
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinTable(name = "project_tags",
             joinColumns = @JoinColumn(
                     name = "project_id",
@@ -44,7 +44,7 @@ public class Project {
                     referencedColumnName = "tag_name"))
     private List<Tag> tags = new ArrayList<>();
 
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinTable(name="project_special_permission",
             joinColumns = @JoinColumn(
                     name = "project_id",
