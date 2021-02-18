@@ -15,8 +15,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletResponse;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 
 /**
  * The job of this class is to be the endpoint for all authentication and authorization
@@ -36,7 +37,7 @@ public class AuthController {
     private JwtUtil jwtTokenUtil;
 
     @PostMapping(path = "/login")
-    public ResponseEntity<?> login(@RequestBody AuthenticationRequest authenticationRequest, HttpServletResponse response) throws BadCredentialsException {
+    public ResponseEntity<?> login(@RequestBody AuthenticationRequest authenticationRequest, HttpServletResponse response) throws BadCredentialsException, UnsupportedEncodingException {
         try {
             authManager.authenticate(
                     new UsernamePasswordAuthenticationToken(authenticationRequest.getUsername(), authenticationRequest.getPassword())
@@ -48,10 +49,11 @@ public class AuthController {
                 .loadUserByUsername(authenticationRequest.getUsername());
         final String jwt = jwtTokenUtil.generateToken(userDetails);
 
-        Cookie cookie = new Cookie("token", jwt);
+        Cookie cookie = new Cookie("jwt", URLEncoder.encode("Bearer " + jwt, "UTF-8"));
+        //System.out.println(URLEncoder.encode(("Bearer " + jwt), "UTF-8"));
         cookie.setMaxAge(1800);
         cookie.setPath("/");
-        cookie.setDomain("127.0.0.1");
+        cookie.setDomain("localhost");
         cookie.setSecure(false); // TODO: When the connection becomes secure (HTTPS) change this to true!
         cookie.setHttpOnly(true);
         response.addCookie(cookie);
