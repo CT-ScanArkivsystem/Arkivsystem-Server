@@ -17,6 +17,13 @@
     <properties>
         <java.version>1.8</java.version>
     </properties>
+    <repositories>
+    <repository>
+        <id>www.dcm4che.org</id>
+        <name>dcm4che Repository</name>
+        <url>http://www.dcm4che.org/maven2</url>
+    </repository>
+    </repositories>
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -72,6 +79,37 @@
             <artifactId>org.eclipse.persistence.jpa</artifactId>
             <version>2.7.8</version>
         </dependency>
+        <dependency>
+            <groupId>com.fasterxml.woodstox</groupId>
+            <artifactId>woodstox-core</artifactId>
+            <version>6.0.3</version>
+        </dependency>
+        <!-- For StaxMate -->
+        <!-- https://github.com/FasterXML/StaxMate#maven-coordinates -->
+        <dependency>
+            <groupId>com.fasterxml.staxmate</groupId>
+            <artifactId>staxmate</artifactId>
+            <version>2.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jdom</groupId>
+            <artifactId>jdom2</artifactId>
+            <version>2.0.6</version>
+        </dependency>
+        <!-- For Dcm2Xml -->
+        <!-- https://mvnrepository.com/artifact/org.dcm4che.tool/dcm4che-tool-dcm2xml -->
+        <dependency>
+            <groupId>org.dcm4che.tool</groupId>
+            <artifactId>dcm4che-tool-dcm2xml </artifactId>
+            <version>5.23.0</version>
+            <!-- FIX CONFLICT -->
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
         <!-- For Security -->
         <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-security -->
         <dependency>
@@ -85,8 +123,6 @@
             <artifactId>jjwt</artifactId>
             <version>0.9.1</version>
         </dependency>
-
-
     </dependencies>
     <build>
         <plugins>
