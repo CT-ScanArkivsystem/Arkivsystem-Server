@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 /**
  * The job of this class is to be the endpoint for all authentication and authorization
  * requests which is accessible for all user. (With or without an account)
+ * @author TrymV
  */
 @RequestMapping("/auth")
 @RestController

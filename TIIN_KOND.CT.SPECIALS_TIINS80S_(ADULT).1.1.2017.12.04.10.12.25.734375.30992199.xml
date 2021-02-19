@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<NativeDicomModel xml:space="preserve">
+  <DicomAttribute keyword="FileMetaInformationVersion" tag="00020001" vr="OB">
+    <InlineBinary>AAE=</InlineBinary>
+  </DicomAttribute>
+  <DicomAttribute keyword="MediaStorageSOPClassUID" tag="00020002" vr="UI">
+    <Value number="1">1.2.840.10008.5.1.4.1.1.2</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="MediaStorageSOPInstanceUID" tag="00020003" vr="UI">
+    <Value number="1">1.3.6.1.4.1.9590.100.1.2.323990275941469569032080001561034559666</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="TransferSyntaxUID" tag="00020010" vr="UI">
+    <Value number="1">1.2.840.10008.1.2.1</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="ImplementationClassUID" tag="00020012" vr="UI">
+    <Value number="1">1.3.6.1.4.1.9590.100.1.3.100.9.4</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="ImplementationVersionName" tag="00020013" vr="SH">
+    <Value number="1">MATLAB IPT 9.4</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="SpecificCharacterSet" tag="00080005" vr="CS">
+    <Value number="1">ISO_IR 100</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="ImageType" tag="00080008" vr="CS">
+    <Value number="1">ORIGINAL</Value>
+    <Value number="2">PRIMARY</Value>
+    <Value number="3">AXIAL</Value>
+    <Value number="4">CT_SOM5 SEQ</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="SOPClassUID" tag="00080016" vr="UI">
+    <Value number="1">1.2.840.10008.5.1.4.1.1.2</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="SOPInstanceUID" tag="00080018" vr="UI">
+    <Value number="1">1.3.6.1.4.1.9590.100.1.2.323990275941469569032080001561034559666</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="StudyDate" tag="00080020" vr="DA">
+    <Value number="1">20171127</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="SeriesDate" tag="00080021" vr="DA">
+    <Value number="1">20171127</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="AcquisitionDate" tag="00080022" vr="DA">
+    <Value number="1">20171127</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="ContentDate" tag="00080023" vr="DA">
+    <Value number="1">20171127</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="StudyTime" tag="00080030" vr="TM">
+    <Value number="1">144450.625000</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="SeriesTime" tag="00080031" vr="TM">
+    <Value number="1">153316.453000</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="AcquisitionTime" tag="00080032" vr="TM">
+    <Value number="1">153622.921010</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="ContentTime" tag="00080033" vr="TM">
+    <Value number="1">153622.921010</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="AccessionNumber" tag="00080050" vr="SH"/>
+  <DicomAttribute keyword="Modality" tag="00080060" vr="CS">
+    <Value number="1">CT</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="Manufacturer" tag="00080070" vr="LO">
+    <Value number="1">SIEMENS</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="InstitutionName" tag="00080080" vr="LO">
+    <Value number="1">LTU Trateknik</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="InstitutionAddress" tag="00080081" vr="ST">
+    <Value number="1">ForskargatanSkellefteaDistrictSweden</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="ReferringPhysicianName" tag="00080090" vr="PN"/>
+  <DicomAttribute keyword="StationName" tag="00081010" vr="SH">
+    <Value number="1">CT37413</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="StudyDescription" tag="00081030" vr="LO">
+    <Value number="1">Specials^TIINS80s (Adult)</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="SeriesDescription" tag="0008103E" vr="LO">
+    <Value number="1">DynSerio  5.0  S80s</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="ManufacturerModelName" tag="00081090" vr="LO">
+    <Value number="1">Emotion Duo</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="SourceImageSequence" tag="00082112" vr="SQ">
+    <Item number="1">
+      <DicomAttribute keyword="ReferencedSOPClassUID" tag="00081150" vr="UI">
+        <Value number="1">1.3.12.2.1107.5.9.1</Value>
+      </DicomAttribute>
+      <DicomAttribute keyword="ReferencedSOPInstanceUID" tag="00081155" vr="UI">
+        <Value number="1">1.3.12.2.1107.5.1.4.37413.30000017112713102851500000027</Value>
+      </DicomAttribute>
+    </Item>
+  </DicomAttribute>
+  <DicomAttribute keyword="PatientName" tag="00100010" vr="PN">
+    <PersonName number="1">
+      <Alphabetic>
+        <FamilyName>TIIN_Kond</FamilyName>
+      </Alphabetic>
+    </PersonName>
+  </DicomAttribute>
+  <DicomAttribute keyword="PatientID" tag="00100020" vr="LO">
+    <Value number="1">17.11.27-14:44:50-STD-1.3.12.2.1107.5.1.4.37413</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="PatientBirthDate" tag="00100030" vr="DA">
+    <Value number="1">19871127</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="PatientSex" tag="00100040" vr="CS">
+    <Value number="1">O</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="PatientAge" tag="00101010" vr="AS">
+    <Value number="1">030Y</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="BodyPartExamined" tag="00180015" vr="CS">
+    <Value number="1">ABDOMEN</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="SliceThickness" tag="00180050" vr="DS">
+    <Value number="1">5</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="KVP" tag="00180060" vr="DS">
+    <Value number="1">110</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="DataCollectionDiameter" tag="00180090" vr="DS">
+    <Value number="1">502.17</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="DeviceSerialNumber" tag="00181000" vr="LO">
+    <Value number="1">37413</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="SoftwareVersions" tag="00181020" vr="LO">
+    <Value number="1">syngo CT 2006A</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="ProtocolName" tag="00181030" vr="LO">
+    <Value number="1">TIINS80s</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="ReconstructionDiameter" tag="00181100" vr="DS">
+    <Value number="1">300</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="DistanceSourceToDetector" tag="00181110" vr="DS">
+    <Value number="1">940</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="DistanceSourceToPatient" tag="00181111" vr="DS">
+    <Value number="1">535</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="GantryDetectorTilt" tag="00181120" vr="DS">
+    <Value number="1">0</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="TableHeight" tag="00181130" vr="DS">
+    <Value number="1">145</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="RotationDirection" tag="00181140" vr="CS">
+    <Value number="1">CW</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="ExposureTime" tag="00181150" vr="IS">
+    <Value number="1">800</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="XRayTubeCurrent" tag="00181151" vr="IS">
+    <Value number="1">88</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="Exposure" tag="00181152" vr="IS">
+    <Value number="1">70</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="FilterType" tag="00181160" vr="SH">
+    <Value number="1">1</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="GeneratorPower" tag="00181170" vr="IS">
+    <Value number="1">9</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="FocalSpots" tag="00181190" vr="DS">
+    <Value number="1">0.95</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="DateOfLastCalibration" tag="00181200" vr="DA">
+    <Value number="1">20171127</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="TimeOfLastCalibration" tag="00181201" vr="TM">
+    <Value number="1">141137.000000</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="ConvolutionKernel" tag="00181210" vr="SH">
+    <Value number="1">S80s</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="PatientPosition" tag="00185100" vr="CS">
+    <Value number="1">HFS</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="StudyInstanceUID" tag="0020000D" vr="UI">
+    <Value number="1">1.3.12.2.1107.5.1.4.37413.30000017112713142406200000004</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="SeriesInstanceUID" tag="0020000E" vr="UI">
+    <Value number="1">1.3.12.2.1107.5.1.4.37413.30000017112713102851500000028</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="StudyID" tag="00200010" vr="SH">
+    <Value number="1">1</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="SeriesNumber" tag="00200011" vr="IS">
+    <Value number="1">1</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="AcquisitionNumber" tag="00200012" vr="IS">
+    <Value number="1">1</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="InstanceNumber" tag="00200013" vr="IS">
+    <Value number="1">1</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="ImagePositionPatient" tag="00200032" vr="DS">
+    <Value number="1">-149.70703125</Value>
+    <Value number="2">-274.70703125</Value>
+    <Value number="3">-633.5</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="ImageOrientationPatient" tag="00200037" vr="DS">
+    <Value number="1">1</Value>
+    <Value number="2">0</Value>
+    <Value number="3">0</Value>
+    <Value number="4">0</Value>
+    <Value number="5">1</Value>
+    <Value number="6">0</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="FrameOfReferenceUID" tag="00200052" vr="UI">
+    <Value number="1">1.3.12.2.1107.5.1.4.37413.30000017112713102851500000024</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="PositionReferenceIndicator" tag="00201040" vr="LO"/>
+  <DicomAttribute keyword="SliceLocation" tag="00201041" vr="DS">
+    <Value number="1">-633.5</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="ImageComments" tag="00204000" vr="LT"/>
+  <DicomAttribute keyword="SamplesPerPixel" tag="00280002" vr="US">
+    <Value number="1">1</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="PhotometricInterpretation" tag="00280004" vr="CS">
+    <Value number="1">MONOCHROME2</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="Rows" tag="00280010" vr="US">
+    <Value number="1">512</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="Columns" tag="00280011" vr="US">
+    <Value number="1">512</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="PixelSpacing" tag="00280030" vr="DS">
+    <Value number="1">0.5859375</Value>
+    <Value number="2">0.5859375</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="BitsAllocated" tag="00280100" vr="US">
+    <Value number="1">16</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="BitsStored" tag="00280101" vr="US">
+    <Value number="1">16</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="HighBit" tag="00280102" vr="US">
+    <Value number="1">15</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="PixelRepresentation" tag="00280103" vr="US">
+    <Value number="1">0</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="SmallestImagePixelValue" tag="00280106" vr="US">
+    <Value number="1">0</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="LargestImagePixelValue" tag="00280107" vr="US">
+    <Value number="1">2747</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="WindowCenter" tag="00281050" vr="DS">
+    <Value number="1">40</Value>
+    <Value number="2">300</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="WindowWidth" tag="00281051" vr="DS">
+    <Value number="1">300</Value>
+    <Value number="2">1500</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="RescaleIntercept" tag="00281052" vr="DS">
+    <Value number="1">-1024</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="RescaleSlope" tag="00281053" vr="DS">
+    <Value number="1">1</Value>
+  </DicomAttribute>
+  <DicomAttribute keyword="WindowCenterWidthExplanation" tag="00281055" vr="LO">
+    <Value number="1">WINDOW1</Value>
+    <Value number="2">WINDOW2</Value>
+  </DicomAttribute>
+</NativeDicomModel>
