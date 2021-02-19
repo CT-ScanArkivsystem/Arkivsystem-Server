@@ -1,7 +1,12 @@
 package no.ntnu.ctscanarkivsystemserver.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import no.ntnu.ctscanarkivsystemserver.dao.UserDao;
+import no.ntnu.ctscanarkivsystemserver.exception.UserNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -16,9 +21,12 @@ import java.util.UUID;
 @Entity(name = "projects")
 @Data
 @NoArgsConstructor
-@NamedQuery(name = Project.FIND_ALL_NAMES, query = "SELECT p FROM projects p ORDER BY p.projectName")
+@NamedQuery(name = Project.FIND_ALL_PROJECTS, query = "SELECT p FROM projects p ORDER BY p.projectName")
+@NamedQuery(name = Project.FIND_PROJECTS_BY_NAME, query = "SELECT p FROM projects p WHERE p.projectName LIKE: projectName")
 public class Project {
-    public static final String FIND_ALL_NAMES = "Project.findAllNames";
+
+    public static final String FIND_ALL_PROJECTS = "Project.findAllNames";
+    public static final String FIND_PROJECTS_BY_NAME = "Project.findProjectsByName";
 
     @Id
     @Column(name="project_id")
@@ -54,15 +62,27 @@ public class Project {
                     referencedColumnName = "user_id"))
     private List<User> usersWithSpecialPermission = new ArrayList<>();
 
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @ManyToOne
+    @JoinColumn(
+            name="owner",
+            referencedColumnName = "user_id"
+    )
+    private User owner;
+
 
     /**
      * Constructor for the Project class.
      * @param projectName The name of this project
-     * @param isPrivate If this project is private
+     * @param isPrivate If this project is private or not
+     * @param user The user which is the owner of the project
+     * @param date The creation date of the project
      */
-    public Project(String projectName, Boolean isPrivate) {
+    public Project(String projectName, Boolean isPrivate, User user, Date date) {
         this.projectId = UUID.randomUUID();
         this.projectName = projectName;
         this.isPrivate = isPrivate;
+        this.owner = user;
+        this.creation = date;
     }
 }
