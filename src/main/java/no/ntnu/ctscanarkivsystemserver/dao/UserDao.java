@@ -18,5 +18,7 @@ public interface UserDao {
 
     boolean doesEmailExist(String email);
 
+    boolean removeUser(User userToBeRemoved);
+
     User editUser(User userToBeChanged, UserDTO changes);
 }

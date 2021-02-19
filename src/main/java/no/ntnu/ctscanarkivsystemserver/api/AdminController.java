@@ -66,7 +66,6 @@ public class AdminController {
      * If a variable in user is empty no change will happen to that variable.
      * @param user user object with the changes to be done to the user.
      *             Id or email will be used to find the user.
-     * @param role to give user. If empty role wont change.
      * @return changed user.
      */
     @PutMapping(path = "/editUser")
@@ -100,7 +99,26 @@ public class AdminController {
         return ResponseEntity.badRequest().build();
     }
 
-    public ResponseEntity<?> removeUser(@RequestBody User user) {
-        return null;
+    /**
+     * Removes a user from the system.
+     * @param user UserDTO object which must contain userId of user to be removed.
+     * @return 200-ok if user was successfully removed.
+     */
+    @DeleteMapping(path = "/removeUser")
+    public ResponseEntity<?> removeUser(@RequestBody UserDTO user) {
+        if(user == null || user.getUserId() == null || user.getUserId().toString().isEmpty()) {
+            //User and userId cannot be null and userId cannot be empty.
+            return ResponseEntity.badRequest().build();
+        }
+        try {
+            if(!userService.removeUser(user.getUserId())) {
+                //Something went wrong when trying to remove the user.
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        } catch (UserNotFoundException e) {
+            //No user was found with the id.
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok().build();
     }
 }

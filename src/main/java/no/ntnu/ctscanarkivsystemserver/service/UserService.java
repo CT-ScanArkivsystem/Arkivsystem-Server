@@ -125,6 +125,17 @@ public class UserService implements UserDetailsService {
     }
 
     /**
+     * Removes a user from the system.
+     * @param userId id of user to be removed.
+     * @return true if user was successfully removed.
+     * @throws UserNotFoundException if no user was found with id.
+     */
+    public boolean removeUser(UUID userId) throws UserNotFoundException{
+        User userToBeRemoved = getUserById(userId);
+        return userDao.removeUser(userToBeRemoved);
+    }
+
+    /**
      * Checks if parameter is a valid role.
      * @param role to be check if is valid.
      * @return true if parameter is a valid role.

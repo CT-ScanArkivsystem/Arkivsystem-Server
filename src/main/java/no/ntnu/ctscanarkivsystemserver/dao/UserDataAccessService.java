@@ -134,6 +134,22 @@ public class UserDataAccessService implements UserDao{
     }
 
     /**
+     * Delete a user from the database and return true if successful
+     * @param userToBeRemoved the user to be removed.
+     * @return true if user was successfully removed.
+     */
+    @Transactional
+    @Override
+    public boolean removeUser(User userToBeRemoved) {
+        if(userToBeRemoved != null) {
+            em.remove(userToBeRemoved);
+            em.flush();
+            return getUserById(userToBeRemoved.getUserId()) == null;
+        }
+        return false;
+    }
+
+    /**
      * Search the database for a user with the id. If found the user will be returned.
      * @param id of the user to be found.
      * @return user with id.
