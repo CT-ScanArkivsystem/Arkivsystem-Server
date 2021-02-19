@@ -2,6 +2,7 @@ package no.ntnu.ctscanarkivsystemserver.dao;
 
 import no.ntnu.ctscanarkivsystemserver.model.Role;
 import no.ntnu.ctscanarkivsystemserver.model.User;
+import no.ntnu.ctscanarkivsystemserver.model.UserDTO;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
@@ -63,20 +64,19 @@ public class UserDataAccessService implements UserDao{
     }
 
     /**
-     *
+     * Changes an existing user in the database.
      * @param userToBeChanged user in the database to be changed.
      * @param changes a user object with the changes. If a variable is empty there will
      *                be no changes on that variable.
-     * @param role to change the current users role to. If empty role wont be changed.
      * @return the changed user.
      */
     @Transactional
     @Override
-    public User editUser(User userToBeChanged, User changes, String role) {
+    public User editUser(User userToBeChanged, UserDTO changes) {
         em.refresh(userToBeChanged);
         prepareUserForEdit(userToBeChanged);
-        if(!role.isEmpty()) {
-            Role userRole = em.find(Role.class, "ROLE_" + role);
+        if(!changes.getRole().isEmpty()) {
+            Role userRole = em.find(Role.class, "ROLE_" + changes.getRole());
             if (!userToBeChanged.getRoles().get(0).getRoleName().equals(userRole.getRoleName())) {
                 userToBeChanged.getRoles().remove(0);
                 userToBeChanged.getRoles().add(userRole);

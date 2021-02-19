@@ -1,6 +1,7 @@
 package no.ntnu.ctscanarkivsystemserver.dao;
 
 import no.ntnu.ctscanarkivsystemserver.model.User;
+import no.ntnu.ctscanarkivsystemserver.model.UserDTO;
 
 import java.util.List;
 import java.util.UUID;
@@ -17,5 +18,5 @@ public interface UserDao {
 
     boolean doesEmailExist(String email);
 
-    User editUser(User userToBeChanged, User changes, String role);
+    User editUser(User userToBeChanged, UserDTO changes);
 }
