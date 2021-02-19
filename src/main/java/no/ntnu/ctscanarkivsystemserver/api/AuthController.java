@@ -49,12 +49,14 @@ public class AuthController {
                 .loadUserByUsername(authenticationRequest.getUsername());
         final String jwt = jwtTokenUtil.generateToken(userDetails);
 
+        // If a cookie with sameSite is ever needed, the Cookie cannot be used due
+        // to it being old and SameSite being rather new. Use something like:
+        // response.setHeader("Set-Cookie", "jwt=Bearer " + jwt + "; HttpOnly; SameSite=lax; path=/; domain=localhost");
         Cookie cookie = new Cookie("jwt", URLEncoder.encode("Bearer " + jwt, "UTF-8"));
-        //System.out.println(URLEncoder.encode(("Bearer " + jwt), "UTF-8"));
         cookie.setMaxAge(1800);
         cookie.setPath("/");
         cookie.setDomain("localhost");
-        cookie.setSecure(false); // TODO: When the connection becomes secure (HTTPS) change this to true!
+        cookie.setSecure(false); // TODO: When the connection becomes secure (HTTPS), change this to true!
         cookie.setHttpOnly(true);
         response.addCookie(cookie);
 
