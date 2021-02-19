@@ -1,6 +1,7 @@
 package no.ntnu.ctscanarkivsystemserver.model;
 
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
@@ -50,6 +51,11 @@ public class User {
                     name = "role_name",
                     referencedColumnName = "role_name"))
     private List<Role> roles = new ArrayList<>();
+
+    @Getter
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "owner")
+    private List<Project> ownProjects;
+
 
     /**
      * Constructor.

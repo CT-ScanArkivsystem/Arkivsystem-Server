@@ -1,12 +1,16 @@
 package no.ntnu.ctscanarkivsystemserver.service;
 
 import no.ntnu.ctscanarkivsystemserver.dao.ProjectDao;
-import no.ntnu.ctscanarkivsystemserver.dao.ProjectDaoClass;
+import no.ntnu.ctscanarkivsystemserver.dao.UserDao;
 import no.ntnu.ctscanarkivsystemserver.exception.ProjectNameExistsException;
+import no.ntnu.ctscanarkivsystemserver.model.MyUserDetails;
 import no.ntnu.ctscanarkivsystemserver.model.Project;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * This class handles the business logic related to projects
@@ -16,10 +20,12 @@ import org.springframework.stereotype.Service;
 public class ProjectService {
 
     private final ProjectDao projectDao;
+    private final UserDao userDao;
 
     @Autowired
-    public ProjectService(@Qualifier("postgreSQL1") ProjectDao projectDao) {
+    public ProjectService(@Qualifier("postgreSQL1") ProjectDao projectDao, @Qualifier("postgreSQL") UserDao userDao) {
         this.projectDao = projectDao;
+        this.userDao = userDao;
     }
 
 
@@ -33,8 +39,17 @@ public class ProjectService {
         if (projectDao.doesNameExist(project.getProjectName())) {
             throw new ProjectNameExistsException(project.getProjectName());
         }
-        Project newProject = new Project(project.getProjectName(), project.getIsPrivate());
+        MyUserDetails userDetails = (MyUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Project newProject = new Project(project.getProjectName(), project.getIsPrivate(), userDao.getUserByEmail(userDetails.getUsername()), project.getCreation());
         return projectDao.createProject(newProject);
     }
 
+    /**
+     * Method for returning a list of projects
+     * @return The lust of projects
+     */
+    public List<Project> getAllProjects() {
+        List<Project> projectList = projectDao.getAllProjects();
+        return projectList;
+    }
 }
