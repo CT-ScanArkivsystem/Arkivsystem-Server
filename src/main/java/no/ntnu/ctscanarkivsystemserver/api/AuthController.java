@@ -3,9 +3,7 @@ package no.ntnu.ctscanarkivsystemserver.api;
 import no.ntnu.ctscanarkivsystemserver.model.AuthenticationRequest;
 import no.ntnu.ctscanarkivsystemserver.service.UserService;
 import no.ntnu.ctscanarkivsystemserver.util.JwtUtil;
-import org.apache.catalina.connector.Response;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -60,6 +58,18 @@ public class AuthController {
         cookie.setHttpOnly(true);
         response.addCookie(cookie);
 
+        return new ResponseEntity<>("{\"success\": true}", HttpStatus.OK);
+    }
+
+    @GetMapping(path = "/logout")
+    public ResponseEntity<?> logout(HttpServletResponse response) {
+        System.out.println("Inside /logout");
+        response.setContentType("text/html");
+        Cookie cookie = new Cookie("jwt", "");
+        cookie.setMaxAge(0);
+        cookie.setPath("/");
+        cookie.setDomain("localhost");
+        response.addCookie(cookie);
         return new ResponseEntity<>("{\"success\": true}", HttpStatus.OK);
     }
 }
