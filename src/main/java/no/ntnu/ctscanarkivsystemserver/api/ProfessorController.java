@@ -1,8 +1,12 @@
 package no.ntnu.ctscanarkivsystemserver.api;
 
 import no.ntnu.ctscanarkivsystemserver.exception.ProjectNameExistsException;
+import no.ntnu.ctscanarkivsystemserver.exception.ProjectNotFoundException;
+import no.ntnu.ctscanarkivsystemserver.exception.UserNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.model.Project;
+import no.ntnu.ctscanarkivsystemserver.model.ProjectDTO;
 import no.ntnu.ctscanarkivsystemserver.model.User;
+import no.ntnu.ctscanarkivsystemserver.model.UserDTO;
 import no.ntnu.ctscanarkivsystemserver.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -54,13 +58,30 @@ public class ProfessorController {
      */
     @GetMapping(path = "/allProjects")
     public ResponseEntity<?> getAllUsers() {
-        System.out.println("Getting all projects!");
+        //System.out.println("Getting all projects!");
         List<Project> allProjects = projectService.getAllProjects();
         if(allProjects == null || allProjects.isEmpty()) {
             return ResponseEntity.notFound().build();
         } else {
             return ResponseEntity.ok(allProjects);
         }
+    }
+
+    @PutMapping(path = "/changeProjectOwner")
+    public ResponseEntity<?> changeProjectOwner(@RequestBody ProjectDTO project, @RequestBody UserDTO newOwner) {
+        Project result = null;
+
+        if (project == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        try {
+            result = projectService.changeProjectOwner(project, newOwner);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+
+        assert result != null;
+        return ResponseEntity.ok(result);
     }
 
 }

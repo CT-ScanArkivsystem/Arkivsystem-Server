@@ -3,10 +3,6 @@ package no.ntnu.ctscanarkivsystemserver.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import no.ntnu.ctscanarkivsystemserver.dao.UserDao;
-import no.ntnu.ctscanarkivsystemserver.exception.UserNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -23,10 +19,13 @@ import java.util.UUID;
 @NoArgsConstructor
 @NamedQuery(name = Project.FIND_ALL_PROJECTS, query = "SELECT p FROM projects p ORDER BY p.projectName")
 @NamedQuery(name = Project.FIND_PROJECTS_BY_NAME, query = "SELECT p FROM projects p WHERE p.projectName LIKE: projectName")
+@NamedQuery(name = Project.FIND_PROJECTS_BY_UUID, query = "SELECT p FROM projects p WHERE p.projectId =: projectId")
+
 public class Project {
 
     public static final String FIND_ALL_PROJECTS = "Project.findAllNames";
     public static final String FIND_PROJECTS_BY_NAME = "Project.findProjectsByName";
+    public static final String FIND_PROJECTS_BY_UUID = "Project.findProjectsByUUID";
 
     @Id
     @Column(name="project_id")

@@ -3,14 +3,16 @@ package no.ntnu.ctscanarkivsystemserver.service;
 import no.ntnu.ctscanarkivsystemserver.dao.ProjectDao;
 import no.ntnu.ctscanarkivsystemserver.dao.UserDao;
 import no.ntnu.ctscanarkivsystemserver.exception.ProjectNameExistsException;
-import no.ntnu.ctscanarkivsystemserver.model.MyUserDetails;
-import no.ntnu.ctscanarkivsystemserver.model.Project;
+import no.ntnu.ctscanarkivsystemserver.exception.ProjectNotFoundException;
+import no.ntnu.ctscanarkivsystemserver.exception.UserNotFoundException;
+import no.ntnu.ctscanarkivsystemserver.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * This class handles the business logic related to projects
@@ -23,7 +25,7 @@ public class ProjectService {
     private final UserDao userDao;
 
     @Autowired
-    public ProjectService(@Qualifier("postgreSQL1") ProjectDao projectDao, @Qualifier("postgreSQL") UserDao userDao) {
+    public ProjectService(@Qualifier("projectDaoRepository") ProjectDao projectDao, @Qualifier("postgreSQL") UserDao userDao) {
         this.projectDao = projectDao;
         this.userDao = userDao;
     }
@@ -52,4 +54,27 @@ public class ProjectService {
         List<Project> projectList = projectDao.getAllProjects();
         return projectList;
     }
+
+    public Project changeProjectOwner(ProjectDTO project, UserDTO inputUser) {
+        UUID projectId = project.getProjectId();
+        UUID ownerId = inputUser.getUserId();
+        User newOwner = userDao.getUserById(ownerId);
+
+        if (!projectDao.doesProjectExist(projectId)) {
+            System.out.println("ERROR: This project does not exist.");
+            throw new ProjectNotFoundException(projectId);
+        }
+        else if (newOwner == null) {
+            System.out.println("ERROR: User does not exist");
+            throw new UserNotFoundException(ownerId);
+        }
+        else {
+            Project projectToEdit = projectDao.getProjectById(projectId);
+            return projectDao.changeProjectOwner(projectToEdit, newOwner);
+
+        }
+
+    }
+
+
 }
