@@ -38,28 +38,22 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
-        //System.out.println("Cookie from request: " + request.getHeader("Cookie"));
         if (request.getHeader("Cookie") != "" && request.getHeader("Cookie") != null) {
-            //System.out.println("Decoded cookie: " + URLDecoder.decode(request.getHeader("Cookie"), "UTF-8"));
             final String authorizationHeader = URLDecoder.decode(request.getHeader("Cookie"), "UTF-8");
-            //System.out.println("Starts with test: " + authorizationHeader.startsWith("Bearer ", 4));
 
             String username = null;
             String jwt = null;
 
-            //System.out.println("AuthorizationHeader " + authorizationHeader);
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ", 4)) {
                 jwt = authorizationHeader.substring(11);
-                //System.out.println("Remade jwt thigny: " + jwt);
                 username = jwtUtil.extractUsername(jwt);
-                System.out.println("Inside auth header!!!!");
             }
 
 
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
-                System.out.println("Loading user!\n" + "Name: " + userDetails.getUsername() + "\n" + userDetails.getAuthorities());
+                //System.out.println("Loading user!\n" + "Name: " + userDetails.getUsername() + "\n" + userDetails.getAuthorities());
 
                 if (jwtUtil.validateToken(jwt, userDetails)) {
 
