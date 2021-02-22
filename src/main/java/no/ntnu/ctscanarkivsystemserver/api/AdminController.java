@@ -10,8 +10,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Locale;
-
 /**
  * The job of this class is to be the endpoint for all requests limited
  * to user with the role admin.
@@ -37,7 +35,7 @@ public class AdminController {
      */
     @PostMapping(path = "/newUser")
     public ResponseEntity<?> addUser(@RequestBody UserDTO user) {
-        User addedUser = null;
+        User addedUser;
         if(user == null) {
             //User cannot be null!
             System.out.println("User is null!");
