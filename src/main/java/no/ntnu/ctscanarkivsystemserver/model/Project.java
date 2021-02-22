@@ -23,10 +23,12 @@ import java.util.UUID;
 @NoArgsConstructor
 @NamedQuery(name = Project.FIND_ALL_PROJECTS, query = "SELECT p FROM projects p ORDER BY p.projectName")
 @NamedQuery(name = Project.FIND_PROJECTS_BY_NAME, query = "SELECT p FROM projects p WHERE p.projectName LIKE: projectName")
+@NamedQuery(name = Project.FIND_PROJECT_BY_ID, query = "SELECT p FROM projects p WHERE p.projectId =: id")
 public class Project {
 
     public static final String FIND_ALL_PROJECTS = "Project.findAllNames";
     public static final String FIND_PROJECTS_BY_NAME = "Project.findProjectsByName";
+    public static final String FIND_PROJECT_BY_ID = "Project.findProjectById";
 
     @Id
     @Column(name="project_id")

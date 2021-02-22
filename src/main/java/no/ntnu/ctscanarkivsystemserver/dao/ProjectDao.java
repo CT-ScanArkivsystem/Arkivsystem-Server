@@ -9,6 +9,7 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.transaction.Transactional;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * The data access service for the Project database.
@@ -43,6 +44,27 @@ public class ProjectDao {
     public List<Project> getAllProjects() {
         Query query = em.createNamedQuery(Project.FIND_ALL_PROJECTS);
         return query.getResultList();
+    }
+
+    /**
+     * Gets a project from the database with a UUID.
+     * @param id UUID of project to find.
+     * @return project with UUID.
+     */
+    public Project getProjectById(UUID id) {
+        Query query = em.createNamedQuery(Project.FIND_PROJECT_BY_ID);
+        if(id == null) {
+            return null;
+        }
+        query.setParameter("id", id);
+        List<Project> queryResult = query.getResultList();
+        if(queryResult.size() == 1) {
+            System.out.println("Found a project with id: " + id);
+            return queryResult.get(0);
+        } else {
+            System.out.println("Found no project with id: " + id);
+            return null;
+        }
     }
 
     /**
