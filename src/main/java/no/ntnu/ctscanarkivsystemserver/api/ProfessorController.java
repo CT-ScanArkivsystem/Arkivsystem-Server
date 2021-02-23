@@ -1,18 +1,25 @@
 package no.ntnu.ctscanarkivsystemserver.api;
 
+import no.ntnu.ctscanarkivsystemserver.exception.FileStorageException;
 import no.ntnu.ctscanarkivsystemserver.exception.ProjectNameExistsException;
+import no.ntnu.ctscanarkivsystemserver.exception.ProjectNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.model.Project;
 import no.ntnu.ctscanarkivsystemserver.model.User;
+import no.ntnu.ctscanarkivsystemserver.service.FileStorageService;
 import no.ntnu.ctscanarkivsystemserver.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Class for the project APIs.
+ *
  * @author Brage
  */
 @RequestMapping("/professor")
@@ -20,10 +27,12 @@ import java.util.List;
 public class ProfessorController {
 
     private final ProjectService projectService;
+    private final FileStorageService fileStorageService;
 
     @Autowired
-    public ProfessorController(ProjectService projectService) {
+    public ProfessorController(ProjectService projectService, FileStorageService fileStorageService) {
         this.projectService = projectService;
+        this.fileStorageService = fileStorageService;
     }
 
     /**
@@ -46,6 +55,24 @@ public class ProfessorController {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
         return ResponseEntity.ok(project);
+    }
+
+    @PostMapping(path = "/uploadFiles")
+    public ResponseEntity<?> uploadFiles(@RequestParam("files") MultipartFile[] files, @RequestParam("projectId") UUID projectId) {
+        try {
+            Project projectToUploadFilesTo = projectService.getProjectById(projectId);
+            for(MultipartFile file:files) {
+                fileStorageService.storeFile(file, projectToUploadFilesTo);
+            }
+        } catch (ProjectNotFoundException e) {
+            //No project was found with id.
+            return ResponseEntity.notFound().build();
+        } catch (FileStorageException e) {
+            //TODO Maybe change to something else?
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+        return ResponseEntity.ok().build();
     }
 
     /**
