@@ -1,11 +1,8 @@
 package no.ntnu.ctscanarkivsystemserver.api;
 
 import no.ntnu.ctscanarkivsystemserver.exception.ProjectNameExistsException;
-import no.ntnu.ctscanarkivsystemserver.exception.ProjectNotFoundException;
-import no.ntnu.ctscanarkivsystemserver.exception.UserNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.model.Project;
 import no.ntnu.ctscanarkivsystemserver.model.ProjectDTO;
-import no.ntnu.ctscanarkivsystemserver.model.User;
 import no.ntnu.ctscanarkivsystemserver.model.UserDTO;
 import no.ntnu.ctscanarkivsystemserver.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,7 +55,7 @@ public class ProfessorController {
      */
     @GetMapping(path = "/allProjects")
     public ResponseEntity<?> getAllUsers() {
-        //System.out.println("Getting all projects!");
+        System.out.println("Getting all projects!");
         List<Project> allProjects = projectService.getAllProjects();
         if(allProjects == null || allProjects.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -67,6 +64,13 @@ public class ProfessorController {
         }
     }
 
+    /**
+     * This API request is used to change the owner of a project.
+     * @param project The ProjectDTO object used to pass data
+     * @param newOwner The UserDTO object used to pass data
+     * @return If successful: Response code 200 OK and the Project object
+     *         If ProjectDTO is null: Response Bad Request
+     */
     @PutMapping(path = "/changeProjectOwner")
     public ResponseEntity<?> changeProjectOwner(@RequestBody ProjectDTO project, @RequestBody UserDTO newOwner) {
         Project result = null;

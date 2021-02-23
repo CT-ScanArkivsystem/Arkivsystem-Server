@@ -61,6 +61,16 @@ public class Project {
                     referencedColumnName = "user_id"))
     private List<User> usersWithSpecialPermission = new ArrayList<>();
 
+    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinTable(name="project_members",
+            joinColumns = @JoinColumn(
+                    name = "project_id",
+                    referencedColumnName = "project_id"),
+            inverseJoinColumns = @JoinColumn(
+                    name = "user_id",
+                    referencedColumnName = "user_id"))
+    private List<User> projectMembers = new ArrayList<>();
+
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @ManyToOne
     @JoinColumn(

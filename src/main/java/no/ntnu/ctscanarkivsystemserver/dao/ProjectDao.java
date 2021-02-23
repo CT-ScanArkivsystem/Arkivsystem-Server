@@ -1,5 +1,6 @@
 package no.ntnu.ctscanarkivsystemserver.dao;
 
+import no.ntnu.ctscanarkivsystemserver.exception.ProjectNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.model.Project;
 import no.ntnu.ctscanarkivsystemserver.model.User;
 import org.springframework.stereotype.Repository;
@@ -61,6 +62,11 @@ public class ProjectDao {
         return !queryResult.isEmpty();
     }
 
+    /**
+     * This method checks if a project with this uuid already exists.
+     * @param uuid The uuid you want to look for
+     * @return True if if does exist, false if not
+     */
     public boolean doesProjectExist(UUID uuid) {
         Query query = em.createNamedQuery(Project.FIND_PROJECTS_BY_UUID);
         query.setParameter("projectId", uuid);
@@ -68,28 +74,72 @@ public class ProjectDao {
         return !queryResult.isEmpty();
     }
 
-    public Project getProjectById(UUID uuid) {
+    /**
+     * Gets a project from the database with a UUID.
+     * @param uuid UUID of project to find.
+     * @return project with UUID.
+     * @throws ProjectNotFoundException if no project was found.
+     */
+    public Project getProjectById(UUID uuid) throws ProjectNotFoundException {
         Query query = em.createNamedQuery(Project.FIND_PROJECTS_BY_UUID);
+        if(uuid == null) {
+            return null;
+        }
         query.setParameter("projectId", uuid);
         List<Project> queryResult = query.getResultList();
-        if (queryResult.size()==1) {
+        if(queryResult.size() == 1) {
+            System.out.println("Found a project with id: " + uuid);
             return (Project) query.getResultList().get(0);
         } else {
-            System.out.println("ERROR: This is not possible");
-            return null;
+            System.out.println("Found no project with id: " + uuid);
+            throw new ProjectNotFoundException(uuid);
         }
     }
 
+    /**
+     * This method uses the Entity Manager to modify and save the changes in the database
+     * @param inputProject The project that will be changed
+     * @param newOwner The owner you want to set instead
+     * @return The modified Project
+     */
     public Project changeProjectOwner(Project inputProject, User newOwner) {
         em.refresh(inputProject);
         prepareProjectForEdit(inputProject);
-
         inputProject.setOwner(newOwner);
+        return saveProject(inputProject);
+    }
 
+    /**
+     * This method uses the entity manager to remove a user from special-permission.
+     * @param inputProject The project you want to modify
+     * @param newOwner The user you want to remove
+     * @return The modified project
+     */
+    public Project removeSpecialPermission(Project inputProject, User newOwner) {
+        em.refresh(inputProject);
+        prepareProjectForEdit(inputProject);
+        inputProject.getUsersWithSpecialPermission().remove(newOwner);
+        return saveProject(inputProject);
+    }
+
+    /**
+     * This method uses the entity manager to add a user to project_members.
+     * @param inputProject The project you want to modify
+     * @param oldOwner The user you want to remove
+     * @return The modified project
+     */
+    public Project addProjectMember(Project inputProject, User oldOwner) {
+        em.refresh(inputProject);
+        prepareProjectForEdit(inputProject);
+        inputProject.getProjectMembers().add(oldOwner);
         return saveProject(inputProject);
     }
 
 
+    /**
+     * Helper method for preparing the database and locking the entry that will be modified
+     * @param project the project you want to change
+     */
     private void prepareProjectForEdit(Project project) {
         System.out.println("user getting ready for edit.");
         if(project != null) {
@@ -101,6 +151,11 @@ public class ProjectDao {
         }
     }
 
+    /**
+     * Helper method for saving the database
+     * @param projectToSave The project that you want to change
+     * @return
+     */
     private Project saveProject(Project projectToSave) {
         System.out.println("Trying to save user.");
         if(projectToSave != null) {
