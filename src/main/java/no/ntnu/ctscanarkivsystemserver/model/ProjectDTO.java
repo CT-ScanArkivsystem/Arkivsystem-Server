@@ -6,6 +6,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Data To Object class used for projects
+ * @author Brage
+ */
+
 @Data
 public class ProjectDTO {
 
@@ -16,6 +21,6 @@ public class ProjectDTO {
     private List<Tag> tags;
     private List<User> usersWithSpecialPermission;
     private List<User> projectMembers;
-    private User owner;
+    private UUID userId;
 
 }

@@ -3,7 +3,6 @@ package no.ntnu.ctscanarkivsystemserver.api;
 import no.ntnu.ctscanarkivsystemserver.exception.ProjectNameExistsException;
 import no.ntnu.ctscanarkivsystemserver.model.Project;
 import no.ntnu.ctscanarkivsystemserver.model.ProjectDTO;
-import no.ntnu.ctscanarkivsystemserver.model.UserDTO;
 import no.ntnu.ctscanarkivsystemserver.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -32,21 +31,22 @@ public class ProfessorController {
      * If the project object is null, it will return Bad Request response.
      * If the name of the new project already exists, will catch an exception and return a CONFLICT status.
      * Otherwise returns status OK.
-     * @param project The object I want to create. Needs to contain projectName, isPrivate and creation date
+     * @param projectDto The object I want to create.
      * @return Response code 200 OK and the project itself. Received from the service class
      */
     @PostMapping(path = "/createProject")
-    public ResponseEntity<?> createProject(@RequestBody Project project) {
-        if (project == null) {
+    public ResponseEntity<?> createProject(@RequestBody ProjectDTO projectDto) {
+        Project result = null;
+        if (projectDto == null) {
             return ResponseEntity.badRequest().build();
         }
         try {
-            project = projectService.createProject(project);
+            result = projectService.createProject(projectDto);
         } catch (ProjectNameExistsException e) {
             System.out.println(e.toString());
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
-        return ResponseEntity.ok(project);
+        return ResponseEntity.ok(result);
     }
 
     /**
@@ -66,20 +66,20 @@ public class ProfessorController {
 
     /**
      * This API request is used to change the owner of a project.
-     * @param project The ProjectDTO object used to pass data
-     * @param newOwner The UserDTO object used to pass data
+     * @param projectDto The ProjectDTO object used to pass data
      * @return If successful: Response code 200 OK and the Project object
      *         If ProjectDTO is null: Response Bad Request
      */
-    @PutMapping(path = "/changeProjectOwner")
-    public ResponseEntity<?> changeProjectOwner(@RequestBody ProjectDTO project, @RequestBody UserDTO newOwner) {
+    @PostMapping(path = "/changeProjectOwner")
+    public ResponseEntity<?> changeProjectOwner(@RequestBody ProjectDTO projectDto) {
         Project result = null;
 
-        if (project == null) {
+        if (projectDto == null) {
             return ResponseEntity.badRequest().build();
         }
         try {
-            result = projectService.changeProjectOwner(project, newOwner);
+            System.out.println("Controller: projectDto is not null, attempting to use projectservice");
+            result = projectService.changeProjectOwner(projectDto);
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
@@ -87,5 +87,30 @@ public class ProfessorController {
         assert result != null;
         return ResponseEntity.ok(result);
     }
+
+
+    /**
+     * This API request is used to add an existing user to the members of a project
+     * @param projectDto The 'Data To Object' used to carry the required id's. Must contain userId and projectId
+     * @return If successful: Response code 200 OK and the modified project
+     *         If ProjectDTO is null: Response Bad Request
+     */
+    @PostMapping(path = "/addMemberToProject")
+    public ResponseEntity<?> addMemberToProject(@RequestBody ProjectDTO projectDto) {
+        Project result = null;
+
+        if (projectDto  == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        try {
+            result = projectService.addMemberToProject(projectDto);
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        assert result != null;
+        return ResponseEntity.ok(result);
+    }
+
 
 }

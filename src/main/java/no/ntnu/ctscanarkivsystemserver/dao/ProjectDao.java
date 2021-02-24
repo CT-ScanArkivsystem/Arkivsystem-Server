@@ -102,7 +102,9 @@ public class ProjectDao {
      * @param newOwner The owner you want to set instead
      * @return The modified Project
      */
+    @Transactional
     public Project changeProjectOwner(Project inputProject, User newOwner) {
+        System.out.println("ProjectDao: attempting to set newOwner as owner");
         em.refresh(inputProject);
         prepareProjectForEdit(inputProject);
         inputProject.setOwner(newOwner);
@@ -115,7 +117,9 @@ public class ProjectDao {
      * @param newOwner The user you want to remove
      * @return The modified project
      */
+    @Transactional
     public Project removeSpecialPermission(Project inputProject, User newOwner) {
+        System.out.println("ProjectDao: removing newOwner from special permissions");
         em.refresh(inputProject);
         prepareProjectForEdit(inputProject);
         inputProject.getUsersWithSpecialPermission().remove(newOwner);
@@ -128,7 +132,9 @@ public class ProjectDao {
      * @param oldOwner The user you want to remove
      * @return The modified project
      */
+    @Transactional
     public Project addProjectMember(Project inputProject, User oldOwner) {
+        System.out.println("ProjectDao: adding oldOwner as project member");
         em.refresh(inputProject);
         prepareProjectForEdit(inputProject);
         inputProject.getProjectMembers().add(oldOwner);

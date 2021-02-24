@@ -16,7 +16,6 @@ import java.util.UUID;
  */
 @Entity(name = "projects")
 @Data
-@NoArgsConstructor
 @NamedQuery(name = Project.FIND_ALL_PROJECTS, query = "SELECT p FROM projects p ORDER BY p.projectName")
 @NamedQuery(name = Project.FIND_PROJECTS_BY_NAME, query = "SELECT p FROM projects p WHERE p.projectName LIKE: projectName")
 @NamedQuery(name = Project.FIND_PROJECTS_BY_UUID, query = "SELECT p FROM projects p WHERE p.projectId =: projectId")
@@ -27,6 +26,8 @@ public class Project {
     public static final String FIND_PROJECTS_BY_NAME = "Project.findProjectsByName";
     public static final String FIND_PROJECTS_BY_UUID = "Project.findProjectsByUUID";
 
+    // https://stackoverflow.com/questions/16142071/hibernate-ids-for-this-class-must-be-manually-assigned-before-calling-save
+    //@GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
     @Column(name="project_id")
     private UUID projectId;
@@ -41,7 +42,7 @@ public class Project {
     @Column(name="creation")
     private Date creation;
 
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToMany(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
     @JoinTable(name = "project_tags",
             joinColumns = @JoinColumn(
                     name = "project_id",
@@ -51,7 +52,7 @@ public class Project {
                     referencedColumnName = "tag_name"))
     private List<Tag> tags = new ArrayList<>();
 
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToMany(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
     @JoinTable(name="project_special_permission",
             joinColumns = @JoinColumn(
                     name = "project_id",
@@ -61,7 +62,7 @@ public class Project {
                     referencedColumnName = "user_id"))
     private List<User> usersWithSpecialPermission = new ArrayList<>();
 
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToMany(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
     @JoinTable(name="project_members",
             joinColumns = @JoinColumn(
                     name = "project_id",
@@ -79,19 +80,21 @@ public class Project {
     )
     private User owner;
 
+    public Project() {
+        this.projectId =  UUID.randomUUID();
+    }
 
     /**
      * Constructor for the Project class.
      * @param projectName The name of this project
      * @param isPrivate If this project is private or not
-     * @param user The user which is the owner of the project
      * @param date The creation date of the project
      */
-    public Project(String projectName, Boolean isPrivate, User user, Date date) {
+    public Project(String projectName, Boolean isPrivate, Date date) {
         this.projectId = UUID.randomUUID();
         this.projectName = projectName;
         this.isPrivate = isPrivate;
-        this.owner = user;
         this.creation = date;
     }
+
 }
