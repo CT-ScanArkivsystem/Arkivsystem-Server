@@ -6,8 +6,10 @@ import no.ntnu.ctscanarkivsystemserver.exception.UserNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.model.MyUserDetails;
 import no.ntnu.ctscanarkivsystemserver.model.Role;
 import no.ntnu.ctscanarkivsystemserver.model.User;
+import no.ntnu.ctscanarkivsystemserver.model.UserDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -39,12 +41,12 @@ public class UserService implements UserDetailsService {
      * @return user which was added into the database.
      * @throws EmailExistsException if a user with given email already exists in the database.
      */
-    public User addUser(User user, String role) throws EmailExistsException{
+    public User addUser(UserDTO user) throws EmailExistsException{
         if(userDao.doesEmailExist(user.getEmail())) {
             throw new EmailExistsException(user.getEmail());
         }
         User newUser = new User(user.getFirstName(), user.getLastName(), user.getEmail(), passwordEncoder.encode(user.getPassword()));
-        return userDao.insertUser(newUser, role);
+        return userDao.insertUser(newUser, user.getRole());
     }
 
     public List<User> getAllUsers() {
@@ -67,6 +69,16 @@ public class UserService implements UserDetailsService {
         }
 
         return new MyUserDetails(user);
+    }
+
+    /**
+     * Return the current logged in user.
+     * @return current logged in user.
+     * @throws UserNotFoundException if user is not logged in.
+     */
+    public User getCurrentLoggedUser() throws UserNotFoundException{
+        MyUserDetails userDetails = (MyUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return getUserByEmail(userDetails.getUsername());
     }
 
     /**
@@ -103,12 +115,11 @@ public class UserService implements UserDetailsService {
      * Find and change a user.
      * @param changes user object with the changes to be done to the user.
      *                Id or email will be used to find the user.
-     * @param role to give user. No changes will happen if role is empty.
      * @return changed user.
      * @throws UserNotFoundException if no user was found with id or email.
      * @throws EmailExistsException if you try to change email to one which already exist.
      */
-    public User editUser(User changes, String role) throws UserNotFoundException, EmailExistsException{
+    public User editUser(UserDTO changes) throws UserNotFoundException, EmailExistsException{
         User user;
         if(!changes.getUserId().toString().isEmpty()) {
             user = getUserById(changes.getUserId());
@@ -121,7 +132,18 @@ public class UserService implements UserDetailsService {
         if(!changes.getPassword().trim().isEmpty()) {
             changes.setPassword(passwordEncoder.encode(changes.getPassword()));
         }
-        return userDao.editUser(user, changes, role);
+        return userDao.editUser(user, changes);
+    }
+
+    /**
+     * Removes a user from the system.
+     * @param userId id of user to be removed.
+     * @return true if user was successfully removed.
+     * @throws UserNotFoundException if no user was found with id.
+     */
+    public boolean removeUser(UUID userId) throws UserNotFoundException{
+        User userToBeRemoved = getUserById(userId);
+        return userDao.removeUser(userToBeRemoved);
     }
 
     /**

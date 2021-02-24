@@ -1,5 +1,6 @@
 package no.ntnu.ctscanarkivsystemserver.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -37,8 +38,8 @@ public class User {
     @NotEmpty
     private String email;
 
-    //@Min(6)
     @NotEmpty
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
