@@ -9,6 +9,7 @@ import no.ntnu.ctscanarkivsystemserver.model.User;
 import no.ntnu.ctscanarkivsystemserver.model.UserDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -68,6 +69,16 @@ public class UserService implements UserDetailsService {
         }
 
         return new MyUserDetails(user);
+    }
+
+    /**
+     * Return the current logged in user.
+     * @return current logged in user.
+     * @throws UserNotFoundException if user is not logged in.
+     */
+    public User getCurrentLoggedUser() throws UserNotFoundException{
+        MyUserDetails userDetails = (MyUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return getUserByEmail(userDetails.getUsername());
     }
 
     /**
