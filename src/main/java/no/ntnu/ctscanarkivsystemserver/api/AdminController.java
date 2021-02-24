@@ -46,9 +46,13 @@ public class AdminController {
             try {
                 addedUser = userService.addUser(user);
             } catch (EmailExistsException e) {
-                System.out.println(e.toString());
+                System.out.println(e.getMessage());
                 //Email already exists in the database! (409 = Conflict)
                 return ResponseEntity.status(HttpStatus.CONFLICT).build();
+            } catch (IllegalArgumentException e) {
+                System.out.println(e.getMessage());
+                //Email is null
+                return ResponseEntity.badRequest().build();
             }
         } else {
             //role is not a valid role in the system.
@@ -85,12 +89,16 @@ public class AdminController {
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
                 }
             } catch (UserNotFoundException e) {
-                System.out.println(e.toString());
+                System.out.println(e.getMessage());
                 return ResponseEntity.notFound().build();
             } catch (EmailExistsException e) {
-                System.out.println(e.toString());
+                System.out.println(e.getMessage());
                 //Email already exists.
                 return ResponseEntity.status(HttpStatus.CONFLICT).build();
+            } catch (IllegalArgumentException e) {
+                System.out.println(e.getMessage());
+                //Email cannot be null.
+                return ResponseEntity.badRequest().build();
             }
         }
         //Role is not valid or is not empty.
