@@ -2,10 +2,13 @@ package no.ntnu.ctscanarkivsystemserver.api;
 
 import no.ntnu.ctscanarkivsystemserver.exception.ProjectNameExistsException;
 import no.ntnu.ctscanarkivsystemserver.exception.ProjectNotFoundException;
+import no.ntnu.ctscanarkivsystemserver.exception.TagExistsException;
 import no.ntnu.ctscanarkivsystemserver.exception.UserNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.model.Project;
 import no.ntnu.ctscanarkivsystemserver.model.ProjectDTO;
+import no.ntnu.ctscanarkivsystemserver.model.Tag;
 import no.ntnu.ctscanarkivsystemserver.service.ProjectService;
+import no.ntnu.ctscanarkivsystemserver.service.TagService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,17 +18,19 @@ import java.util.List;
 
 /**
  * Class for the project APIs.
- * @author Brage
+ * @author Brage, trymv
  */
 @RequestMapping("/professor")
 @RestController
 public class ProfessorController {
 
     private final ProjectService projectService;
+    private final TagService tagService;
 
     @Autowired
-    public ProfessorController(ProjectService projectService) {
+    public ProfessorController(ProjectService projectService, TagService tagService) {
         this.projectService = projectService;
+        this.tagService = tagService;
     }
 
     /**
@@ -149,5 +154,32 @@ public class ProfessorController {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * This request will create a new tag and add it into the system.
+     * @param tagName name of tag to be added.
+     * @return If Successful: 200-OK and new Tag.
+     *         If Tag name is null or empty: 400-Bad Request.
+     *         If Tag already exist: 409-Conflict.
+     */
+    @PostMapping(path = "/createTag")
+    public ResponseEntity<Tag> createTag(@RequestParam String tagName) {
+        Tag tagToBeAdded;
+        if(tagName == null || tagName.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        } else {
+            try {
+                tagToBeAdded = tagService.createTag(tagName);
+            } catch (TagExistsException e) {
+                //Tag already exist!
+                System.out.println(e.getMessage());
+                return ResponseEntity.status(HttpStatus.CONFLICT).build();
+            } catch (IllegalArgumentException e) {
+                //Tag name is null or empty!
+                System.out.println(e.getMessage());
+                return ResponseEntity.badRequest().build();
+            }
+        }
+        return ResponseEntity.ok(tagToBeAdded);
+    }
 
 }
