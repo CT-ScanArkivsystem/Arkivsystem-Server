@@ -2,6 +2,7 @@ package no.ntnu.ctscanarkivsystemserver.dao;
 
 import no.ntnu.ctscanarkivsystemserver.model.Role;
 import no.ntnu.ctscanarkivsystemserver.model.User;
+import no.ntnu.ctscanarkivsystemserver.model.UserDTO;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
@@ -52,31 +53,35 @@ public class UserDataAccessService implements UserDao{
      * Return true if user with email is found in database.
      * @param email to see if already exists in database.
      * @return true if user with email already exist in database.
+     * @throws IllegalArgumentException if email is null.
      */
     @Override
-    public boolean doesEmailExist(String email) {
-        Query query = em.createNamedQuery(User.FIND_USER_BY_EMAIL);
-        email = email.toLowerCase();
-        query.setParameter("email", email);
-        List<User> queryResult = query.getResultList();
-        return !queryResult.isEmpty();
+    public boolean doesEmailExist(String email) throws IllegalArgumentException{
+        if(email != null) {
+            Query query = em.createNamedQuery(User.FIND_USER_BY_EMAIL);
+            email = email.toLowerCase();
+            query.setParameter("email", email);
+            List<User> queryResult = query.getResultList();
+            return !queryResult.isEmpty();
+        } else {
+            throw new IllegalArgumentException("Email cannot be null!");
+        }
     }
 
     /**
-     *
+     * Changes an existing user in the database.
      * @param userToBeChanged user in the database to be changed.
      * @param changes a user object with the changes. If a variable is empty there will
      *                be no changes on that variable.
-     * @param role to change the current users role to. If empty role wont be changed.
      * @return the changed user.
      */
     @Transactional
     @Override
-    public User editUser(User userToBeChanged, User changes, String role) {
+    public User editUser(User userToBeChanged, UserDTO changes) {
         em.refresh(userToBeChanged);
         prepareUserForEdit(userToBeChanged);
-        if(!role.isEmpty()) {
-            Role userRole = em.find(Role.class, "ROLE_" + role);
+        if(!changes.getRole().isEmpty()) {
+            Role userRole = em.find(Role.class, "ROLE_" + changes.getRole());
             if (!userToBeChanged.getRoles().get(0).getRoleName().equals(userRole.getRoleName())) {
                 userToBeChanged.getRoles().remove(0);
                 userToBeChanged.getRoles().add(userRole);
@@ -131,6 +136,22 @@ public class UserDataAccessService implements UserDao{
             }
         }
         return null;
+    }
+
+    /**
+     * Delete a user from the database and return true if successful
+     * @param userToBeRemoved the user to be removed.
+     * @return true if user was successfully removed.
+     */
+    @Transactional
+    @Override
+    public boolean removeUser(User userToBeRemoved) {
+        if(userToBeRemoved != null) {
+            em.remove(userToBeRemoved);
+            em.flush();
+            return getUserById(userToBeRemoved.getUserId()) == null;
+        }
+        return false;
     }
 
     /**
