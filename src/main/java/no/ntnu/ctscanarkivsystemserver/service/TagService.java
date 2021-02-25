@@ -6,6 +6,9 @@ import no.ntnu.ctscanarkivsystemserver.model.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.Query;
+import java.util.List;
+
 @Service
 public class TagService {
 
@@ -38,5 +41,13 @@ public class TagService {
         } else {
             throw new TagExistsException(tagName);
         }
+    }
+
+    /**
+     * Retrieves all tags from the database.
+     * @return all tags from the database.
+     */
+    public List<Tag> getAllTags() {
+        return tagDao.getAllTags();
     }
 }

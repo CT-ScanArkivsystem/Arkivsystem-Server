@@ -50,4 +50,13 @@ public class TagDao {
         em.flush();
         return tagToAdd;
     }
+
+    /**
+     * Retrieves all tags from the database.
+     * @return all found tags as a List.
+     */
+    public List<Tag> getAllTags() {
+        Query query = em.createNamedQuery(Tag.FIND_ALL_TAGS);
+        return query.getResultList();
+    }
 }
