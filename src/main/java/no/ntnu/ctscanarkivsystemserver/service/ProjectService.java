@@ -8,6 +8,7 @@ import no.ntnu.ctscanarkivsystemserver.exception.UserNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -120,13 +121,15 @@ public class ProjectService {
         Project newProject = new Project();
 
         String projectName = projectDto.getProjectName();
-        if (!projectName.isEmpty()) {
+        if (!projectName.trim().isEmpty()) {
             if (projectDao.doesNameExist(projectName)) {
                 throw new ProjectNameExistsException(projectName);
             }
             else {
                 newProject.setProjectName(projectName);
             }
+        } else {
+            return null;
         }
         Boolean isPrivate = projectDto.getIsPrivate();
         if (isPrivate == null) {

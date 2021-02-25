@@ -1,6 +1,8 @@
 package no.ntnu.ctscanarkivsystemserver.api;
 
 import no.ntnu.ctscanarkivsystemserver.exception.ProjectNameExistsException;
+import no.ntnu.ctscanarkivsystemserver.exception.ProjectNotFoundException;
+import no.ntnu.ctscanarkivsystemserver.exception.UserNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.model.Project;
 import no.ntnu.ctscanarkivsystemserver.model.ProjectDTO;
 import no.ntnu.ctscanarkivsystemserver.service.ProjectService;
@@ -46,6 +48,10 @@ public class ProfessorController {
             System.out.println(e.toString());
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
+        if (result == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
         return ResponseEntity.ok(result);
     }
 
@@ -80,11 +86,14 @@ public class ProfessorController {
         try {
             System.out.println("Controller: projectDto is not null, attempting to use projectservice");
             result = projectService.changeProjectOwner(projectDto);
-        } catch (Exception e) {
+        } catch (ProjectNotFoundException | UserNotFoundException e) {
             System.out.println(e.getMessage());
+            ResponseEntity.notFound().build();
+        }
+        if (result == null) {
+            return ResponseEntity.badRequest().build();
         }
 
-        assert result != null;
         return ResponseEntity.ok(result);
     }
 
@@ -107,7 +116,10 @@ public class ProfessorController {
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
-        assert result != null;
+        if (result == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
         return ResponseEntity.ok(result);
     }
 
@@ -130,7 +142,10 @@ public class ProfessorController {
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
-        assert result != null;
+        if (result == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
         return ResponseEntity.ok(result);
     }
 
