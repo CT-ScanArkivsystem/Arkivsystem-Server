@@ -88,7 +88,6 @@ public class ProfessorController {
         return ResponseEntity.ok(result);
     }
 
-
     /**
      * This API request is used to add an existing user to the members of a project
      * @param projectDto The 'Data To Object' used to carry the required id's. Must contain userId and projectId
@@ -104,6 +103,29 @@ public class ProfessorController {
         }
         try {
             result = projectService.addMemberToProject(projectDto);
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        assert result != null;
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * This API request is used to remove an existing user from the members of a project
+     * @param projectDto The 'Data To Object' used to carry the required id's. Must contain userId and projectId
+     * @return If successful: Response code 200 OK and the modified project
+     *         If ProjectDTO is null: Response Bad Request
+     */
+    @PostMapping(path = "/removeMemberFromProject")
+    public ResponseEntity<?> removeMemberFromProject(@RequestBody ProjectDTO projectDto) {
+        Project result = null;
+
+        if (projectDto  == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        try {
+            result = projectService.removeMemberFromProject(projectDto);
 
         } catch (Exception e) {
             System.out.println(e.getMessage());

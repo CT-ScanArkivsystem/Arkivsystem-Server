@@ -129,17 +129,31 @@ public class ProjectDao {
     /**
      * This method uses the entity manager to add a user to project_members.
      * @param inputProject The project you want to modify
-     * @param oldOwner The user you want to remove
+     * @param user The user you want to add
      * @return The modified project
      */
     @Transactional
-    public Project addProjectMember(Project inputProject, User oldOwner) {
-        System.out.println("ProjectDao: adding oldOwner as project member");
+    public Project addProjectMember(Project inputProject, User user) {
         em.refresh(inputProject);
         prepareProjectForEdit(inputProject);
-        inputProject.getProjectMembers().add(oldOwner);
+        inputProject.getProjectMembers().add(user);
         return saveProject(inputProject);
     }
+
+    /**
+     * This method uses the entity manager to remove a user from project_members.
+     * @param inputProject The project you want to modify
+     * @param user The user you want to remove
+     * @return The modified project
+     */
+    @Transactional
+    public Project removeProjectMember(Project inputProject, User user) {
+        em.refresh(inputProject);
+        prepareProjectForEdit(inputProject);
+        inputProject.getProjectMembers().remove(user);
+        return saveProject(inputProject);
+    }
+
 
 
     /**

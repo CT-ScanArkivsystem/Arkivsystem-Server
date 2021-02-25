@@ -38,9 +38,8 @@ public class ProjectService {
      * @param projectDto The projectDto object passed from the controller.
      * @return The the created project
      */
-    public Project createProject(ProjectDTO projectDto) {
+    public Project createProject(ProjectDTO projectDto) throws ProjectNameExistsException {
         Project newProject = parseProjectDTO(projectDto);
-        //Project newProject = new Project(projectDto.getProjectName(), projectDto.getIsPrivate(), projectDto.getCreation());
         return projectDao.createProject(newProject);
     }
 
@@ -102,11 +101,22 @@ public class ProjectService {
     }
 
     /**
+     * This method takes the DTO from the controller and sends project and user to the DAO
+     * @param projectDto The ProjectDTO object used to pass data
+     * @return The resulting Project object after it has been modified
+     */
+    public Project removeMemberFromProject(ProjectDTO projectDto) {
+        Project thisProject = projectDao.getProjectById(projectDto.getProjectId());
+        User thisUser = userDao.getUserById(projectDto.getUserId());
+        return projectDao.removeProjectMember(thisProject, thisUser);
+    }
+
+    /**
      * Helper method used to turn a ProjectDTO into a Project.
      * @param projectDto The ProjectDTO object used to pass data
      * @return The created Project object
      */
-    private Project parseProjectDTO(ProjectDTO projectDto) {
+    private Project parseProjectDTO(ProjectDTO projectDto) throws ProjectNameExistsException {
         Project newProject = new Project();
 
         String projectName = projectDto.getProjectName();
@@ -142,10 +152,6 @@ public class ProjectService {
      * @return True if he has special permissions, false otherwise
      */
     private boolean hasSpecialPermission(Project project, User newOwner) {
-        if (project.getUsersWithSpecialPermission().contains(newOwner)) {
-            return true;
-        } else {
-            return false;
-        }
+        return project.getUsersWithSpecialPermission().contains(newOwner);
     }
 }
