@@ -64,4 +64,14 @@ public class TagService {
     public List<Tag> getAllTags() {
         return tagDao.getAllTags();
     }
+
+    /**
+     * Deletes a tag from the system
+     * @param tagName name of tag to be deleted.
+     * @return true if tag was successfully removed.
+     * @throws TagNotFoundException if no tag with tag name was found.
+     */
+    public boolean deleteTag(String tagName) throws TagNotFoundException {
+        return tagDao.deleteTag(getTag(tagName));
+    }
 }

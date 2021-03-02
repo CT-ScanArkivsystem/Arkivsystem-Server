@@ -59,4 +59,14 @@ public class TagDao {
         Query query = em.createNamedQuery(Tag.FIND_ALL_TAGS);
         return query.getResultList();
     }
+
+    @Transactional
+    public boolean deleteTag(Tag tagToBeRemoved) {
+        if(tagToBeRemoved != null) {
+            em.remove(tagToBeRemoved);
+            em.flush();
+            return getTag(tagToBeRemoved.getTagName()) == null;
+        }
+        return false;
+    }
 }
