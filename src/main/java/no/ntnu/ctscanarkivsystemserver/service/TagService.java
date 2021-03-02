@@ -2,6 +2,7 @@ package no.ntnu.ctscanarkivsystemserver.service;
 
 import no.ntnu.ctscanarkivsystemserver.dao.TagDao;
 import no.ntnu.ctscanarkivsystemserver.exception.TagExistsException;
+import no.ntnu.ctscanarkivsystemserver.exception.TagNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.model.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,19 @@ public class TagService {
         } else {
             throw new TagExistsException(tagName);
         }
+    }
+
+    /**
+     * Retrieves a tag from the database.
+     * @param tagName tag to be retrieved
+     * @return found tag. Null if no tag was found or tag name is empty.
+     */
+    public Tag getTag(String tagName) throws TagNotFoundException{
+        Tag tag = tagDao.getTag(tagName);
+        if(tag == null) {
+            throw new TagNotFoundException(tagName);
+        }
+        return tagDao.getTag(tagName);
     }
 
     /**
