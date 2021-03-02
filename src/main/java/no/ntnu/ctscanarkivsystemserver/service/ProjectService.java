@@ -4,6 +4,7 @@ import no.ntnu.ctscanarkivsystemserver.dao.ProjectDao;
 import no.ntnu.ctscanarkivsystemserver.dao.UserDao;
 import no.ntnu.ctscanarkivsystemserver.exception.ProjectNameExistsException;
 import no.ntnu.ctscanarkivsystemserver.exception.ProjectNotFoundException;
+import no.ntnu.ctscanarkivsystemserver.exception.TagExistsException;
 import no.ntnu.ctscanarkivsystemserver.exception.UserNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import javax.ws.rs.ForbiddenException;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -96,6 +98,7 @@ public class ProjectService {
      * @return The resulting Project object after it has been modified
      */
     public Project addMemberToProject(ProjectDTO projectDto) {
+        //TODO check if only owner can do.
         Project thisProject = projectDao.getProjectById(projectDto.getProjectId());
         User thisUser = userDao.getUserById(projectDto.getUserId());
         return projectDao.addProjectMember(thisProject, thisUser);
@@ -156,5 +159,69 @@ public class ProjectService {
      */
     private boolean hasSpecialPermission(Project project, User newOwner) {
         return project.getUsersWithSpecialPermission().contains(newOwner);
+    }
+
+    /**
+     * Adds a new tag to a project.
+     * @param projectId Id of project for tag to be added to.
+     * @param tagToBeAdded tag to be added to project.
+     * @param adder user which is adding tag to project.
+     * @return Project if adding was successful. Null if something went wrong.
+     * @throws ProjectNotFoundException if no project with projectId was found.
+     * @throws ForbiddenException if user is forbidden to do changes on this project.
+     * @throws TagExistsException if tag already exist in the project.
+     */
+    public Project addTag(UUID projectId, Tag tagToBeAdded, User adder) throws ProjectNotFoundException, ForbiddenException, TagExistsException {
+        Project project = projectDao.getProjectById(projectId);
+        if(!isUserPermittedToChangeProject(project, adder)) {
+            throw new ForbiddenException("User is forbidden to do changes on this project!");
+        } else if(doesTagExistInProject(tagToBeAdded, project)) {
+            throw new TagExistsException(tagToBeAdded.getTagName());
+        } else {
+            return projectDao.addProjectTag(project, tagToBeAdded);
+        }
+    }
+
+    /**
+     * Checks if a user is permitted to do changes on a project.
+     * This does not include adding members.
+     * @param project project to check.
+     * @param user user to check.
+     * @return true if user is permitted to do changes.
+     */
+    private boolean isUserPermittedToChangeProject(Project project, User user) {
+        return project.getOwner().equals(user) ||
+                isUserMember(project, user) ||
+                user.getRoles().get(0).getRoleName().equals("ROLE_" + Role.ADMIN);
+    }
+
+    /**
+     * Returns true if user is a member of project.
+     * @param project project to check.
+     * @param user user to check.
+     * @return true if user is a member of project.
+     */
+    private boolean isUserMember(Project project, User user) {
+        for(User userInProject:project.getProjectMembers()) {
+            if(userInProject.equals(user)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns true if tag already exist in project.
+     * @param tag tag to see if exist.
+     * @param project project to see if tag exist in.
+     * @return true if tag exist in project.
+     */
+    private boolean doesTagExistInProject(Tag tag, Project project) {
+        for(Tag projectTag:project.getTags()) {
+            if(projectTag.equals(tag)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
