@@ -242,4 +242,39 @@ public class ProfessorController {
             return ResponseEntity.ok(addedProject);
         }
     }
+
+    /**
+     * Remove a tag from a project.
+     * @param tagName name of tag to be removed.
+     * @param projectId id of project to which tag is getting removed from.
+     * @return If Successful: 200-Ok with Project.
+     *         If tagName or projectId is null; 400-Bad Request.
+     *         If tag, project or remover user is not found: 404-Not Found.
+     *         If user is not allowed to do changes on project: 403-Forbidden.
+     *         If database failed to add tag: 500-Internal Server Error.
+     */
+    @PutMapping(path = ("/removeTag"))
+    public ResponseEntity<Project> removeTag(@RequestParam String tagName, @RequestParam UUID projectId) {
+        Project project;
+        if(tagName == null || tagName.trim().isEmpty() || projectId == null) {
+            return ResponseEntity.badRequest().build();
+        } else {
+            try {
+                project = projectService.removeTag(projectId, tagService.getTag(tagName), userService.getCurrentLoggedUser());
+            } catch (UserNotFoundException | TagNotFoundException | ProjectNotFoundException e) {
+                System.out.println(e.getMessage());
+                //Tag, project or user not found. Tag is either does not exist or is not found in project.
+                return ResponseEntity.notFound().build();
+            } catch (ForbiddenException e) {
+                System.out.println(e.getMessage());
+                //User is forbidden to do changes on this project.
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
+        if(project == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } else {
+            return ResponseEntity.ok(project);
+        }
+    }
 }

@@ -2,10 +2,7 @@ package no.ntnu.ctscanarkivsystemserver.service;
 
 import no.ntnu.ctscanarkivsystemserver.dao.ProjectDao;
 import no.ntnu.ctscanarkivsystemserver.dao.UserDao;
-import no.ntnu.ctscanarkivsystemserver.exception.ProjectNameExistsException;
-import no.ntnu.ctscanarkivsystemserver.exception.ProjectNotFoundException;
-import no.ntnu.ctscanarkivsystemserver.exception.TagExistsException;
-import no.ntnu.ctscanarkivsystemserver.exception.UserNotFoundException;
+import no.ntnu.ctscanarkivsystemserver.exception.*;
 import no.ntnu.ctscanarkivsystemserver.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -98,7 +95,6 @@ public class ProjectService {
      * @return The resulting Project object after it has been modified
      */
     public Project addMemberToProject(ProjectDTO projectDto) {
-        //TODO check if only owner can do.
         Project thisProject = projectDao.getProjectById(projectDto.getProjectId());
         User thisUser = userDao.getUserById(projectDto.getUserId());
         return projectDao.addProjectMember(thisProject, thisUser);
@@ -179,6 +175,27 @@ public class ProjectService {
             throw new TagExistsException(tagToBeAdded.getTagName());
         } else {
             return projectDao.addProjectTag(project, tagToBeAdded);
+        }
+    }
+
+    /**
+     * Removes a tag from a project.
+     * @param projectId Id of project to be removed from.
+     * @param tagToBeRemoved tag to be removed from project.
+     * @param remover user which is removing tag from project.
+     * @return Project if removing was successful.
+     * @throws ProjectNotFoundException if no project with projectId was found.
+     * @throws ForbiddenException if user is forbidden to do changes on this project.
+     * @throws TagNotFoundException if tag does not exist in the project.
+     */
+    public Project removeTag(UUID projectId, Tag tagToBeRemoved, User remover) throws ProjectNotFoundException, ForbiddenException, TagNotFoundException{
+        Project project = projectDao.getProjectById(projectId);
+        if(!isUserPermittedToChangeProject(project, remover)) {
+            throw new ForbiddenException("User is forbidden to do changes on this project!");
+        } else if(!doesTagExistInProject(tagToBeRemoved, project)) {
+            throw new TagNotFoundException(tagToBeRemoved.getTagName());
+        } else {
+            return projectDao.removeProjectTag(project, tagToBeRemoved);
         }
     }
 

@@ -169,6 +169,20 @@ public class ProjectDao {
         return saveProject(project);
     }
 
+    /**
+     * Removes a tag from a project.
+     * @param project project for tag to be removed from.
+     * @param tag tag to be removed.
+     * @return project if successful. Null if something went wrong.
+     */
+    @Transactional
+    public Project removeProjectTag(Project project, Tag tag) {
+        em.refresh(project);
+        prepareProjectForEdit(project);
+        project.getTags().remove(tag);
+        return saveProject(project);
+    }
+
 
 
     /**
