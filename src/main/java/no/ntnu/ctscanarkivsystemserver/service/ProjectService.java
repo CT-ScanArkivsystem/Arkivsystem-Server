@@ -27,7 +27,8 @@ public class ProjectService {
     private final UserDao userDao;
 
     @Autowired
-    public ProjectService(@Qualifier("projectDaoRepository") ProjectDao projectDao, @Qualifier("postgreSQL") UserDao userDao) {
+    public ProjectService(@Qualifier("projectDaoRepository") ProjectDao projectDao,
+                          @Qualifier("postgreSQL") UserDao userDao) {
         this.projectDao = projectDao;
         this.userDao = userDao;
     }
@@ -42,6 +43,26 @@ public class ProjectService {
     public Project createProject(ProjectDTO projectDto) throws ProjectNameExistsException {
         Project newProject = parseProjectDTO(projectDto);
         return projectDao.createProject(newProject);
+    }
+
+    /**
+     * THis methos removes a project from the database using UUID from projectDto.
+     * @param projectDto The projectDto object passed from the controller.
+     * @return True if project has been removes, false if not
+     * @throws NullPointerException If projectDto is null
+     * @throws ProjectNotFoundException
+     */
+    public boolean deleteProject(ProjectDTO projectDto) throws NullPointerException, ProjectNotFoundException{
+        if (projectDto == null) {
+            throw new NullPointerException("ERROR: projectDto is null");
+        }
+        Project projectToDelete = projectDao.getProjectById(projectDto.getProjectId());
+        if (!projectDao.doesProjectExist(projectDto.getProjectId())) {
+            System.out.println("WHYYYYYYYYYYYYYYYYY????????");
+            throw new ProjectNotFoundException(projectDto.getProjectId());
+        }
+
+        return projectDao.deleteProject(projectToDelete);
     }
 
     /**
@@ -63,7 +84,8 @@ public class ProjectService {
      * @throws ProjectNotFoundException If a project with this UUID does not exist
      * @throws UserNotFoundException If a user with this UUID does not exist
      */
-    public Project changeProjectOwner(ProjectDTO projectDto) throws ProjectNotFoundException, UserNotFoundException, NullPointerException {
+    public Project changeProjectOwner(ProjectDTO projectDto) throws ProjectNotFoundException, UserNotFoundException,
+            NullPointerException {
         if (projectDto == null) {
             throw new NullPointerException("ERROR: projectDto is null");
         }

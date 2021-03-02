@@ -40,6 +40,26 @@ public class ProjectDao {
     }
 
     /**
+     * Method to delete a project from the database
+     * Takes the object that is passed from the ProjectService class and removes in from the database
+     * using EntityManager.
+     * @param project The project you want to delete
+     * @return True if it is removed successfully, false if it is not
+     * @throws NullPointerException if project parameter is null
+     */
+    @Transactional
+    public boolean deleteProject(Project project) throws NullPointerException {
+        if (project != null) {
+            em.remove(project);
+            em.flush();
+            return !doesProjectExist(project.getProjectId());
+        }
+        else {
+            throw new NullPointerException("Project is null");
+        }
+    }
+
+    /**
      * This method runs the SQL query used to get all projects.
      * @return The list
      */
@@ -114,15 +134,15 @@ public class ProjectDao {
     /**
      * This method uses the entity manager to remove a user from special-permission.
      * @param inputProject The project you want to modify
-     * @param newOwner The user you want to remove
+     * @param user The user you want to remove
      * @return The modified project
      */
     @Transactional
-    public Project removeSpecialPermission(Project inputProject, User newOwner) {
-        System.out.println("ProjectDao: removing newOwner from special permissions");
+    public Project removeSpecialPermission(Project inputProject, User user) {
+        System.out.println("ProjectDao: removing user from special permissions");
         em.refresh(inputProject);
         prepareProjectForEdit(inputProject);
-        inputProject.getUsersWithSpecialPermission().remove(newOwner);
+        inputProject.getUsersWithSpecialPermission().remove(user);
         return saveProject(inputProject);
     }
 
@@ -154,14 +174,12 @@ public class ProjectDao {
         return saveProject(inputProject);
     }
 
-
-
     /**
      * Helper method for preparing the database and locking the entry that will be modified
      * @param project the project you want to change
      */
     private void prepareProjectForEdit(Project project) {
-        System.out.println("user getting ready for edit.");
+        System.out.println("Project getting ready for edit.");
         if(project != null) {
             try {
                 em.lock(project, LockModeType.PESSIMISTIC_WRITE);
@@ -177,7 +195,7 @@ public class ProjectDao {
      * @return
      */
     private Project saveProject(Project projectToSave) {
-        System.out.println("Trying to save user.");
+        System.out.println("Trying to save project.");
         if(projectToSave != null) {
             try {
                 em.merge(projectToSave);

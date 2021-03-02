@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * Class for the project APIs.
+ * Class for the professor APIs.
  * @author Brage
  */
 @RequestMapping("/professor")
@@ -37,15 +37,15 @@ public class ProfessorController {
      * @return Response code 200 OK and the project itself. Received from the service class
      */
     @PostMapping(path = "/createProject")
-    public ResponseEntity<?> createProject(@RequestBody ProjectDTO projectDto) {
-        Project result = null;
+    public ResponseEntity<Project> createProject(@RequestBody ProjectDTO projectDto) {
+        Project result;
         if (projectDto == null) {
             return ResponseEntity.badRequest().build();
         }
         try {
             result = projectService.createProject(projectDto);
         } catch (ProjectNameExistsException e) {
-            System.out.println(e.toString());
+            System.out.println(e.getMessage());
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
         if (result == null) {
@@ -56,11 +56,33 @@ public class ProfessorController {
     }
 
     /**
+     * This method will delete a project from the database
+     * @param projectDto The object containing the id of the project to remove
+     * @return If successful: Response code 200 OK and the boolean true
+     *         If ProjectDto is null: Response Bad Request
+     */
+    @DeleteMapping(path = "/deleteProject")
+    public ResponseEntity<Boolean> deleteProject(@RequestBody ProjectDTO projectDto) {
+        boolean result;
+        if (projectDto == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        try {
+            result = projectService.deleteProject(projectDto);
+        } catch (ProjectNameExistsException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+
+        return ResponseEntity.ok(result);
+    }
+
+    /**
      * This API request will return a list of all existing projects
      * @return Response code 200 OK and the list of projects.
      */
-    @GetMapping(path = "/allProjects")
-    public ResponseEntity<?> getAllUsers() {
+    @GetMapping(path = "/getAllProjects")
+    public ResponseEntity<List<Project>> getAllProject() {
         System.out.println("Getting all projects!");
         List<Project> allProjects = projectService.getAllProjects();
         if(allProjects == null || allProjects.isEmpty()) {
@@ -74,10 +96,10 @@ public class ProfessorController {
      * This API request is used to change the owner of a project.
      * @param projectDto The ProjectDTO object used to pass data
      * @return If successful: Response code 200 OK and the Project object
-     *         If ProjectDTO is null: Response Bad Request
+     *         If ProjectDto is null: Response Bad Request
      */
     @PostMapping(path = "/changeProjectOwner")
-    public ResponseEntity<?> changeProjectOwner(@RequestBody ProjectDTO projectDto) {
+    public ResponseEntity<Project> changeProjectOwner(@RequestBody ProjectDTO projectDto) {
         Project result = null;
 
         if (projectDto == null) {
@@ -101,10 +123,10 @@ public class ProfessorController {
      * This API request is used to add an existing user to the members of a project
      * @param projectDto The 'Data To Object' used to carry the required id's. Must contain userId and projectId
      * @return If successful: Response code 200 OK and the modified project
-     *         If ProjectDTO is null: Response Bad Request
+     *         If ProjectDto is null: Response Bad Request
      */
     @PostMapping(path = "/addMemberToProject")
-    public ResponseEntity<?> addMemberToProject(@RequestBody ProjectDTO projectDto) {
+    public ResponseEntity<Project> addMemberToProject(@RequestBody ProjectDTO projectDto) {
         Project result = null;
 
         if (projectDto  == null) {
@@ -127,10 +149,10 @@ public class ProfessorController {
      * This API request is used to remove an existing user from the members of a project
      * @param projectDto The 'Data To Object' used to carry the required id's. Must contain userId and projectId
      * @return If successful: Response code 200 OK and the modified project
-     *         If ProjectDTO is null: Response Bad Request
+     *         If ProjectDto is null: Response Bad Request
      */
     @PostMapping(path = "/removeMemberFromProject")
-    public ResponseEntity<?> removeMemberFromProject(@RequestBody ProjectDTO projectDto) {
+    public ResponseEntity<Project> removeMemberFromProject(@RequestBody ProjectDTO projectDto) {
         Project result = null;
 
         if (projectDto  == null) {

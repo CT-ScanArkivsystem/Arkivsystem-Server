@@ -26,8 +26,6 @@ public class Project {
     public static final String FIND_PROJECTS_BY_NAME = "Project.findProjectsByName";
     public static final String FIND_PROJECTS_BY_UUID = "Project.findProjectsByUUID";
 
-    // https://stackoverflow.com/questions/16142071/hibernate-ids-for-this-class-must-be-manually-assigned-before-calling-save
-    //@GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
     @Column(name="project_id")
     private UUID projectId;
