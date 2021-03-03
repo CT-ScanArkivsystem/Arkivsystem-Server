@@ -7,7 +7,6 @@ import no.ntnu.ctscanarkivsystemserver.model.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.Query;
 import java.util.List;
 
 @Service

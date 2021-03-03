@@ -40,9 +40,9 @@ public class AdminController {
     @PostMapping(path = "/newUser")
     public ResponseEntity<?> addUser(@RequestBody UserDTO user) {
         User addedUser;
-        if(user == null) {
+        if(user == null || user.getRole() == null) {
             //User cannot be null!
-            System.out.println("User is null!");
+            System.out.println("User or role is null!");
             return ResponseEntity.badRequest().build();
         }
         user.setRole(user.getRole().toUpperCase());
@@ -77,8 +77,8 @@ public class AdminController {
     @PutMapping(path = "/editUser")
     public ResponseEntity<?> editUserDetails(@RequestBody UserDTO user) {
         User userAfterChange;
-        if(user == null || user.getUserId() == null && user.getEmail() == null) {
-            System.out.println("User, id and email cannot be null!");
+        if(user == null || user.getUserId() == null && user.getEmail() == null || user.getRole() == null) {
+            System.out.println("User, Role, (id and email) cannot be null!");
             return ResponseEntity.badRequest().build();
         }
         user.setRole(user.getRole().toUpperCase());
