@@ -55,15 +55,20 @@ public class ProjectService {
     /**
      * THis methos removes a project from the database using UUID from projectDto.
      * @param projectDto The projectDto object passed from the controller.
+     * @param user The logged in user
      * @return True if project has been removes, false if not
      * @throws NullPointerException If projectDto is null
      * @throws ProjectNotFoundException
      */
-    public boolean deleteProject(ProjectDTO projectDto) throws NullPointerException, ProjectNotFoundException{
+    public boolean deleteProject(ProjectDTO projectDto, User user) throws NullPointerException, ProjectNotFoundException,
+    ForbiddenException {
         if (projectDto == null) {
             throw new NullPointerException("ERROR: projectDto is null");
         }
         Project projectToDelete = projectDao.getProjectById(projectDto.getProjectId());
+        if (!canUserModify(projectToDelete, user)) {
+            throw new ForbiddenException("The logged on user is not allowed to delete projects");
+        }
         if (!projectDao.doesProjectExist(projectDto.getProjectId())) {
             System.out.println("WHYYYYYYYYYYYYYYYYY????????");
             throw new ProjectNotFoundException(projectDto.getProjectId());
@@ -85,12 +90,13 @@ public class ProjectService {
      * It also moves the old owner to project_members.
      * If the new owner is already in special_permissions, he is removed from there
      * @param projectDto The ProjectDTO object used to pass data
-     * @return the resulting Project object after it has been modified
+     * @param user The logged in user
+     * @return True if new owner is set correctly, false otherwise
      * @throws NullPointerException if projectDto is null
      * @throws ProjectNotFoundException If a project with this UUID does not exist
      * @throws UserNotFoundException If a user with this UUID does not exist
      */
-    public Project changeProjectOwner(ProjectDTO projectDto, User user) throws ProjectNotFoundException, UserNotFoundException,
+    public boolean changeProjectOwner(ProjectDTO projectDto, User user) throws ProjectNotFoundException, UserNotFoundException,
             NullPointerException, ForbiddenException {
         if (projectDto == null) {
             throw new NullPointerException("ERROR: projectDto is null");

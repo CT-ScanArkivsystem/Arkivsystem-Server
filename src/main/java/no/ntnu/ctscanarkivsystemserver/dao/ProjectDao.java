@@ -118,17 +118,19 @@ public class ProjectDao {
 
     /**
      * This method uses the Entity Manager to modify and save the changes in the database
-     * @param inputProject The project that will be changed
+     * @param project The project that will be changed
      * @param newOwner The owner you want to set instead
-     * @return The modified Project
+     * @return True if new owner is set correctly, false otherwise
      */
     @Transactional
-    public Project changeProjectOwner(Project inputProject, User newOwner) {
+    public boolean changeProjectOwner(Project project, User newOwner) {
         System.out.println("ProjectDao: attempting to set newOwner as owner");
-        em.refresh(inputProject);
-        prepareProjectForEdit(inputProject);
-        inputProject.setOwner(newOwner);
-        return saveProject(inputProject);
+        em.refresh(project);
+        prepareProjectForEdit(project);
+        project.setOwner(newOwner);
+        saveProject(project);
+
+        return project.getOwner().getUserId() == newOwner.getUserId();
     }
 
     /**
