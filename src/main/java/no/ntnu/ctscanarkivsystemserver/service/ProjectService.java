@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import javax.ws.rs.ForbiddenException;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -40,9 +41,15 @@ public class ProjectService {
      * @param projectDto The projectDto object passed from the controller.
      * @return The the created project
      */
-    public Project createProject(ProjectDTO projectDto) throws ProjectNameExistsException {
-        Project newProject = parseProjectDTO(projectDto);
-        return projectDao.createProject(newProject);
+    public Project createProject(ProjectDTO projectDto, User user) throws NullPointerException {
+        if (user != null) {
+            Project newProject = parseProjectDTO(projectDto);
+            newProject.setOwner(user);
+            return projectDao.createProject(newProject);
+        } else {
+            throw new NullPointerException("'user' cannot be null");
+        }
+
     }
 
     /**
@@ -70,8 +77,7 @@ public class ProjectService {
      * @return The list of projects
      */
     public List<Project> getAllProjects() {
-        List<Project> projectList = projectDao.getAllProjects();
-        return projectList;
+        return projectDao.getAllProjects();
     }
 
     /**
@@ -84,8 +90,8 @@ public class ProjectService {
      * @throws ProjectNotFoundException If a project with this UUID does not exist
      * @throws UserNotFoundException If a user with this UUID does not exist
      */
-    public Project changeProjectOwner(ProjectDTO projectDto) throws ProjectNotFoundException, UserNotFoundException,
-            NullPointerException {
+    public Project changeProjectOwner(ProjectDTO projectDto, User user) throws ProjectNotFoundException, UserNotFoundException,
+            NullPointerException, ForbiddenException {
         if (projectDto == null) {
             throw new NullPointerException("ERROR: projectDto is null");
         }
@@ -103,11 +109,17 @@ public class ProjectService {
             System.out.println("ERROR: User does not exist");
             throw new UserNotFoundException(newOwnerId);
         }
+        else if (!canUserModify(projectToEdit, user)) {
+            throw new ForbiddenException("The logged on user is not allowed to change owner of this project");
+        }
         else {
             if (hasSpecialPermission(projectToEdit, newOwner)) {
                 projectDao.removeSpecialPermission(projectToEdit, newOwner);
             }
             projectDao.addProjectMember(projectToEdit, oldOwner);
+            if (projectToEdit.getProjectMembers().contains(newOwner)) {
+                projectDao.removeProjectMember(projectToEdit, newOwner);
+            }
             return projectDao.changeProjectOwner(projectToEdit, newOwner);
         }
     }
@@ -115,23 +127,38 @@ public class ProjectService {
     /**
      * This method takes the DTO from the controller and sends project and user to the DAO
      * @param projectDto The ProjectDTO object used to pass data
+     * @param user The logged in user
      * @return The resulting Project object after it has been modified
+     * @throws ForbiddenException If user is not allowed to add members
      */
-    public Project addMemberToProject(ProjectDTO projectDto) {
+    public Project addMemberToProject(ProjectDTO projectDto, User user) throws ForbiddenException {
         Project thisProject = projectDao.getProjectById(projectDto.getProjectId());
         User thisUser = userDao.getUserById(projectDto.getUserId());
-        return projectDao.addProjectMember(thisProject, thisUser);
+        if (canUserModify(thisProject, user)) {
+            return projectDao.addProjectMember(thisProject, thisUser);
+        } else {
+            throw new ForbiddenException("The logged on user is not allowed to add members to this project");
+        }
+
+
     }
 
     /**
      * This method takes the DTO from the controller and sends project and user to the DAO
      * @param projectDto The ProjectDTO object used to pass data
+     * @param user The logged in user
      * @return The resulting Project object after it has been modified
+     * @throws ForbiddenException If user is not allowed to add members
      */
-    public Project removeMemberFromProject(ProjectDTO projectDto) {
+    public Project removeMemberFromProject(ProjectDTO projectDto, User user) throws ForbiddenException {
         Project thisProject = projectDao.getProjectById(projectDto.getProjectId());
         User thisUser = userDao.getUserById(projectDto.getUserId());
-        return projectDao.removeProjectMember(thisProject, thisUser);
+        if (canUserModify(thisProject, user)) {
+            return projectDao.removeProjectMember(thisProject, thisUser);
+        } else {
+            throw new ForbiddenException("The logged on user is not allowed to remove members from this project");
+        }
+
     }
 
     /**
@@ -164,9 +191,6 @@ public class ProjectService {
             newProject.setCreation(creation);
         }
 
-        MyUserDetails loggedInUserDetails = (MyUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        newProject.setOwner(userDao.getUserByEmail(loggedInUserDetails.getUsername()));
-
         return newProject;
     }
 
@@ -178,5 +202,9 @@ public class ProjectService {
      */
     private boolean hasSpecialPermission(Project project, User newOwner) {
         return project.getUsersWithSpecialPermission().contains(newOwner);
+    }
+
+    private boolean canUserModify(Project project, User user) {
+        return project.getOwner().equals(user) || user.getRoles().get(0).getRoleName().equals("ROLE_" + Role.ADMIN);
     }
 }

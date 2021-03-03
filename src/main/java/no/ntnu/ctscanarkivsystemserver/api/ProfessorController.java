@@ -5,12 +5,15 @@ import no.ntnu.ctscanarkivsystemserver.exception.ProjectNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.exception.UserNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.model.Project;
 import no.ntnu.ctscanarkivsystemserver.model.ProjectDTO;
+import no.ntnu.ctscanarkivsystemserver.model.User;
 import no.ntnu.ctscanarkivsystemserver.service.ProjectService;
+import no.ntnu.ctscanarkivsystemserver.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.ws.rs.ForbiddenException;
 import java.util.List;
 
 /**
@@ -22,10 +25,12 @@ import java.util.List;
 public class ProfessorController {
 
     private final ProjectService projectService;
+    private final UserService userService;
 
     @Autowired
-    public ProfessorController(ProjectService projectService) {
+    public ProfessorController(ProjectService projectService, UserService userService) {
         this.projectService = projectService;
+        this.userService = userService;
     }
 
     /**
@@ -43,7 +48,7 @@ public class ProfessorController {
             return ResponseEntity.badRequest().build();
         }
         try {
-            result = projectService.createProject(projectDto);
+            result = projectService.createProject(projectDto, userService.getCurrentLoggedUser());
         } catch (ProjectNameExistsException e) {
             System.out.println(e.getMessage());
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
@@ -107,10 +112,13 @@ public class ProfessorController {
         }
         try {
             System.out.println("Controller: projectDto is not null, attempting to use projectservice");
-            result = projectService.changeProjectOwner(projectDto);
+            result = projectService.changeProjectOwner(projectDto, userService.getCurrentLoggedUser());
         } catch (ProjectNotFoundException | UserNotFoundException e) {
             System.out.println(e.getMessage());
             ResponseEntity.notFound().build();
+        } catch (ForbiddenException e) {
+            System.out.println(e.getMessage());
+            ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         if (result == null) {
             return ResponseEntity.badRequest().build();
@@ -133,10 +141,11 @@ public class ProfessorController {
             return ResponseEntity.badRequest().build();
         }
         try {
-            result = projectService.addMemberToProject(projectDto);
+            result = projectService.addMemberToProject(projectDto, userService.getCurrentLoggedUser());
 
         } catch (Exception e) {
             System.out.println(e.getMessage());
+            ResponseEntity.badRequest().build();
         }
         if (result == null) {
             return ResponseEntity.badRequest().build();
@@ -159,10 +168,11 @@ public class ProfessorController {
             return ResponseEntity.badRequest().build();
         }
         try {
-            result = projectService.removeMemberFromProject(projectDto);
+            result = projectService.removeMemberFromProject(projectDto, userService.getCurrentLoggedUser());
 
         } catch (Exception e) {
             System.out.println(e.getMessage());
+            ResponseEntity.badRequest().build();
         }
         if (result == null) {
             return ResponseEntity.badRequest().build();
