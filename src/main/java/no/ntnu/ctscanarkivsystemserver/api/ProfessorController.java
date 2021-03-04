@@ -251,7 +251,7 @@ public class ProfessorController {
      *         If tagName or projectId is null; 400-Bad Request.
      *         If tag, project or remover user is not found: 404-Not Found.
      *         If user is not allowed to do changes on project: 403-Forbidden.
-     *         If database failed to add tag: 500-Internal Server Error.
+     *         If database failed to remove tag: 500-Internal Server Error.
      */
     @PutMapping(path = ("/removeTag"))
     public ResponseEntity<Project> removeTag(@RequestParam String tagName, @RequestParam UUID projectId) {
