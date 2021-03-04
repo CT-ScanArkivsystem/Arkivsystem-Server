@@ -2,6 +2,7 @@ package no.ntnu.ctscanarkivsystemserver.dao;
 
 import no.ntnu.ctscanarkivsystemserver.exception.ProjectNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.model.Project;
+import no.ntnu.ctscanarkivsystemserver.model.Tag;
 import no.ntnu.ctscanarkivsystemserver.model.User;
 import org.springframework.stereotype.Repository;
 
@@ -175,6 +176,36 @@ public class ProjectDao {
         inputProject.getProjectMembers().remove(user);
         return saveProject(inputProject);
     }
+
+    /**
+     * Adds a tag to a project.
+     * @param project project for tag to be added to.
+     * @param tag tag to be added to project.
+     * @return project if successful. Null if something went wrong.
+     */
+    @Transactional
+    public Project addProjectTag(Project project, Tag tag) {
+        em.refresh(project);
+        prepareProjectForEdit(project);
+        project.getTags().add(tag);
+        return saveProject(project);
+    }
+
+    /**
+     * Removes a tag from a project.
+     * @param project project for tag to be removed from.
+     * @param tag tag to be removed.
+     * @return project if successful. Null if something went wrong.
+     */
+    @Transactional
+    public Project removeProjectTag(Project project, Tag tag) {
+        em.refresh(project);
+        prepareProjectForEdit(project);
+        project.getTags().remove(tag);
+        return saveProject(project);
+    }
+
+
 
     /**
      * Helper method for preparing the database and locking the entry that will be modified
