@@ -40,8 +40,9 @@ public class UserService implements UserDetailsService {
      * @param user to be added into the database.
      * @return user which was added into the database.
      * @throws EmailExistsException if a user with given email already exists in the database.
+     * @throws IllegalArgumentException if email is null in UserDTO object.
      */
-    public User addUser(UserDTO user) throws EmailExistsException{
+    public User addUser(UserDTO user) throws EmailExistsException, IllegalArgumentException {
         if(userDao.doesEmailExist(user.getEmail())) {
             throw new EmailExistsException(user.getEmail());
         }
@@ -118,8 +119,9 @@ public class UserService implements UserDetailsService {
      * @return changed user.
      * @throws UserNotFoundException if no user was found with id or email.
      * @throws EmailExistsException if you try to change email to one which already exist.
+     * @throws IllegalArgumentException if email in UserDTO object is null.
      */
-    public User editUser(UserDTO changes) throws UserNotFoundException, EmailExistsException{
+    public User editUser(UserDTO changes) throws UserNotFoundException, EmailExistsException, IllegalArgumentException{
         User user;
         if(!changes.getUserId().toString().isEmpty()) {
             user = getUserById(changes.getUserId());
