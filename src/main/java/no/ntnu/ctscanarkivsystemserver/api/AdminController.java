@@ -157,6 +157,9 @@ public class AdminController {
                     System.out.println(e.getMessage());
                     //Tag was not found.
                     notFoundTags.add(tagName);
+                } catch (IndexOutOfBoundsException e) {
+                    //tagNames cannot be empty or have less than 2 characters
+                    System.out.println(e.getMessage());
                 }
             }
         }

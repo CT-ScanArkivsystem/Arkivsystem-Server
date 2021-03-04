@@ -35,7 +35,8 @@ public class TagService {
      * @throws TagExistsException if tag with name already exists in the system.
      * @throws IllegalArgumentException if tag name is null or empty.
      */
-    public Tag createTag(String tagName) throws TagExistsException, IllegalArgumentException {
+    public Tag createTag(String tagName) throws TagExistsException, IllegalArgumentException, IndexOutOfBoundsException {
+        tagName = formatTagName(tagName);
         if(!doesTagExist(tagName)) {
             return tagDao.insertTag(tagName);
         } else {
@@ -48,7 +49,8 @@ public class TagService {
      * @param tagName tag to be retrieved
      * @return found tag. Null if no tag was found or tag name is empty.
      */
-    public Tag getTag(String tagName) throws TagNotFoundException{
+    public Tag getTag(String tagName) throws TagNotFoundException, IndexOutOfBoundsException{
+        tagName = formatTagName(tagName);
         Tag tag = tagDao.getTag(tagName);
         if(tag == null) {
             throw new TagNotFoundException(tagName);
@@ -72,5 +74,17 @@ public class TagService {
      */
     public boolean deleteTag(String tagName) throws TagNotFoundException {
         return tagDao.deleteTag(getTag(tagName));
+    }
+
+    /**
+     * Makes first letter to uppercase and rest of name to lowercase.
+     * @param tagName name to format.
+     * @return formatted tag name.
+     * @throws IndexOutOfBoundsException if word has less than 2 characters.
+     */
+    private String formatTagName(String tagName) throws IndexOutOfBoundsException {
+        String firstLetter = tagName.substring(0,1).toUpperCase();
+        String restLetters = tagName.substring(1).toLowerCase();
+        return firstLetter + restLetters;
     }
 }
