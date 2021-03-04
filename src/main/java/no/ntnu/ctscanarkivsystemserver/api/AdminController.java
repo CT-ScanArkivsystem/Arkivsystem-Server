@@ -165,4 +165,26 @@ public class AdminController {
         }
         return ResponseEntity.ok(notFoundTags);
     }
+
+    /**
+     * Returns a user with email.
+     * @param email email of user to get.
+     * @return If Successful: 200-Ok with user with email.
+     *         If email is null or empty: 400-Bad Request
+     *         If no user was found with email: 404-Not Found.
+     */
+    @GetMapping(path = "/getUser")
+    public ResponseEntity<User> getUser(@RequestParam String email) {
+        if(email == null || email.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        } else {
+            try {
+                return ResponseEntity.ok(userService.getUserByEmail(email));
+            } catch (UserNotFoundException e) {
+                System.out.println(e.getMessage());
+                //No user with email was found.
+                return ResponseEntity.notFound().build();
+            }
+        }
+    }
 }

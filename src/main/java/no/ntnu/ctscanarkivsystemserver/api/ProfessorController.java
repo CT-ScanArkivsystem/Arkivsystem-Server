@@ -236,7 +236,7 @@ public class ProfessorController {
                 return ResponseEntity.status(HttpStatus.CONFLICT).build();
             } catch (IndexOutOfBoundsException e) {
                 System.out.println(e.getMessage());
-                //tagName cannot have 2 or less characters
+                //tagName cannot have less than 2 characters
                 return ResponseEntity.badRequest().build();
             }
         }
@@ -277,7 +277,7 @@ public class ProfessorController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             } catch (IndexOutOfBoundsException e) {
                 System.out.println(e.getMessage());
-                //tagName cannot have 2 or less characters.
+                //tagName cannot have less than 2 characters.
                 return ResponseEntity.badRequest().build();
             }
         }
