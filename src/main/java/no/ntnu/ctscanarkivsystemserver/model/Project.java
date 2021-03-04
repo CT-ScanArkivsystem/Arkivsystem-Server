@@ -70,7 +70,6 @@ public class Project {
                     referencedColumnName = "user_id"))
     private List<User> projectMembers = new ArrayList<>();
 
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @ManyToOne
     @JoinColumn(
             name="owner",

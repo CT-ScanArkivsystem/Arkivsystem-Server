@@ -150,6 +150,21 @@ public class ProjectDao {
     }
 
     /**
+     * This method uses the entity manager to remove a user from special-permission.
+     * @param inputProject The project you want to modify
+     * @param user The user you want to add
+     * @return The modified project
+     */
+    @Transactional
+    public boolean grantSpecialPermission(Project inputProject, User user) {
+        em.refresh(inputProject);
+        prepareProjectForEdit(inputProject);
+        inputProject.getUsersWithSpecialPermission().add(user);
+        saveProject(inputProject);
+        return inputProject.getUsersWithSpecialPermission().contains(user);
+    }
+
+    /**
      * This method uses the entity manager to add a user to project_members.
      * @param inputProject The project you want to modify
      * @param user The user you want to add

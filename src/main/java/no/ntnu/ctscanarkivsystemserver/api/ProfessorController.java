@@ -1,10 +1,7 @@
 package no.ntnu.ctscanarkivsystemserver.api;
 
 import no.ntnu.ctscanarkivsystemserver.exception.*;
-import no.ntnu.ctscanarkivsystemserver.model.Project;
-import no.ntnu.ctscanarkivsystemserver.model.ProjectDTO;
-import no.ntnu.ctscanarkivsystemserver.model.Tag;
-import no.ntnu.ctscanarkivsystemserver.model.User;
+import no.ntnu.ctscanarkivsystemserver.model.*;
 import no.ntnu.ctscanarkivsystemserver.service.ProjectService;
 import no.ntnu.ctscanarkivsystemserver.service.TagService;
 import no.ntnu.ctscanarkivsystemserver.service.UserService;
@@ -15,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.ws.rs.ForbiddenException;
 import java.util.List;
+import java.util.ResourceBundle;
 import java.util.UUID;
 
 /**
@@ -312,6 +310,41 @@ public class ProfessorController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         } else {
             return ResponseEntity.ok(project);
+        }
+    }
+
+    /**
+     * This method adds a user to the special permissions of a project.
+     * @param projectId UUID of the project
+     * @param userEmail the email of the user
+     * @return If successful: 200 OK
+     *         If user or project does not exist: 404 Not Found
+     *         If logged in user is not allowed to grant special permissions: 403 Forbidden
+     *         If user already has special permission: 409 Conflict
+     *         If if adding user to special permission fails some other way: 500 Internal server error
+     */
+    @PutMapping(path = ("/grantSpecialPermission"))
+    public ResponseEntity<?> grantSpecialPermission(@RequestParam UUID projectId, @RequestParam String userEmail) {
+        boolean success = false;
+        if (projectId == null || userEmail == null || projectId.toString().trim().isEmpty() || userEmail.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        } else {
+            try {
+                success = projectService.grantSpecialPermission(projectId, userEmail, userService.getCurrentLoggedUser());
+            } catch (UserNotFoundException | ProjectNotFoundException e) {
+                System.out.println(e.getMessage());
+                return ResponseEntity.notFound().build();
+            } catch (ForbiddenException e) {
+                System.out.println(e.getMessage());
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).build();
+            }
+            if (success) {
+                return ResponseEntity.ok().build();
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
         }
     }
 }
