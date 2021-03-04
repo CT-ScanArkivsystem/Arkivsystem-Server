@@ -12,6 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * The job of this class is to be the endpoint for all requests limited
  * to user with the role admin.
@@ -133,28 +136,30 @@ public class AdminController {
     }
 
     /**
-     * Deletes a tag from the system.
-     * @param tagName name of tag to be deleted.
-     * @return If Successful: 200-Ok.
+     * Deletes tags from the system.
+     * @param tagNames name of tags to be deleted.
+     * @return If Successful: 200-Ok with list of all tags which where not found.
      *         If tagName is null: 400-Bad Request.
-     *         If tag was not found: 404-Not Found.
      */
-    @DeleteMapping(path = "/deleteTag")
-    public ResponseEntity<?> deleteTag(@RequestParam String tagName) {
-        if(tagName == null || tagName.trim().isEmpty()) {
+    @DeleteMapping(path = "/deleteTags")
+    public ResponseEntity<List<String>> deleteTags(@RequestParam List<String> tagNames) {
+        List<String> notFoundTags = new ArrayList<>();
+        if(tagNames == null) {
             return ResponseEntity.badRequest().build();
         } else {
-            try {
-                if(!tagService.deleteTag(tagName)) {
-                    //Something went wrong when trying to delete the tag.
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            for(String tagName:tagNames) {
+                try {
+                    if (!tagService.deleteTag(tagName)) {
+                        //Something went wrong when trying to delete the tag.
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+                    }
+                } catch (TagNotFoundException e) {
+                    System.out.println(e.getMessage());
+                    //Tag was not found.
+                    notFoundTags.add(tagName);
                 }
-            } catch (TagNotFoundException e) {
-                System.out.println(e.getMessage());
-                //Tag was not found.
-                return ResponseEntity.notFound().build();
             }
         }
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(notFoundTags);
     }
 }
