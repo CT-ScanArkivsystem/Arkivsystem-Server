@@ -1,9 +1,11 @@
 package no.ntnu.ctscanarkivsystemserver.api;
 
 import no.ntnu.ctscanarkivsystemserver.exception.EmailExistsException;
+import no.ntnu.ctscanarkivsystemserver.exception.TagNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.exception.UserNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.model.User;
 import no.ntnu.ctscanarkivsystemserver.model.UserDTO;
+import no.ntnu.ctscanarkivsystemserver.service.TagService;
 import no.ntnu.ctscanarkivsystemserver.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,10 +22,12 @@ import org.springframework.web.bind.annotation.*;
 public class AdminController {
 
     private final UserService userService;
+    private final TagService tagService;
 
     @Autowired
-    public AdminController(UserService userService) {
+    public AdminController(UserService userService, TagService tagService) {
         this.userService = userService;
+        this.tagService = tagService;
     }
 
     /**
@@ -36,9 +40,9 @@ public class AdminController {
     @PostMapping(path = "/newUser")
     public ResponseEntity<?> addUser(@RequestBody UserDTO user) {
         User addedUser;
-        if(user == null) {
+        if(user == null || user.getRole() == null) {
             //User cannot be null!
-            System.out.println("User is null!");
+            System.out.println("User or role is null!");
             return ResponseEntity.badRequest().build();
         }
         user.setRole(user.getRole().toUpperCase());
@@ -46,9 +50,13 @@ public class AdminController {
             try {
                 addedUser = userService.addUser(user);
             } catch (EmailExistsException e) {
-                System.out.println(e.toString());
+                System.out.println(e.getMessage());
                 //Email already exists in the database! (409 = Conflict)
                 return ResponseEntity.status(HttpStatus.CONFLICT).build();
+            } catch (IllegalArgumentException e) {
+                System.out.println(e.getMessage());
+                //Email is null
+                return ResponseEntity.badRequest().build();
             }
         } else {
             //role is not a valid role in the system.
@@ -69,8 +77,8 @@ public class AdminController {
     @PutMapping(path = "/editUser")
     public ResponseEntity<?> editUserDetails(@RequestBody UserDTO user) {
         User userAfterChange;
-        if(user == null || user.getUserId() == null && user.getEmail() == null) {
-            System.out.println("User, id and email cannot be null!");
+        if(user == null || user.getUserId() == null && user.getEmail() == null || user.getRole() == null) {
+            System.out.println("User, Role, (id and email) cannot be null!");
             return ResponseEntity.badRequest().build();
         }
         user.setRole(user.getRole().toUpperCase());
@@ -85,12 +93,16 @@ public class AdminController {
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
                 }
             } catch (UserNotFoundException e) {
-                System.out.println(e.toString());
+                System.out.println(e.getMessage());
                 return ResponseEntity.notFound().build();
             } catch (EmailExistsException e) {
-                System.out.println(e.toString());
+                System.out.println(e.getMessage());
                 //Email already exists.
                 return ResponseEntity.status(HttpStatus.CONFLICT).build();
+            } catch (IllegalArgumentException e) {
+                System.out.println(e.getMessage());
+                //Email cannot be null.
+                return ResponseEntity.badRequest().build();
             }
         }
         //Role is not valid or is not empty.
@@ -116,6 +128,32 @@ public class AdminController {
         } catch (UserNotFoundException e) {
             //No user was found with the id.
             return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Deletes a tag from the system.
+     * @param tagName name of tag to be deleted.
+     * @return If Successful: 200-Ok.
+     *         If tagName is null: 400-Bad Request.
+     *         If tag was not found: 404-Not Found.
+     */
+    @DeleteMapping(path = "/deleteTag")
+    public ResponseEntity<?> deleteTag(@RequestParam String tagName) {
+        if(tagName == null || tagName.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        } else {
+            try {
+                if(!tagService.deleteTag(tagName)) {
+                    //Something went wrong when trying to delete the tag.
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+                }
+            } catch (TagNotFoundException e) {
+                System.out.println(e.getMessage());
+                //Tag was not found.
+                return ResponseEntity.notFound().build();
+            }
         }
         return ResponseEntity.ok().build();
     }
