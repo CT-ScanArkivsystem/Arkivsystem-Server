@@ -76,9 +76,7 @@ public class ProjectDao {
      */
     public boolean doesNameExist(String name) {
         Query query = em.createNamedQuery(Project.FIND_PROJECTS_BY_NAME);
-        System.out.println("DOESNAMEEXIST 1");
         query.setParameter("projectName", name);
-        System.out.println("DOESNAMEEXIST 2");
         List<Project> queryResult = query.getResultList();
         return !queryResult.isEmpty();
     }

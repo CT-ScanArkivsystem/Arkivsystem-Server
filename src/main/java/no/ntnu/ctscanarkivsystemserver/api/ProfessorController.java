@@ -40,25 +40,35 @@ public class ProfessorController {
      * If the name of the new project already exists, will catch an exception and return a CONFLICT status.
      * Otherwise returns status OK.
      * @param projectDto The object I want to create.
-     * @return Response code 200 OK and the project itself. Received from the service class
+     * @return If successful: Response code 200 OK and the project itself. Received from the service class
+     *         If projectDto is null: 400 Bad request
+     *         If a project with this name exists: 409 Conflict
+     *         If userService can't get current user: 400 Bad request
+     *
      */
     @PostMapping(path = "/createProject")
     public ResponseEntity<Project> createProject(@RequestBody ProjectDTO projectDto) {
         Project result;
         if (projectDto == null) {
+            System.out.println("projectDto cannot be null");
             return ResponseEntity.badRequest().build();
+        } else {
+            try {
+                result = projectService.createProject(projectDto, userService.getCurrentLoggedUser());
+            } catch (ProjectNameExistsException e) {
+                System.out.println(e.getMessage());
+                return ResponseEntity.status(HttpStatus.CONFLICT).build();
+            } catch (NullPointerException e) {
+                System.out.println(e.getMessage());
+                return ResponseEntity.badRequest().build();
+            }
+            if (result == null) {
+                System.out.println("Something went wrong while attempting to create project");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            } else {
+                return ResponseEntity.ok(result);
+            }
         }
-        try {
-            result = projectService.createProject(projectDto, userService.getCurrentLoggedUser());
-        } catch (ProjectNameExistsException e) {
-            System.out.println(e.getMessage());
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
-        if (result == null) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        return ResponseEntity.ok(result);
     }
 
     /**
@@ -73,21 +83,23 @@ public class ProfessorController {
     public ResponseEntity<?> deleteProject(@RequestBody ProjectDTO projectDto) {
         if (projectDto == null) {
             return ResponseEntity.badRequest().build();
-        }
-        try {
-            if (!projectService.deleteProject(projectDto, userService.getCurrentLoggedUser())) {
+        } else {
+            try {
+                if (!projectService.deleteProject(projectDto, userService.getCurrentLoggedUser())) {
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+                }
+            } catch (ProjectNameExistsException e) {
+                System.out.println(e.getMessage());
+                return ResponseEntity.status(HttpStatus.CONFLICT).build();
+            } catch (ForbiddenException e) {
+                System.out.println(e.getMessage());
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
             }
-        } catch (ProjectNameExistsException e) {
-            System.out.println(e.getMessage());
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        } catch (ForbiddenException e) {
-            System.out.println(e.getMessage());
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
+            return ResponseEntity.ok().build();
         }
-        return ResponseEntity.ok().build();
     }
 
     /**
@@ -116,21 +128,22 @@ public class ProfessorController {
     public ResponseEntity<?> changeProjectOwner(@RequestBody ProjectDTO projectDto) {
         if (projectDto == null) {
             return ResponseEntity.badRequest().build();
-        }
-        try {
-            System.out.println("Controller: projectDto is not null, attempting to use projectService");
-            if (!projectService.changeProjectOwner(projectDto, userService.getCurrentLoggedUser())) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } else {
+            try {
+                System.out.println("Controller: projectDto is not null, attempting to use projectService");
+                if (!projectService.changeProjectOwner(projectDto, userService.getCurrentLoggedUser())) {
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+                }
+            } catch (ProjectNotFoundException | UserNotFoundException e) {
+                System.out.println(e.getMessage());
+                ResponseEntity.notFound().build();
+            } catch (ForbiddenException e) {
+                System.out.println(e.getMessage());
+                ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
-        } catch (ProjectNotFoundException | UserNotFoundException e) {
-            System.out.println(e.getMessage());
-            ResponseEntity.notFound().build();
-        } catch (ForbiddenException e) {
-            System.out.println(e.getMessage());
-            ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
 
-        return ResponseEntity.ok().build();
+            return ResponseEntity.ok().build();
+        }
     }
 
     /**
@@ -145,23 +158,25 @@ public class ProfessorController {
 
         if (projectDto  == null) {
             return ResponseEntity.badRequest().build();
-        }
-        try {
-            result = projectService.addMemberToProject(projectDto, userService.getCurrentLoggedUser());
-
-        } catch (ForbiddenException e) {
-            System.out.println(e.getMessage());
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        catch (Exception e) {
-            System.out.println(e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-
-        if (result == null) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         } else {
-            return ResponseEntity.ok(result);
+            try {
+                result = projectService.addMemberToProject(projectDto, userService.getCurrentLoggedUser());
+
+            } catch (ForbiddenException e) {
+                System.out.println(e.getMessage());
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            catch (Exception e) {
+                System.out.println(e.getMessage());
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+
+            if (result == null) {
+                System.out.println("Adding member to project failed");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            } else {
+                return ResponseEntity.ok(result);
+            }
         }
     }
 
@@ -177,19 +192,21 @@ public class ProfessorController {
 
         if (projectDto  == null) {
             return ResponseEntity.badRequest().build();
-        }
-        try {
-            result = projectService.removeMemberFromProject(projectDto, userService.getCurrentLoggedUser());
+        } else {
+            try {
+                result = projectService.removeMemberFromProject(projectDto, userService.getCurrentLoggedUser());
 
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            return ResponseEntity.badRequest().build();
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+                return ResponseEntity.badRequest().build();
+            }
+            if (result == null) {
+                System.out.println("Removing member from project failed");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            } else {
+                return ResponseEntity.ok(result);
+            }
         }
-        if (result == null) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        return ResponseEntity.ok(result);
     }
 
     /**

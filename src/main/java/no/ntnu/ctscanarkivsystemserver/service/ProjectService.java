@@ -37,24 +37,23 @@ public class ProjectService {
      * @param projectDto The projectDto object passed from the controller.
      * @return The the created project
      */
-    public Project createProject(ProjectDTO projectDto, User user) throws NullPointerException {
-        if (user != null) {
+    public Project createProject(ProjectDTO projectDto, User user) throws ProjectNameExistsException {
+        if (user == null) {
+            throw new NullPointerException("User cannot be null");
+        } else {
             Project newProject = parseProjectDTO(projectDto);
             newProject.setOwner(user);
             return projectDao.createProject(newProject);
-        } else {
-            throw new NullPointerException("'user' cannot be null");
         }
-
     }
 
     /**
-     * THis methos removes a project from the database using UUID from projectDto.
+     * This method removes a project from the database using UUID from projectDto.
      * @param projectDto The projectDto object passed from the controller.
      * @param user The logged in user
      * @return True if project has been removes, false if not
      * @throws NullPointerException If projectDto is null
-     * @throws ProjectNotFoundException
+     * @throws ProjectNotFoundException If a project with this UUID does not exist
      */
     public boolean deleteProject(ProjectDTO projectDto, User user) throws NullPointerException, ProjectNotFoundException,
     ForbiddenException {
@@ -66,7 +65,6 @@ public class ProjectService {
             throw new ForbiddenException("The logged on user is not allowed to delete projects");
         }
         if (!projectDao.doesProjectExist(projectDto.getProjectId())) {
-            System.out.println("WHYYYYYYYYYYYYYYYYY????????");
             throw new ProjectNotFoundException(projectDto.getProjectId());
         }
 
