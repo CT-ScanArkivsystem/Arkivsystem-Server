@@ -46,4 +46,32 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
+
+    /**
+     * Gets all projects a tag is used in.
+     * @param tagName name of tag to get all projects from.
+     * @return If Successful: 200-Ok with a list of all projects a tag is used in.
+     *         If tagName is null or empty: 400-Bad Request.
+     *         If no tag with tagName was found: 404-Not Found.
+     *         If tagName has less than 2 characters: 400-Bad Request.
+     */
+    @GetMapping(path = "/getAllProjectsTagIsUsedIn")
+    public ResponseEntity<List<Project>> getAllProjectsTagIsUsedIn(@RequestParam String tagName) {
+        if(tagName == null || tagName.trim().isEmpty()) {
+            //tagName cannot be null or empty!
+            return ResponseEntity.badRequest().build();
+        } else {
+            try {
+                return ResponseEntity.ok(tagService.getAllProjectsTagIsUsedIn(tagName));
+            } catch (TagNotFoundException e) {
+                System.out.println(e.getMessage());
+                //No tag with tagName was found.
+                return ResponseEntity.notFound().build();
+            } catch (IndexOutOfBoundsException e) {
+                System.out.println(e.getMessage());
+                //tagName has less than 2 characters!
+                return ResponseEntity.badRequest().build();
+            }
+        }
+    }
 }
