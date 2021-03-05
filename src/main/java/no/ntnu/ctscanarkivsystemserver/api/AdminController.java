@@ -113,12 +113,12 @@ public class AdminController {
     }
 
     /**
-     * Removes a user from the system.
-     * @param user UserDTO object which must contain userId of user to be removed.
+     * Delete a user from the system.
+     * @param user UserDTO object which must contain userId of user to be deleted.
      * @return 200-ok if user was successfully removed.
      */
-    @DeleteMapping(path = "/removeUser")
-    public ResponseEntity<?> removeUser(@RequestBody UserDTO user) {
+    @DeleteMapping(path = "/deleteUser")
+    public ResponseEntity<?> deleteUser(@RequestBody UserDTO user) {
         if(user == null || user.getUserId() == null || user.getUserId().toString().isEmpty()) {
             //User and userId cannot be null and userId cannot be empty.
             return ResponseEntity.badRequest().build();
