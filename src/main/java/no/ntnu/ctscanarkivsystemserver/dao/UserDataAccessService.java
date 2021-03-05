@@ -53,14 +53,19 @@ public class UserDataAccessService implements UserDao{
      * Return true if user with email is found in database.
      * @param email to see if already exists in database.
      * @return true if user with email already exist in database.
+     * @throws IllegalArgumentException if email is null.
      */
     @Override
-    public boolean doesEmailExist(String email) {
-        Query query = em.createNamedQuery(User.FIND_USER_BY_EMAIL);
-        email = email.toLowerCase();
-        query.setParameter("email", email);
-        List<User> queryResult = query.getResultList();
-        return !queryResult.isEmpty();
+    public boolean doesEmailExist(String email) throws IllegalArgumentException{
+        if(email != null) {
+            Query query = em.createNamedQuery(User.FIND_USER_BY_EMAIL);
+            email = email.toLowerCase();
+            query.setParameter("email", email);
+            List<User> queryResult = query.getResultList();
+            return !queryResult.isEmpty();
+        } else {
+            throw new IllegalArgumentException("Email cannot be null!");
+        }
     }
 
     /**

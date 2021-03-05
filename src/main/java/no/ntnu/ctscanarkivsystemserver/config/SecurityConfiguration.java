@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
@@ -61,13 +62,14 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         //TODO Fix this when developing the role system.
         http.csrf().disable().authorizeRequests()
                 .antMatchers("/admin/**").hasRole(Role.ADMIN)
-                .antMatchers("/professor/**").hasAnyRole(Role.ADMIN, Role.PROFESSOR)
-                .antMatchers("/user/**").hasAnyRole(Role.ADMIN, Role.PROFESSOR, Role.USER)
+                .antMatchers("/academic/**").hasAnyRole(Role.ADMIN, Role.ACADEMIC)
+                .antMatchers("/user/**").hasAnyRole(Role.ADMIN, Role.ACADEMIC, Role.USER)
                 .antMatchers("/auth/**").permitAll()
                 .antMatchers("/api/**").permitAll()
                 .anyRequest().authenticated()
                 .and().addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling().authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
+        http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
     }
 
     @Override

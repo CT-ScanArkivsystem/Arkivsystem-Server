@@ -16,11 +16,13 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedMethods("GET", "POST", "PUT", "DELETE")
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
-                        .allowedOrigins("http://localhost:3000");
+                        // TODO: When the connection becomes secure (HTTPS), change the IP to include an s!
+                        .allowedOrigins("http://localhost:3000", "http://127.0.0.1:3000")
+                        .exposedHeaders("Set-Cookie")
+                        .allowCredentials(true);
             }
         };
     }
-
 }
