@@ -12,6 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * The job of this class is to be the endpoint for all requests limited
  * to user with the role admin.
@@ -133,28 +136,71 @@ public class AdminController {
     }
 
     /**
-     * Deletes a tag from the system.
-     * @param tagName name of tag to be deleted.
-     * @return If Successful: 200-Ok.
+     * Deletes tags from the system.
+     * @param tagNames name of tags to be deleted.
+     * @return If Successful: 200-Ok with list of all tags which where not found.
      *         If tagName is null: 400-Bad Request.
-     *         If tag was not found: 404-Not Found.
      */
-    @DeleteMapping(path = "/deleteTag")
-    public ResponseEntity<?> deleteTag(@RequestParam String tagName) {
-        if(tagName == null || tagName.trim().isEmpty()) {
+    @DeleteMapping(path = "/deleteTags")
+    public ResponseEntity<List<String>> deleteTags(@RequestParam List<String> tagNames) {
+        List<String> notFoundTags = new ArrayList<>();
+        if(tagNames == null) {
+            return ResponseEntity.badRequest().build();
+        } else {
+            for(String tagName:tagNames) {
+                try {
+                    if (!tagService.deleteTag(tagName)) {
+                        //Something went wrong when trying to delete the tag.
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+                    }
+                } catch (TagNotFoundException e) {
+                    System.out.println(e.getMessage());
+                    //Tag was not found.
+                    notFoundTags.add(tagName);
+                } catch (IndexOutOfBoundsException e) {
+                    //tagNames cannot be empty or have less than 2 characters
+                    System.out.println(e.getMessage());
+                }
+            }
+        }
+        return ResponseEntity.ok(notFoundTags);
+    }
+
+    /**
+     * Returns a user with email.
+     * @param email email of user to get.
+     * @return If Successful: 200-Ok with user with email.
+     *         If email is null or empty: 400-Bad Request
+     *         If no user was found with email: 404-Not Found.
+     */
+    @GetMapping(path = "/getUser")
+    public ResponseEntity<User> getUser(@RequestParam String email) {
+        if(email == null || email.trim().isEmpty()) {
             return ResponseEntity.badRequest().build();
         } else {
             try {
-                if(!tagService.deleteTag(tagName)) {
-                    //Something went wrong when trying to delete the tag.
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-                }
-            } catch (TagNotFoundException e) {
+                return ResponseEntity.ok(userService.getUserByEmail(email));
+            } catch (UserNotFoundException e) {
                 System.out.println(e.getMessage());
-                //Tag was not found.
+                //No user with email was found.
                 return ResponseEntity.notFound().build();
             }
         }
-        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Gets all users in the database.
+     * @return If Successful: 200-Ok with a list of all users.
+     *         If list is null or empty: 404-Not Found.
+     */
+    @GetMapping(path = "/allUsers")
+    public ResponseEntity<?> getAllUsers() {
+        System.out.println("Getting all users!");
+        List<User> allUsers = userService.getAllUsers();
+        if(allUsers == null || allUsers.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        } else {
+            return ResponseEntity.ok(allUsers);
+        }
     }
 }

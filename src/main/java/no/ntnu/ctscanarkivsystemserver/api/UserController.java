@@ -1,8 +1,11 @@
 package no.ntnu.ctscanarkivsystemserver.api;
 
 
+import no.ntnu.ctscanarkivsystemserver.exception.TagNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.exception.UserNotFoundException;
+import no.ntnu.ctscanarkivsystemserver.model.Project;
 import no.ntnu.ctscanarkivsystemserver.model.User;
+import no.ntnu.ctscanarkivsystemserver.service.TagService;
 import no.ntnu.ctscanarkivsystemserver.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,21 +19,12 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final TagService tagService;
 
     @Autowired
-    public UserController(UserService userService) {
+    public UserController(UserService userService, TagService tagService) {
         this.userService = userService;
-    }
-
-    @GetMapping(path = "/allUsers")
-    public ResponseEntity<?> getAllUsers() {
-        System.out.println("Getting all users!");
-        List<User> allUsers = userService.getAllUsers();
-        if(allUsers == null || allUsers.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        } else {
-            return ResponseEntity.ok(allUsers);
-        }
+        this.tagService = tagService;
     }
 
     /**
@@ -44,6 +38,34 @@ public class UserController {
         } catch (UserNotFoundException e) {
             System.out.println("No user found.");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
+
+    /**
+     * Gets all projects a tag is used in.
+     * @param tagName name of tag to get all projects from.
+     * @return If Successful: 200-Ok with a list of all projects a tag is used in.
+     *         If tagName is null or empty: 400-Bad Request.
+     *         If no tag with tagName was found: 404-Not Found.
+     *         If tagName has less than 2 characters: 400-Bad Request.
+     */
+    @GetMapping(path = "/getAllProjectsTagIsUsedIn")
+    public ResponseEntity<List<Project>> getAllProjectsTagIsUsedIn(@RequestParam String tagName) {
+        if(tagName == null || tagName.trim().isEmpty()) {
+            //tagName cannot be null or empty!
+            return ResponseEntity.badRequest().build();
+        } else {
+            try {
+                return ResponseEntity.ok(tagService.getAllProjectsTagIsUsedIn(tagName));
+            } catch (TagNotFoundException e) {
+                System.out.println(e.getMessage());
+                //No tag with tagName was found.
+                return ResponseEntity.notFound().build();
+            } catch (IndexOutOfBoundsException e) {
+                System.out.println(e.getMessage());
+                //tagName has less than 2 characters!
+                return ResponseEntity.badRequest().build();
+            }
         }
     }
 }
