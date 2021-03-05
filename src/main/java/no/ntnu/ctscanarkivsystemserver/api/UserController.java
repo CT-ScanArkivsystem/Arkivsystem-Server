@@ -1,8 +1,11 @@
 package no.ntnu.ctscanarkivsystemserver.api;
 
 
+import no.ntnu.ctscanarkivsystemserver.exception.TagNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.exception.UserNotFoundException;
+import no.ntnu.ctscanarkivsystemserver.model.Project;
 import no.ntnu.ctscanarkivsystemserver.model.User;
+import no.ntnu.ctscanarkivsystemserver.service.TagService;
 import no.ntnu.ctscanarkivsystemserver.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,21 +19,12 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final TagService tagService;
 
     @Autowired
-    public UserController(UserService userService) {
+    public UserController(UserService userService, TagService tagService) {
         this.userService = userService;
-    }
-
-    @GetMapping(path = "/allUsers")
-    public ResponseEntity<?> getAllUsers() {
-        System.out.println("Getting all users!");
-        List<User> allUsers = userService.getAllUsers();
-        if(allUsers == null || allUsers.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        } else {
-            return ResponseEntity.ok(allUsers);
-        }
+        this.tagService = tagService;
     }
 
     /**
