@@ -103,21 +103,6 @@ public class ProfessorController {
     }
 
     /**
-     * This API request will return a list of all existing projects
-     * @return Response code 200 OK and the list of projects.
-     */
-    @GetMapping(path = "/getAllProjects")
-    public ResponseEntity<List<Project>> getAllProject() {
-        System.out.println("Getting all projects!");
-        List<Project> allProjects = projectService.getAllProjects();
-        if(allProjects == null || allProjects.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        } else {
-            return ResponseEntity.ok(allProjects);
-        }
-    }
-
-    /**
      * This API request is used to change the owner of a project.
      * @param projectDto The ProjectDTO object used to pass data
      * @return If successful: Response code 200 OK and the Project object
@@ -132,6 +117,7 @@ public class ProfessorController {
             try {
                 System.out.println("Controller: projectDto is not null, attempting to use projectService");
                 if (!projectService.changeProjectOwner(projectDto, userService.getCurrentLoggedUser())) {
+                    System.out.println("Could not change project owner");
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
                 }
             } catch (ProjectNotFoundException | UserNotFoundException e) {
@@ -149,19 +135,20 @@ public class ProfessorController {
     /**
      * This API request is used to add an existing user to the members of a project
      * @param projectDto The 'Data To Object' used to carry the required id's. Must contain userId and projectId
-     * @return If successful: Response code 200 OK and the modified project
-     *         If ProjectDto is null: Response Bad Request
+     * @return If successful: Response code 200 OK
+     *         If ProjectDto is null: 400 Bad request
+     *         If User is not allowed to add project members: 403 Forbidden
+     *         If member is not added successfully or something else fails: 500 Internal server error
      */
     @PostMapping(path = "/addMemberToProject")
     public ResponseEntity<Project> addMemberToProject(@RequestBody ProjectDTO projectDto) {
-        Project result = null;
-
+        boolean success = false;
         if (projectDto  == null) {
+            System.out.println("ProjectDto is null");
             return ResponseEntity.badRequest().build();
         } else {
             try {
-                result = projectService.addMemberToProject(projectDto, userService.getCurrentLoggedUser());
-
+                success = projectService.addMemberToProject(projectDto, userService.getCurrentLoggedUser());
             } catch (ForbiddenException e) {
                 System.out.println(e.getMessage());
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -170,13 +157,12 @@ public class ProfessorController {
                 System.out.println(e.getMessage());
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
             }
-
-            if (result == null) {
-                System.out.println("Adding member to project failed");
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            if (success) {
+                return ResponseEntity.ok().build();
             } else {
-                return ResponseEntity.ok(result);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
             }
+
         }
     }
 
@@ -188,23 +174,24 @@ public class ProfessorController {
      */
     @PostMapping(path = "/removeMemberFromProject")
     public ResponseEntity<Project> removeMemberFromProject(@RequestBody ProjectDTO projectDto) {
-        Project result = null;
-
+        boolean success = false;
         if (projectDto  == null) {
+            System.out.println("ProjectDto is null");
             return ResponseEntity.badRequest().build();
         } else {
             try {
-                result = projectService.removeMemberFromProject(projectDto, userService.getCurrentLoggedUser());
-
+                success = projectService.removeMemberFromProject(projectDto, userService.getCurrentLoggedUser());
+            } catch (ForbiddenException e) {
+                System.out.println(e.getMessage());
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             } catch (Exception e) {
                 System.out.println(e.getMessage());
-                return ResponseEntity.badRequest().build();
-            }
-            if (result == null) {
-                System.out.println("Removing member from project failed");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+            if (success) {
+                return ResponseEntity.ok().build();
             } else {
-                return ResponseEntity.ok(result);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
             }
         }
     }
@@ -338,7 +325,7 @@ public class ProfessorController {
      *         If user or project does not exist: 404 Not Found
      *         If logged in user is not allowed to grant special permissions: 403 Forbidden
      *         If user already has special permission: 409 Conflict
-     *         If if adding user to special permission fails some other way: 500 Internal server error
+     *         If adding user to special permission fails some other way: 500 Internal server error
      */
     @PutMapping(path = ("/grantSpecialPermission"))
     public ResponseEntity<?> grantSpecialPermission(@RequestParam UUID projectId, @RequestParam String userEmail) {
@@ -348,6 +335,41 @@ public class ProfessorController {
         } else {
             try {
                 success = projectService.grantSpecialPermission(projectId, userEmail, userService.getCurrentLoggedUser());
+            } catch (UserNotFoundException | ProjectNotFoundException e) {
+                System.out.println(e.getMessage());
+                return ResponseEntity.notFound().build();
+            } catch (ForbiddenException e) {
+                System.out.println(e.getMessage());
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).build();
+            }
+            if (success) {
+                return ResponseEntity.ok().build();
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        }
+    }
+
+    /**
+     * This method removes a user from the special permissions of a project.
+     * @param projectId UUID of the project
+     * @param userEmail the email of the user
+     * @return If successful: 200 OK
+     *         If user or project does not exist: 404 Not Found
+     *         If logged in user is not allowed to grant special permissions: 403 Forbidden
+     *         If user already has special permission: 409 Conflict
+     *         If removing user from special permission fails some other way: 500 Internal server error
+     */
+    @PutMapping(path = ("/revokeSpecialPermission"))
+    public ResponseEntity<?> revokeSpecialPermission(@RequestParam UUID projectId, @RequestParam String userEmail) {
+        boolean success = false;
+        if (projectId == null || userEmail == null || projectId.toString().trim().isEmpty() || userEmail.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        } else {
+            try {
+                success = projectService.revokeSpecialPermission(projectId, userEmail, userService.getCurrentLoggedUser());
             } catch (UserNotFoundException | ProjectNotFoundException e) {
                 System.out.println(e.getMessage());
                 return ResponseEntity.notFound().build();

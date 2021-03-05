@@ -114,7 +114,7 @@ public class ProjectService {
         }
         else {
             if (hasSpecialPermission(projectToEdit, newOwner)) {
-                projectDao.removeSpecialPermission(projectToEdit, newOwner);
+                projectDao.revokeSpecialPermission(projectToEdit, newOwner);
             }
             projectDao.addProjectMember(projectToEdit, oldOwner);
             if (projectToEdit.getProjectMembers().contains(newOwner)) {
@@ -128,10 +128,10 @@ public class ProjectService {
      * This method takes the DTO from the controller and sends project and user to the DAO
      * @param projectDto The ProjectDTO object used to pass data
      * @param user The logged in user
-     * @return The resulting Project object after it has been modified
+     * @return True if user has been successfully added, false otherwise
      * @throws ForbiddenException If user is not allowed to add members
      */
-    public Project addMemberToProject(ProjectDTO projectDto, User user) throws ForbiddenException {
+    public boolean addMemberToProject(ProjectDTO projectDto, User user) throws ForbiddenException {
         Project thisProject = projectDao.getProjectById(projectDto.getProjectId());
         User thisUser = userDao.getUserById(projectDto.getUserId());
         if (userIsOwnerOrAdmin(thisProject, user)) {
@@ -148,7 +148,7 @@ public class ProjectService {
      * @return The resulting Project object after it has been modified
      * @throws ForbiddenException If user is not allowed to add members
      */
-    public Project removeMemberFromProject(ProjectDTO projectDto, User user) throws ForbiddenException {
+    public boolean removeMemberFromProject(ProjectDTO projectDto, User user) throws ForbiddenException {
         Project thisProject = projectDao.getProjectById(projectDto.getProjectId());
         User thisUser = userDao.getUserById(projectDto.getUserId());
         if (userIsOwnerOrAdmin(thisProject, user)) {
@@ -168,6 +168,7 @@ public class ProjectService {
      * @throws ProjectNotFoundException If no project with this UUID exists
      * @throws UserNotFoundException If no user with this email exists
      * @throws ForbiddenException If logged on user is not allowed to grant special permission
+     * @throws IllegalArgumentException If user already has special permission
      */
     public boolean grantSpecialPermission(UUID projectId, String userEmail, User loggedInUser) throws ProjectNotFoundException,
             UserNotFoundException, ForbiddenException, IllegalArgumentException {
@@ -183,6 +184,33 @@ public class ProjectService {
                 throw new ForbiddenException("User is not allowed to grant special permissions");
             }
             return projectDao.grantSpecialPermission(projectDao.getProjectById(projectId), userDao.getUserByEmail(userEmail));
+        }
+    }
+
+    /**
+     * This method removes a user from the special permissions of a project.
+     * @param projectId UUID of the project
+     * @param userEmail Email of the user
+     * @param loggedInUser The current logged in user
+     * @return True if user has been removed from special permissions, false otherwise
+     * @throws ProjectNotFoundException If no project with this UUID exists
+     * @throws UserNotFoundException If no user with this email exists
+     * @throws ForbiddenException If logged on user is not allowed to grant special permission
+     * @throws IllegalArgumentException If user does not have special permission to begin with
+     */
+    public boolean revokeSpecialPermission(UUID projectId, String userEmail, User loggedInUser) throws ProjectNotFoundException,
+            UserNotFoundException, ForbiddenException, IllegalArgumentException {
+        if (!projectDao.doesProjectExist(projectId)) {
+            throw new ProjectNotFoundException(projectId);
+        } else if (userDao.getUserByEmail(userEmail) == null) {
+            throw new UserNotFoundException(userEmail);
+        } else if (!projectDao.getProjectById(projectId).getUsersWithSpecialPermission().contains(userDao.getUserByEmail(userEmail))) {
+            throw new IllegalArgumentException("User " + userEmail + " does not have special permission for this project");
+        } else {
+            if (!isUserPermittedToChangeProject(projectDao.getProjectById(projectId), loggedInUser)) {
+                throw new ForbiddenException("User is not allowed to grant special permissions");
+            }
+            return projectDao.revokeSpecialPermission(projectDao.getProjectById(projectId), userDao.getUserByEmail(userEmail));
         }
     }
 

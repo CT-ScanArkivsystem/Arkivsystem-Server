@@ -136,22 +136,22 @@ public class ProjectDao {
      * This method uses the entity manager to remove a user from special-permission.
      * @param inputProject The project you want to modify
      * @param user The user you want to remove
-     * @return The modified project
+     * @return True if user does not have special-permission anymore, false otherwise
      */
     @Transactional
-    public Project removeSpecialPermission(Project inputProject, User user) {
-        System.out.println("ProjectDao: removing user from special permissions");
+    public boolean revokeSpecialPermission(Project inputProject, User user) {
         em.refresh(inputProject);
         prepareProjectForEdit(inputProject);
         inputProject.getUsersWithSpecialPermission().remove(user);
-        return saveProject(inputProject);
+        saveProject(inputProject);
+        return !inputProject.getUsersWithSpecialPermission().contains(user);
     }
 
     /**
      * This method uses the entity manager to remove a user from special-permission.
      * @param inputProject The project you want to modify
      * @param user The user you want to add
-     * @return The modified project
+     * @return True if user now has special-permission, false otherwise
      */
     @Transactional
     public boolean grantSpecialPermission(Project inputProject, User user) {
@@ -166,28 +166,30 @@ public class ProjectDao {
      * This method uses the entity manager to add a user to project_members.
      * @param inputProject The project you want to modify
      * @param user The user you want to add
-     * @return The modified project
+     * @return True if member has been added
      */
     @Transactional
-    public Project addProjectMember(Project inputProject, User user) {
+    public boolean addProjectMember(Project inputProject, User user) {
         em.refresh(inputProject);
         prepareProjectForEdit(inputProject);
         inputProject.getProjectMembers().add(user);
-        return saveProject(inputProject);
+        saveProject(inputProject);
+        return inputProject.getProjectMembers().contains(user);
     }
 
     /**
      * This method uses the entity manager to remove a user from project_members.
      * @param inputProject The project you want to modify
      * @param user The user you want to remove
-     * @return The modified project
+     * @return True if member has been removed
      */
     @Transactional
-    public Project removeProjectMember(Project inputProject, User user) {
+    public boolean removeProjectMember(Project inputProject, User user) {
         em.refresh(inputProject);
         prepareProjectForEdit(inputProject);
         inputProject.getProjectMembers().remove(user);
-        return saveProject(inputProject);
+        saveProject(inputProject);
+        return !inputProject.getProjectMembers().contains(user);
     }
 
     /**
