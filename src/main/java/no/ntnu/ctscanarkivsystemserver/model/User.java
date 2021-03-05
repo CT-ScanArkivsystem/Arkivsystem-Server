@@ -54,6 +54,7 @@ public class User {
     private List<Role> roles = new ArrayList<>();
 
     @Getter
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "owner")
     private List<Project> ownProjects;
 
