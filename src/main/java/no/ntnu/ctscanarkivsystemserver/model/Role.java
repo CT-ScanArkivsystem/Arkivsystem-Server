@@ -13,7 +13,7 @@ import javax.persistence.Id;
 public class Role {
 
     public static final String ADMIN = "ADMIN";
-    public static final String PROFESSOR = "PROFESSOR";
+    public static final String ACADEMIC = "ACADEMIC";
     public static final String USER = "USER";
 
     @Id

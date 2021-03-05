@@ -62,8 +62,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         //TODO Fix this when developing the role system.
         http.csrf().disable().authorizeRequests()
                 .antMatchers("/admin/**").hasRole(Role.ADMIN)
-                .antMatchers("/professor/**").hasAnyRole(Role.ADMIN, Role.PROFESSOR)
-                .antMatchers("/user/**").hasAnyRole(Role.ADMIN, Role.PROFESSOR, Role.USER)
+                .antMatchers("/academic/**").hasAnyRole(Role.ADMIN, Role.ACADEMIC)
+                .antMatchers("/user/**").hasAnyRole(Role.ADMIN, Role.ACADEMIC, Role.USER)
                 .antMatchers("/auth/**").permitAll()
                 .antMatchers("/api/**").permitAll()
                 .anyRequest().authenticated()

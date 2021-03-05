@@ -12,23 +12,23 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.ws.rs.ForbiddenException;
 import java.util.List;
-import java.util.ResourceBundle;
 import java.util.UUID;
 
 /**
- * Class for the project APIs.
+ * The job of this class is to be the endpoint for all requests limited
+ * to user with the role academic.
  * @author Brage, trymv
  */
-@RequestMapping("/professor")
+@RequestMapping("/academic")
 @RestController
-public class ProfessorController {
+public class AcademicController {
 
     private final ProjectService projectService;
     private final TagService tagService;
     private final UserService userService;
 
     @Autowired
-    public ProfessorController(ProjectService projectService, TagService tagService, UserService userService) {
+    public AcademicController(ProjectService projectService, TagService tagService, UserService userService) {
         this.projectService = projectService;
         this.tagService = tagService;
         this.userService = userService;
