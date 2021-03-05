@@ -250,6 +250,7 @@ public class ProfessorController {
      *         If user is not allowed to do changes on project: 403-Forbidden.
      *         If database failed to add tag: 500-Internal Server Error.
      *         If tag already exist in project: 409-Conflict.
+     *         If tagName has 2 or less characters: 400-Bad Request.
      */
     @PutMapping(path = "/addTag")
     public ResponseEntity<Project> addTag(@RequestParam String tagName, @RequestParam UUID projectId) {
@@ -272,6 +273,10 @@ public class ProfessorController {
                 System.out.println(e.getMessage());
                 //Tag already exist in project.
                 return ResponseEntity.status(HttpStatus.CONFLICT).build();
+            } catch (IndexOutOfBoundsException e) {
+                System.out.println(e.getMessage());
+                //tagName cannot have less than 2 characters
+                return ResponseEntity.badRequest().build();
             }
         }
         if(addedProject == null) {
@@ -287,10 +292,11 @@ public class ProfessorController {
      * @param tagName name of tag to be removed.
      * @param projectId id of project to which tag is getting removed from.
      * @return If Successful: 200-Ok with Project.
-     *         If tagName or projectId is null; 400-Bad Request.
+     *         If tagName or projectId is null: 400-Bad Request.
      *         If tag, project or remover user is not found: 404-Not Found.
      *         If user is not allowed to do changes on project: 403-Forbidden.
      *         If database failed to remove tag: 500-Internal Server Error.
+     *         If tagName has 2 or less characters: 400-Bad Request.
      */
     @PutMapping(path = ("/removeTag"))
     public ResponseEntity<Project> removeTag(@RequestParam String tagName, @RequestParam UUID projectId) {
@@ -308,6 +314,10 @@ public class ProfessorController {
                 System.out.println(e.getMessage());
                 //User is forbidden to do changes on this project.
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            } catch (IndexOutOfBoundsException e) {
+                System.out.println(e.getMessage());
+                //tagName cannot have less than 2 characters.
+                return ResponseEntity.badRequest().build();
             }
         }
         if(project == null) {

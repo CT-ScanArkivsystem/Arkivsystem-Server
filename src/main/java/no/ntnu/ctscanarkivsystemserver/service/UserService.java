@@ -88,7 +88,7 @@ public class UserService implements UserDetailsService {
      * @return user with email in database.
      * @throws UserNotFoundException if no user was found.
      */
-    private User getUserByEmail(String email) throws UserNotFoundException {
+    public User getUserByEmail(String email) throws UserNotFoundException {
         User user = userDao.getUserByEmail(email);
 
         if(user == null) {
