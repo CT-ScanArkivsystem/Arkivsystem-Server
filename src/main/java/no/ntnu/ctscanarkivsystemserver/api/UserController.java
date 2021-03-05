@@ -23,30 +23,26 @@ public class UserController {
 
     private final UserService userService;
     private final ProjectService projectService;
+    private final TagService tagService;
 
     @Autowired
-    public UserController(UserService userService, ProjectService projectService) {
+    public UserController(UserService userService, ProjectService projectService, TagService tagService) {
         this.userService = userService;
         this.projectService = projectService;
+        this.tagService = tagService;
     }
 
     @GetMapping(path = "/allUsers")
     public ResponseEntity<?> getAllUsers() {
         System.out.println("Getting all users!");
         List<User> allUsers = userService.getAllUsers();
-        if(allUsers == null || allUsers.isEmpty()) {
+        if (allUsers == null || allUsers.isEmpty()) {
             return ResponseEntity.notFound().build();
         } else {
             return ResponseEntity.ok(allUsers);
         }
-
-    private final TagService tagService;
-
-    @Autowired
-    public UserController(UserService userService, TagService tagService) {
-        this.userService = userService;
-        this.tagService = tagService;
     }
+
 
     /**
      * Return the current logged in user.
@@ -101,6 +97,11 @@ public class UserController {
                 return ResponseEntity.ok(project);
             } else {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        }
+    }
+
+    /**
      * Gets all projects a tag is used in.
      * @param tagName name of tag to get all projects from.
      * @return If Successful: 200-Ok with a list of all projects a tag is used in.
