@@ -109,7 +109,7 @@ public class ProfessorController {
      *         If ProjectDto is null: Response Bad Request
      *         If user is not allowed to delete projects: Http response FORBIDDEN
      */
-    @PostMapping(path = "/changeProjectOwner")
+    @PutMapping(path = "/changeProjectOwner")
     public ResponseEntity<?> changeProjectOwner(@RequestBody ProjectDTO projectDto) {
         if (projectDto == null) {
             return ResponseEntity.badRequest().build();
@@ -140,7 +140,7 @@ public class ProfessorController {
      *         If User is not allowed to add project members: 403 Forbidden
      *         If member is not added successfully or something else fails: 500 Internal server error
      */
-    @PostMapping(path = "/addMemberToProject")
+    @PutMapping(path = "/addMemberToProject")
     public ResponseEntity<Project> addMemberToProject(@RequestBody ProjectDTO projectDto) {
         boolean success = false;
         if (projectDto  == null) {
@@ -172,7 +172,7 @@ public class ProfessorController {
      * @return If successful: Response code 200 OK and the modified project
      *         If ProjectDto is null: Response Bad Request
      */
-    @PostMapping(path = "/removeMemberFromProject")
+    @PutMapping(path = "/removeMemberFromProject")
     public ResponseEntity<Project> removeMemberFromProject(@RequestBody ProjectDTO projectDto) {
         boolean success = false;
         if (projectDto  == null) {
