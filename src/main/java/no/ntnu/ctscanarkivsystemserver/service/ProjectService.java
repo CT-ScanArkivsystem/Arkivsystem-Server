@@ -80,6 +80,20 @@ public class ProjectService {
     }
 
     /**
+     * Method for returning a specific project
+     * @param projectId UUID of the project
+     * @return The project
+     * @throws ProjectNotFoundException If no project with this UUID exists
+     */
+    public Project getProject(UUID projectId) throws ProjectNotFoundException {
+        if (projectDao.doesProjectExist(projectId)) {
+            return projectDao.getProjectById(projectId);
+        } else {
+            throw new ProjectNotFoundException(projectId);
+        }
+    }
+
+    /**
      * This method is used to change the owner of a product.
      * It also moves the old owner to project_members.
      * If the new owner is already in special_permissions, he is removed from there
