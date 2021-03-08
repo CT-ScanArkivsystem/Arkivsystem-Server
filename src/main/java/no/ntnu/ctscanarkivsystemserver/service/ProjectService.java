@@ -6,8 +6,6 @@ import no.ntnu.ctscanarkivsystemserver.exception.*;
 import no.ntnu.ctscanarkivsystemserver.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import javax.ws.rs.ForbiddenException;
@@ -26,11 +24,11 @@ public class ProjectService {
     private final UserDao userDao;
 
     @Autowired
-    public ProjectService(@Qualifier("projectDaoRepository") ProjectDao projectDao, @Qualifier("postgreSQL") UserDao userDao) {
+    public ProjectService(@Qualifier("projectDaoRepository") ProjectDao projectDao,
+                          @Qualifier("postgreSQL") UserDao userDao) {
         this.projectDao = projectDao;
         this.userDao = userDao;
     }
-
 
     /**
      * Method for creating a new project.
@@ -38,9 +36,38 @@ public class ProjectService {
      * @param projectDto The projectDto object passed from the controller.
      * @return The the created project
      */
-    public Project createProject(ProjectDTO projectDto) throws ProjectNameExistsException {
-        Project newProject = parseProjectDTO(projectDto);
-        return projectDao.createProject(newProject);
+    public Project createProject(ProjectDTO projectDto, User user) throws ProjectNameExistsException {
+        if (user == null) {
+            throw new NullPointerException("User cannot be null");
+        } else {
+            Project newProject = parseProjectDTO(projectDto);
+            newProject.setOwner(user);
+            return projectDao.createProject(newProject);
+        }
+    }
+
+    /**
+     * This method removes a project from the database using UUID from projectDto.
+     * @param projectDto The projectDto object passed from the controller.
+     * @param user The logged in user
+     * @return True if project has been removes, false if not
+     * @throws NullPointerException If projectDto is null
+     * @throws ProjectNotFoundException If a project with this UUID does not exist
+     */
+    public boolean deleteProject(ProjectDTO projectDto, User user) throws NullPointerException, ProjectNotFoundException,
+    ForbiddenException {
+        if (projectDto == null) {
+            throw new NullPointerException("ERROR: projectDto is null");
+        }
+        Project projectToDelete = projectDao.getProjectById(projectDto.getProjectId());
+        if (!userIsOwnerOrAdmin(projectToDelete, user)) {
+            throw new ForbiddenException("The logged on user is not allowed to delete projects");
+        }
+        if (!projectDao.doesProjectExist(projectDto.getProjectId())) {
+            throw new ProjectNotFoundException(projectDto.getProjectId());
+        }
+
+        return projectDao.deleteProject(projectToDelete);
     }
 
     /**
@@ -48,8 +75,21 @@ public class ProjectService {
      * @return The list of projects
      */
     public List<Project> getAllProjects() {
-        List<Project> projectList = projectDao.getAllProjects();
-        return projectList;
+        return projectDao.getAllProjects();
+    }
+
+    /**
+     * Method for returning a specific project
+     * @param projectId UUID of the project
+     * @return The project
+     * @throws ProjectNotFoundException If no project with this UUID exists
+     */
+    public Project getProject(UUID projectId) throws ProjectNotFoundException {
+        if (projectDao.doesProjectExist(projectId)) {
+            return projectDao.getProjectById(projectId);
+        } else {
+            throw new ProjectNotFoundException(projectId);
+        }
     }
 
     /**
@@ -57,12 +97,14 @@ public class ProjectService {
      * It also moves the old owner to project_members.
      * If the new owner is already in special_permissions, he is removed from there
      * @param projectDto The ProjectDTO object used to pass data
-     * @return the resulting Project object after it has been modified
+     * @param user The logged in user
+     * @return True if new owner is set correctly, false otherwise
      * @throws NullPointerException if projectDto is null
      * @throws ProjectNotFoundException If a project with this UUID does not exist
      * @throws UserNotFoundException If a user with this UUID does not exist
      */
-    public Project changeProjectOwner(ProjectDTO projectDto) throws ProjectNotFoundException, UserNotFoundException, NullPointerException {
+    public boolean changeProjectOwner(ProjectDTO projectDto, User user) throws ProjectNotFoundException, UserNotFoundException,
+            NullPointerException, ForbiddenException {
         if (projectDto == null) {
             throw new NullPointerException("ERROR: projectDto is null");
         }
@@ -80,11 +122,17 @@ public class ProjectService {
             System.out.println("ERROR: User does not exist");
             throw new UserNotFoundException(newOwnerId);
         }
+        else if (!userIsOwnerOrAdmin(projectToEdit, user)) {
+            throw new ForbiddenException("The logged on user is not allowed to change owner of this project");
+        }
         else {
             if (hasSpecialPermission(projectToEdit, newOwner)) {
-                projectDao.removeSpecialPermission(projectToEdit, newOwner);
+                projectDao.revokeSpecialPermission(projectToEdit, newOwner);
             }
             projectDao.addProjectMember(projectToEdit, oldOwner);
+            if (projectToEdit.getProjectMembers().contains(newOwner)) {
+                projectDao.removeProjectMember(projectToEdit, newOwner);
+            }
             return projectDao.changeProjectOwner(projectToEdit, newOwner);
         }
     }
@@ -92,23 +140,91 @@ public class ProjectService {
     /**
      * This method takes the DTO from the controller and sends project and user to the DAO
      * @param projectDto The ProjectDTO object used to pass data
-     * @return The resulting Project object after it has been modified
+     * @param user The logged in user
+     * @return True if user has been successfully added, false otherwise
+     * @throws ForbiddenException If user is not allowed to add members
      */
-    public Project addMemberToProject(ProjectDTO projectDto) {
+    public boolean addMemberToProject(ProjectDTO projectDto, User user) throws ForbiddenException {
         Project thisProject = projectDao.getProjectById(projectDto.getProjectId());
         User thisUser = userDao.getUserById(projectDto.getUserId());
-        return projectDao.addProjectMember(thisProject, thisUser);
+        if (userIsOwnerOrAdmin(thisProject, user)) {
+            return projectDao.addProjectMember(thisProject, thisUser);
+        } else {
+            throw new ForbiddenException("The logged on user is not allowed to add members to this project");
+        }
     }
 
     /**
      * This method takes the DTO from the controller and sends project and user to the DAO
      * @param projectDto The ProjectDTO object used to pass data
+     * @param user The logged in user
      * @return The resulting Project object after it has been modified
+     * @throws ForbiddenException If user is not allowed to add members
      */
-    public Project removeMemberFromProject(ProjectDTO projectDto) {
+    public boolean removeMemberFromProject(ProjectDTO projectDto, User user) throws ForbiddenException {
         Project thisProject = projectDao.getProjectById(projectDto.getProjectId());
         User thisUser = userDao.getUserById(projectDto.getUserId());
-        return projectDao.removeProjectMember(thisProject, thisUser);
+        if (userIsOwnerOrAdmin(thisProject, user)) {
+            return projectDao.removeProjectMember(thisProject, thisUser);
+        } else {
+            throw new ForbiddenException("The logged on user is not allowed to remove members from this project");
+        }
+
+    }
+
+    /**
+     * This method adds a user to the special permissions of a project.
+     * @param projectId UUID of the project
+     * @param userEmail Email of the user
+     * @param loggedInUser The current logged in user
+     * @return True if user has been added to special permissions, false otherwise
+     * @throws ProjectNotFoundException If no project with this UUID exists
+     * @throws UserNotFoundException If no user with this email exists
+     * @throws ForbiddenException If logged on user is not allowed to grant special permission
+     * @throws IllegalArgumentException If user already has special permission
+     */
+    public boolean grantSpecialPermission(UUID projectId, String userEmail, User loggedInUser) throws ProjectNotFoundException,
+            UserNotFoundException, ForbiddenException, IllegalArgumentException {
+        if (!projectDao.doesProjectExist(projectId)) {
+            throw new ProjectNotFoundException(projectId);
+        } else if (userDao.getUserByEmail(userEmail) == null) {
+            throw new UserNotFoundException(userEmail);
+        } else if (projectDao.getProjectById(projectId).getUsersWithSpecialPermission().contains(userDao.getUserByEmail(userEmail))) {
+            throw new IllegalArgumentException("User " + userEmail + " already has special permission for this project");
+        }
+        else {
+            if (!isUserPermittedToChangeProject(projectDao.getProjectById(projectId), loggedInUser)) {
+                throw new ForbiddenException("User is not allowed to grant special permissions");
+            }
+            return projectDao.grantSpecialPermission(projectDao.getProjectById(projectId), userDao.getUserByEmail(userEmail));
+        }
+    }
+
+    /**
+     * This method removes a user from the special permissions of a project.
+     * @param projectId UUID of the project
+     * @param userEmail Email of the user
+     * @param loggedInUser The current logged in user
+     * @return True if user has been removed from special permissions, false otherwise
+     * @throws ProjectNotFoundException If no project with this UUID exists
+     * @throws UserNotFoundException If no user with this email exists
+     * @throws ForbiddenException If logged on user is not allowed to grant special permission
+     * @throws IllegalArgumentException If user does not have special permission to begin with
+     */
+    public boolean revokeSpecialPermission(UUID projectId, String userEmail, User loggedInUser) throws ProjectNotFoundException,
+            UserNotFoundException, ForbiddenException, IllegalArgumentException {
+        if (!projectDao.doesProjectExist(projectId)) {
+            throw new ProjectNotFoundException(projectId);
+        } else if (userDao.getUserByEmail(userEmail) == null) {
+            throw new UserNotFoundException(userEmail);
+        } else if (!projectDao.getProjectById(projectId).getUsersWithSpecialPermission().contains(userDao.getUserByEmail(userEmail))) {
+            throw new IllegalArgumentException("User " + userEmail + " does not have special permission for this project");
+        } else {
+            if (!isUserPermittedToChangeProject(projectDao.getProjectById(projectId), loggedInUser)) {
+                throw new ForbiddenException("User is not allowed to grant special permissions");
+            }
+            return projectDao.revokeSpecialPermission(projectDao.getProjectById(projectId), userDao.getUserByEmail(userEmail));
+        }
     }
 
     /**
@@ -141,20 +257,27 @@ public class ProjectService {
             newProject.setCreation(creation);
         }
 
-        MyUserDetails loggedInUserDetails = (MyUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        newProject.setOwner(userDao.getUserByEmail(loggedInUserDetails.getUsername()));
-
         return newProject;
     }
 
     /**
-     * Checks if the new owner already has special permissions.
+     * Helper method that checks if the new owner already has special permissions.
      * @param project The project
      * @param newOwner The new owner
      * @return True if he has special permissions, false otherwise
      */
     private boolean hasSpecialPermission(Project project, User newOwner) {
         return project.getUsersWithSpecialPermission().contains(newOwner);
+    }
+
+    /**
+     * Helper method to check if a user can modify a project
+     * @param project The project to check
+     * @param user The user you want to check permissions for
+     * @return True is user is allowed to modify project, false otherwise
+     */
+    private boolean userIsOwnerOrAdmin(Project project, User user) {
+        return project.getOwner().equals(user) || user.getRoles().get(0).getRoleName().equals("ROLE_" + Role.ADMIN);
     }
 
     /**
@@ -208,8 +331,8 @@ public class ProjectService {
      */
     private boolean isUserPermittedToChangeProject(Project project, User user) {
         return project.getOwner().equals(user) ||
-                isUserMember(project, user) ||
-                user.getRoles().get(0).getRoleName().equals("ROLE_" + Role.ADMIN);
+               isUserMember(project, user) ||
+               user.getRoles().get(0).getRoleName().equals("ROLE_" + Role.ADMIN);
     }
 
     /**

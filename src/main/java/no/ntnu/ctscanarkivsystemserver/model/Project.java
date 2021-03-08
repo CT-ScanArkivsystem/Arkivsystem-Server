@@ -2,6 +2,11 @@ package no.ntnu.ctscanarkivsystemserver.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import no.ntnu.ctscanarkivsystemserver.dao.UserDao;
+import no.ntnu.ctscanarkivsystemserver.exception.UserNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -21,13 +26,10 @@ import java.util.UUID;
 
 public class Project {
 
-    //eeeeeee
     public static final String FIND_ALL_PROJECTS = "Project.findAllNames";
     public static final String FIND_PROJECTS_BY_NAME = "Project.findProjectsByName";
     public static final String FIND_PROJECTS_BY_UUID = "Project.findProjectsByUUID";
 
-    // https://stackoverflow.com/questions/16142071/hibernate-ids-for-this-class-must-be-manually-assigned-before-calling-save
-    //@GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
     @Column(name="project_id")
     private UUID projectId;
@@ -72,7 +74,6 @@ public class Project {
                     referencedColumnName = "user_id"))
     private List<User> projectMembers = new ArrayList<>();
 
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @ManyToOne
     @JoinColumn(
             name="owner",

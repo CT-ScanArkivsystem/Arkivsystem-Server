@@ -41,6 +41,26 @@ public class ProjectDao {
     }
 
     /**
+     * Method to delete a project from the database
+     * Takes the object that is passed from the ProjectService class and removes in from the database
+     * using EntityManager.
+     * @param project The project you want to delete
+     * @return True if it is removed successfully, false if it is not
+     * @throws NullPointerException if project parameter is null
+     */
+    @Transactional
+    public boolean deleteProject(Project project) throws NullPointerException {
+        if (project != null) {
+            em.remove(project);
+            em.flush();
+            return !doesProjectExist(project.getProjectId());
+        }
+        else {
+            throw new NullPointerException("Project is null");
+        }
+    }
+
+    /**
      * This method runs the SQL query used to get all projects.
      * @return The list
      */
@@ -56,9 +76,7 @@ public class ProjectDao {
      */
     public boolean doesNameExist(String name) {
         Query query = em.createNamedQuery(Project.FIND_PROJECTS_BY_NAME);
-        System.out.println("DOESNAMEEXIST 1");
         query.setParameter("projectName", name);
-        System.out.println("DOESNAMEEXIST 2");
         List<Project> queryResult = query.getResultList();
         return !queryResult.isEmpty();
     }
@@ -99,60 +117,79 @@ public class ProjectDao {
 
     /**
      * This method uses the Entity Manager to modify and save the changes in the database
-     * @param inputProject The project that will be changed
+     * @param project The project that will be changed
      * @param newOwner The owner you want to set instead
-     * @return The modified Project
+     * @return True if new owner is set correctly, false otherwise
      */
     @Transactional
-    public Project changeProjectOwner(Project inputProject, User newOwner) {
+    public boolean changeProjectOwner(Project project, User newOwner) {
         System.out.println("ProjectDao: attempting to set newOwner as owner");
-        em.refresh(inputProject);
-        prepareProjectForEdit(inputProject);
-        inputProject.setOwner(newOwner);
-        return saveProject(inputProject);
+        em.refresh(project);
+        prepareProjectForEdit(project);
+        project.setOwner(newOwner);
+        saveProject(project);
+
+        return project.getOwner().getUserId() == newOwner.getUserId();
     }
 
     /**
      * This method uses the entity manager to remove a user from special-permission.
      * @param inputProject The project you want to modify
-     * @param newOwner The user you want to remove
-     * @return The modified project
+     * @param user The user you want to remove
+     * @return True if user does not have special-permission anymore, false otherwise
      */
     @Transactional
-    public Project removeSpecialPermission(Project inputProject, User newOwner) {
-        System.out.println("ProjectDao: removing newOwner from special permissions");
+    public boolean revokeSpecialPermission(Project inputProject, User user) {
         em.refresh(inputProject);
         prepareProjectForEdit(inputProject);
-        inputProject.getUsersWithSpecialPermission().remove(newOwner);
-        return saveProject(inputProject);
+        inputProject.getUsersWithSpecialPermission().remove(user);
+        saveProject(inputProject);
+        return !inputProject.getUsersWithSpecialPermission().contains(user);
+    }
+
+    /**
+     * This method uses the entity manager to remove a user from special-permission.
+     * @param inputProject The project you want to modify
+     * @param user The user you want to add
+     * @return True if user now has special-permission, false otherwise
+     */
+    @Transactional
+    public boolean grantSpecialPermission(Project inputProject, User user) {
+        em.refresh(inputProject);
+        prepareProjectForEdit(inputProject);
+        inputProject.getUsersWithSpecialPermission().add(user);
+        saveProject(inputProject);
+        return inputProject.getUsersWithSpecialPermission().contains(user);
     }
 
     /**
      * This method uses the entity manager to add a user to project_members.
      * @param inputProject The project you want to modify
      * @param user The user you want to add
-     * @return The modified project
+     * @return True if member has been added
      */
     @Transactional
-    public Project addProjectMember(Project inputProject, User user) {
+    public boolean addProjectMember(Project inputProject, User user) {
         em.refresh(inputProject);
         prepareProjectForEdit(inputProject);
         inputProject.getProjectMembers().add(user);
-        return saveProject(inputProject);
+        saveProject(inputProject);
+        return inputProject.getProjectMembers().contains(user);
     }
 
     /**
      * This method uses the entity manager to remove a user from project_members.
      * @param inputProject The project you want to modify
      * @param user The user you want to remove
-     * @return The modified project
+     * @return True if member has been removed
      */
     @Transactional
-    public Project removeProjectMember(Project inputProject, User user) {
+    public boolean removeProjectMember(Project inputProject, User user) {
         em.refresh(inputProject);
         prepareProjectForEdit(inputProject);
         inputProject.getProjectMembers().remove(user);
-        return saveProject(inputProject);
+        saveProject(inputProject);
+        return !inputProject.getProjectMembers().contains(user);
     }
 
     /**
@@ -190,7 +227,7 @@ public class ProjectDao {
      * @param project the project you want to change
      */
     private void prepareProjectForEdit(Project project) {
-        System.out.println("user getting ready for edit.");
+        System.out.println("Project getting ready for edit.");
         if(project != null) {
             try {
                 em.lock(project, LockModeType.PESSIMISTIC_WRITE);
@@ -206,7 +243,7 @@ public class ProjectDao {
      * @return
      */
     private Project saveProject(Project projectToSave) {
-        System.out.println("Trying to save user.");
+        System.out.println("Trying to save project.");
         if(projectToSave != null) {
             try {
                 em.merge(projectToSave);

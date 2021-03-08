@@ -1,12 +1,12 @@
 package no.ntnu.ctscanarkivsystemserver.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.NamedQuery;
+import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Class for representing project tags
@@ -24,6 +24,14 @@ public class Tag {
     @Id
     @Column(name="tag_name")
     private String tagName;
+
+    //This variable has to be set and will be 0 as default.
+    @Transient
+    private int numberOfProjects;
+
+    @ManyToMany(mappedBy = "tags", fetch = FetchType.EAGER)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private List<Project> projects = new ArrayList<>();
 
     public Tag(String tagName) {
         this.tagName = tagName;

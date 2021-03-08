@@ -88,7 +88,7 @@ public class UserService implements UserDetailsService {
      * @return user with email in database.
      * @throws UserNotFoundException if no user was found.
      */
-    private User getUserByEmail(String email) throws UserNotFoundException {
+    public User getUserByEmail(String email) throws UserNotFoundException {
         User user = userDao.getUserByEmail(email);
 
         if(user == null) {
@@ -154,6 +154,6 @@ public class UserService implements UserDetailsService {
      * @return true if parameter is a valid role.
      */
     public boolean isRoleValid(String role) {
-        return role.equals(Role.ADMIN) || role.equals(Role.PROFESSOR) || role.equals(Role.USER);
+        return role.equals(Role.ADMIN) || role.equals(Role.ACADEMIC) || role.equals(Role.USER);
     }
 }
