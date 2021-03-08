@@ -229,22 +229,6 @@ public class AcademicController {
     }
 
     /**
-     * Retrieves all tags from the database.
-     * @return If Successful: 200-OK and List with Tags
-     *         If there are no tags: 404-Not Found.
-     */
-    @GetMapping(path = "/getAllTags")
-    public ResponseEntity<List<Tag>> getAllTags() {
-        List<Tag> allTags = tagService.getAllTags();
-        if(allTags == null || allTags.isEmpty()) {
-            //No tags in the system.
-            return ResponseEntity.notFound().build();
-        } else {
-            return ResponseEntity.ok(allTags);
-        }
-    }
-
-    /**
      * Add a tag to a project.
      * @param tagName name of tag to be added.
      * @param projectId id of project to which tag is getting added to.

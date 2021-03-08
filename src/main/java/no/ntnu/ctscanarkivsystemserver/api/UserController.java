@@ -5,6 +5,7 @@ import no.ntnu.ctscanarkivsystemserver.exception.ProjectNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.exception.UserNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.exception.TagNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.model.Project;
+import no.ntnu.ctscanarkivsystemserver.model.Tag;
 import no.ntnu.ctscanarkivsystemserver.model.User;
 import no.ntnu.ctscanarkivsystemserver.service.ProjectService;
 import no.ntnu.ctscanarkivsystemserver.service.TagService;
@@ -98,6 +99,22 @@ public class UserController {
             } else {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
             }
+        }
+    }
+
+    /**
+     * Retrieves all tags from the database.
+     * @return If Successful: 200-OK and List with Tags
+     *         If there are no tags: 404-Not Found.
+     */
+    @GetMapping(path = "/getAllTags")
+    public ResponseEntity<List<Tag>> getAllTags() {
+        List<Tag> allTags = tagService.getAllTags();
+        if(allTags == null || allTags.isEmpty()) {
+            //No tags in the system.
+            return ResponseEntity.notFound().build();
+        } else {
+            return ResponseEntity.ok(allTags);
         }
     }
 
