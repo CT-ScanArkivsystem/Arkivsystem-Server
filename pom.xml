@@ -129,6 +129,11 @@
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
         </dependency>
+        <dependency>
+            <groupId>eu.agno3.jcifs</groupId>
+            <artifactId>jcifs-ng</artifactId>
+            <version>2.1.5</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

@@ -1,5 +1,12 @@
 package no.ntnu.ctscanarkivsystemserver.service;
 
+import jcifs.CIFSContext;
+import jcifs.Configuration;
+import jcifs.config.PropertyConfiguration;
+import jcifs.context.BaseContext;
+import jcifs.smb.Kerb5Authenticator;
+import jcifs.smb.SmbFile;
+import jcifs.smb.SmbFileOutputStream;
 import no.ntnu.ctscanarkivsystemserver.config.FileStorageProperties;
 import no.ntnu.ctscanarkivsystemserver.exception.FileStorageException;
 import no.ntnu.ctscanarkivsystemserver.exception.MyFileNotFoundException;
@@ -11,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.security.auth.Subject;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -22,6 +30,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * This class has the job of handling files and creating project directories.
@@ -138,6 +147,33 @@ public class FileStorageService {
         // Copy file to the target location (Replacing existing file with the same name)
         Path targetLocation = projectPath.resolve(fileName);
         Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+
+        SmbFileOutputStream out = null;
+
+        try {
+            String user = "username";
+            String password = "password";
+            String domain = "Nothing";
+
+            Properties prop = new Properties();
+            prop.put( "jcifs.smb.client.enableSMB2", "true");
+            prop.put( "jcifs.smb.client.disableSMB1", "false");
+            prop.put( "jcifs.traceResources", "true" );
+            Configuration config = new PropertyConfiguration(prop);
+            CIFSContext baseContext = new BaseContext(config);
+            CIFSContext contextWithCred = baseContext.withCredentials(new Kerb5Authenticator(new Subject(), domain, user, password));
+
+            // URL: smb://user:passwd@host/share/filname
+            out = new SmbFileOutputStream(new SmbFile("smb://" + user + ":" + password + "@" + path
+                    + File.separator + fileName, contextWithCred));
+            out.write(file.getBytes());
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if(out != null) {
+                out.close();
+            }
+        }
     }
 
     /**
