@@ -193,30 +193,34 @@ public class ProjectDao {
     }
 
     /**
-     * Adds a tag to a project.
+     * Add tags to a project.
      * @param project project for tag to be added to.
-     * @param tag tag to be added to project.
+     * @param tags tags to be added to project.
      * @return project if successful. Null if something went wrong.
      */
     @Transactional
-    public Project addProjectTag(Project project, Tag tag) {
+    public Project addProjectTag(Project project, List<Tag> tags) {
         em.refresh(project);
         prepareProjectForEdit(project);
-        project.getTags().add(tag);
+        for(Tag tag:tags) {
+            project.getTags().add(tag);
+        }
         return saveProject(project);
     }
 
     /**
-     * Removes a tag from a project.
+     * Remove tags from a project.
      * @param project project for tag to be removed from.
-     * @param tag tag to be removed.
+     * @param tags tags to be removed.
      * @return project if successful. Null if something went wrong.
      */
     @Transactional
-    public Project removeProjectTag(Project project, Tag tag) {
+    public Project removeProjectTag(Project project, List<Tag> tags) {
         em.refresh(project);
         prepareProjectForEdit(project);
-        project.getTags().remove(tag);
+        for(Tag tag:tags) {
+            project.getTags().remove(tag);
+        }
         return saveProject(project);
     }
 

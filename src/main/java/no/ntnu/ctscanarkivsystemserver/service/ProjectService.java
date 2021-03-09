@@ -284,42 +284,48 @@ public class ProjectService {
     /**
      * Adds a new tag to a project.
      * @param projectId Id of project for tag to be added to.
-     * @param tagToBeAdded tag to be added to project.
+     * @param tagsToBeAdded tags to be added to project.
      * @param adder user which is adding tag to project.
      * @return Project if adding was successful. Null if something went wrong.
      * @throws ProjectNotFoundException if no project with projectId was found.
      * @throws ForbiddenException if user is forbidden to do changes on this project.
      * @throws TagExistsException if tag already exist in the project.
      */
-    public Project addTag(UUID projectId, Tag tagToBeAdded, User adder) throws ProjectNotFoundException, ForbiddenException, TagExistsException {
+    public Project addTag(UUID projectId, List<Tag> tagsToBeAdded, User adder) throws ProjectNotFoundException, ForbiddenException, TagExistsException {
         Project project = projectDao.getProjectById(projectId);
         if(!isUserPermittedToChangeProject(project, adder)) {
             throw new ForbiddenException("User is forbidden to do changes on this project!");
-        } else if(doesTagExistInProject(tagToBeAdded, project)) {
-            throw new TagExistsException(tagToBeAdded.getTagName());
         } else {
-            return projectDao.addProjectTag(project, tagToBeAdded);
+            for(Tag tagToBeAdded:tagsToBeAdded) {
+                if(doesTagExistInProject(tagToBeAdded, project)) {
+                    throw new TagExistsException(tagToBeAdded.getTagName());
+                }
+            }
+            return projectDao.addProjectTag(project, tagsToBeAdded);
         }
     }
 
     /**
      * Removes a tag from a project.
      * @param projectId Id of project to be removed from.
-     * @param tagToBeRemoved tag to be removed from project.
+     * @param tagsToBeRemoved tags to be removed from project.
      * @param remover user which is removing tag from project.
      * @return Project if removing was successful.
      * @throws ProjectNotFoundException if no project with projectId was found.
      * @throws ForbiddenException if user is forbidden to do changes on this project.
      * @throws TagNotFoundException if tag does not exist in the project.
      */
-    public Project removeTag(UUID projectId, Tag tagToBeRemoved, User remover) throws ProjectNotFoundException, ForbiddenException, TagNotFoundException{
+    public Project removeTag(UUID projectId, List<Tag> tagsToBeRemoved, User remover) throws ProjectNotFoundException, ForbiddenException, TagNotFoundException{
         Project project = projectDao.getProjectById(projectId);
         if(!isUserPermittedToChangeProject(project, remover)) {
             throw new ForbiddenException("User is forbidden to do changes on this project!");
-        } else if(!doesTagExistInProject(tagToBeRemoved, project)) {
-            throw new TagNotFoundException(tagToBeRemoved.getTagName());
-        } else {
-            return projectDao.removeProjectTag(project, tagToBeRemoved);
+        }  else {
+            for(Tag tagToBeRemoved:tagsToBeRemoved) {
+                if(!doesTagExistInProject(tagToBeRemoved, project)) {
+                    throw new TagNotFoundException(tagToBeRemoved.getTagName());
+                }
+            }
+            return projectDao.removeProjectTag(project, tagsToBeRemoved);
         }
     }
 
