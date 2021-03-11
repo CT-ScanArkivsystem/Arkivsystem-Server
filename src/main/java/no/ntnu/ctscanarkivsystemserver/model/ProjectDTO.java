@@ -18,6 +18,7 @@ public class ProjectDTO {
     private String projectName;
     private Boolean isPrivate;
     private Date creation;
+    private String description;
     private List<Tag> tags;
     private List<User> usersWithSpecialPermission;
     private List<User> projectMembers;

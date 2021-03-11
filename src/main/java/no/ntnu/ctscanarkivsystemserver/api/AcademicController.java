@@ -143,7 +143,7 @@ public class AcademicController {
      */
     @PutMapping(path = "/addMemberToProject")
     public ResponseEntity<Project> addMemberToProject(@RequestBody ProjectDTO projectDto) {
-        boolean success = false;
+        boolean success;
         if (projectDto  == null) {
             System.out.println("ProjectDto is null");
             return ResponseEntity.badRequest().build();
@@ -175,7 +175,7 @@ public class AcademicController {
      */
     @PutMapping(path = "/removeMemberFromProject")
     public ResponseEntity<Project> removeMemberFromProject(@RequestBody ProjectDTO projectDto) {
-        boolean success = false;
+        boolean success;
         if (projectDto  == null) {
             System.out.println("ProjectDto is null");
             return ResponseEntity.badRequest().build();

@@ -1,6 +1,5 @@
 package no.ntnu.ctscanarkivsystemserver.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -38,6 +37,9 @@ public class Project {
     @Temporal(TemporalType.DATE)
     @Column(name="creation")
     private Date creation;
+
+    @Column(name="description")
+    private String description;
 
     @ManyToMany(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
     @JoinTable(name = "project_tags",
