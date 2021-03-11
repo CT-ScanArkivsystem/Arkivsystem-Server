@@ -253,9 +253,11 @@ public class ProjectService {
         } else {
             newProject.setIsPrivate(isPrivate);
         }
-        Date creation = projectDto.getCreation();
-        if (creation != null) {
-            newProject.setCreation(creation);
+        if (projectDto.getCreation() != null) {
+            newProject.setCreation(projectDto.getCreation());
+        }
+        if(projectDto.getDescription() != null) {
+            newProject.setDescription(projectDto.getDescription());
         }
 
         return newProject;
