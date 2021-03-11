@@ -154,6 +154,6 @@ public class UserService implements UserDetailsService {
      * @return true if parameter is a valid role.
      */
     public boolean isRoleValid(String role) {
-        return role.equals(Role.ADMIN) || role.equals(Role.PROFESSOR) || role.equals(Role.USER);
+        return role.equals(Role.ADMIN) || role.equals(Role.ACADEMIC) || role.equals(Role.USER);
     }
 }
