@@ -1,6 +1,7 @@
 package no.ntnu.ctscanarkivsystemserver.service;
 
 import jcifs.CIFSContext;
+import jcifs.CIFSException;
 import jcifs.Configuration;
 import jcifs.config.PropertyConfiguration;
 import jcifs.context.BaseContext;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.security.auth.Subject;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -170,12 +172,8 @@ public class FileStorageService {
     private void saveFile(MultipartFile file, String path) throws FileStorageException {
         System.out.println("Test");
         try {
-            Configuration config = new PropertyConfiguration(new Properties());
-            CIFSContext context = new BaseContext(config);
-            context = context.withCredentials(new NtlmPasswordAuthentication(null, domain, userName, password));
-
             System.out.println("Test1");
-            out = new SmbFileOutputStream(new SmbFile(url + "/" + path + "/" + getFileName(file), context));
+            out = new SmbFileOutputStream(new SmbFile(url + "/" + path + "/" + getFileName(file), getContextWithCred()));
             out.write(file.getBytes());
             System.out.println("Test2");
         } catch (SmbException e) {
@@ -228,11 +226,7 @@ public class FileStorageService {
         for(String dirPath:directoriesToMake) {
             SmbFile smbFile = null;
             try {
-                Configuration config = new PropertyConfiguration(new Properties());
-                CIFSContext context = new BaseContext(config);
-                context = context.withCredentials(new NtlmPasswordAuthentication(null, domain, userName, password));
-
-                smbFile = new SmbFile(url + "/" + dirPath, context);
+                smbFile = new SmbFile(url + "/" + dirPath, getContextWithCred());
                 if(!smbFile.exists()) {
                     smbFile.mkdir();
                 }
@@ -274,5 +268,20 @@ public class FileStorageService {
      */
     private LocalDate convertToLocalDateViaSqlDate(Date dateToConvert) {
         return new java.sql.Date(dateToConvert.getTime()).toLocalDate();
+    }
+
+    /**
+     * Creates a context with credentials.
+     * @return CIFSContext with context and credentials.
+     * @throws CIFSException if creation of context failed.
+     */
+    private CIFSContext getContextWithCred() throws CIFSException {
+        Properties prop = new Properties();
+        prop.put( "jcifs.smb.client.enableSMB2", "true");
+        prop.put( "jcifs.smb.client.disableSMB1", "false");
+        prop.put( "jcifs.traceResources", "true" );
+        Configuration config = new PropertyConfiguration(prop);
+        CIFSContext baseContext = new BaseContext(config);
+        return baseContext.withCredentials(new Kerb5Authenticator(new Subject(), domain, userName, password));
     }
 }
