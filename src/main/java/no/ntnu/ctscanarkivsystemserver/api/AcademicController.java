@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.ws.rs.ForbiddenException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -146,7 +147,7 @@ public class AcademicController {
      */
     @PutMapping(path = "/addMemberToProject")
     public ResponseEntity<Project> addMemberToProject(@RequestBody ProjectDTO projectDto) {
-        boolean success = false;
+        boolean success;
         if (projectDto  == null) {
             System.out.println("ProjectDto is null");
             return ResponseEntity.badRequest().build();
@@ -178,7 +179,7 @@ public class AcademicController {
      */
     @PutMapping(path = "/removeMemberFromProject")
     public ResponseEntity<Project> removeMemberFromProject(@RequestBody ProjectDTO projectDto) {
-        boolean success = false;
+        boolean success;
         if (projectDto  == null) {
             System.out.println("ProjectDto is null");
             return ResponseEntity.badRequest().build();
@@ -229,9 +230,25 @@ public class AcademicController {
     }
 
     /**
-     * Add a tag to a project.
-     * @param tagName name of tag to be added.
-     * @param projectId id of project to which tag is getting added to.
+     * Retrieves all tags from the database.
+     * @return If Successful: 200-OK and List with Tags
+     *         If there are no tags: 404-Not Found.
+     */
+    @GetMapping(path = "/getAllTags")
+    public ResponseEntity<List<Tag>> getAllTags() {
+        List<Tag> allTags = tagService.getAllTags();
+        if(allTags == null || allTags.isEmpty()) {
+            //No tags in the system.
+            return ResponseEntity.notFound().build();
+        } else {
+            return ResponseEntity.ok(allTags);
+        }
+    }
+
+    /**
+     * Add tags to a project.
+     * @param tagNames names of tags to be added.
+     * @param projectId id of project to which tags is getting added to.
      * @return If Successful: 200-Ok with Project.
      *         If tagName or projectId is null; 400-Bad Request.
      *         If tag, project or adder user is not found: 404-Not Found.
@@ -241,14 +258,18 @@ public class AcademicController {
      *         If tagName has 2 or less characters: 400-Bad Request.
      */
     @PutMapping(path = "/addTag")
-    public ResponseEntity<Project> addTag(@RequestParam String tagName, @RequestParam UUID projectId) {
+    public ResponseEntity<Project> addTag(@RequestParam List<String> tagNames, @RequestParam UUID projectId) {
         Project addedProject;
-        if(tagName == null || tagName.trim().isEmpty() || projectId == null) {
+        if(tagNames == null || projectId == null) {
             //Tag name cannot be empty and project id cannot be null!
             return ResponseEntity.badRequest().build();
         } else {
+            List<Tag> tagsToBeAdded = new ArrayList<>();
+            for(String tagName: tagNames) {
+                tagsToBeAdded.add(tagService.getTag(tagName));
+            }
             try {
-                addedProject = projectService.addTag(projectId, tagService.getTag(tagName), userService.getCurrentLoggedUser());
+                addedProject = projectService.addTag(projectId, tagsToBeAdded, userService.getCurrentLoggedUser());
             } catch (UserNotFoundException | TagNotFoundException | ProjectNotFoundException e) {
                 System.out.println(e.getMessage());
                 //Tag, project or user not found.
@@ -276,8 +297,8 @@ public class AcademicController {
     }
 
     /**
-     * Remove a tag from a project.
-     * @param tagName name of tag to be removed.
+     * Remove tags from a project.
+     * @param tagNames names of tags to be removed.
      * @param projectId id of project to which tag is getting removed from.
      * @return If Successful: 200-Ok with Project.
      *         If tagName or projectId is null: 400-Bad Request.
@@ -287,13 +308,17 @@ public class AcademicController {
      *         If tagName has 2 or less characters: 400-Bad Request.
      */
     @PutMapping(path = ("/removeTag"))
-    public ResponseEntity<Project> removeTag(@RequestParam String tagName, @RequestParam UUID projectId) {
+    public ResponseEntity<Project> removeTag(@RequestParam List<String> tagNames, @RequestParam UUID projectId) {
         Project project;
-        if(tagName == null || tagName.trim().isEmpty() || projectId == null) {
+        if(tagNames == null || projectId == null) {
             return ResponseEntity.badRequest().build();
         } else {
             try {
-                project = projectService.removeTag(projectId, tagService.getTag(tagName), userService.getCurrentLoggedUser());
+                List<Tag> tagsToBeRemoved = new ArrayList<>();
+                for(String tagName:tagNames) {
+                    tagsToBeRemoved.add(tagService.getTag(tagName));
+                }
+                project = projectService.removeTag(projectId, tagsToBeRemoved, userService.getCurrentLoggedUser());
             } catch (UserNotFoundException | TagNotFoundException | ProjectNotFoundException e) {
                 System.out.println(e.getMessage());
                 //Tag, project or user not found. Tag is either does not exist or is not found in project.
