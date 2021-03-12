@@ -401,12 +401,26 @@ public class AcademicController {
         }
     }
 
+    /**
+     * Uploads files into the correct folders in the file server.
+     * If the file already exist it wont be saved.
+     * @param files files to upload.
+     * @param projectId project files are associated with.
+     * @return If successful: 200 OK with a list of all files which where not uploaded.
+     *         If user or project does not exist: 404 Not Found
+     *         If logged in user is not allowed to do changes on the project: 403 Forbidden
+     */
     @PostMapping(path = "/uploadFiles")
     public ResponseEntity<List<String>> uploadFiles(@RequestParam("files") MultipartFile[] files, @RequestParam("projectId") UUID projectId) {
         List<String> notAddedFiles;
         try {
             Project projectToUploadFilesTo = projectService.getProject(projectId);
-            notAddedFiles = fileStorageService.storeFile(files, projectToUploadFilesTo);
+            if(projectService.isUserPermittedToChangeProject(projectToUploadFilesTo, userService.getCurrentLoggedUser())) {
+                notAddedFiles = fileStorageService.storeFile(files, projectToUploadFilesTo);
+            } else {
+                //User is not permitted to do changes on this project.
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
         } catch (ProjectNotFoundException e) {
             //No project was found with id.
             return ResponseEntity.notFound().build();
