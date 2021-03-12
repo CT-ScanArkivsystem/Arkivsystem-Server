@@ -405,9 +405,8 @@ public class AcademicController {
     public ResponseEntity<?> uploadFiles(@RequestParam("files") MultipartFile[] files, @RequestParam("projectId") UUID projectId) {
         try {
             Project projectToUploadFilesTo = projectService.getProject(projectId);
-            for(MultipartFile file:files) {
-                fileStorageService.storeFile(file, projectToUploadFilesTo);
-            }
+            //fileStorageService.test(files[0]);
+            fileStorageService.storeFile(files, projectToUploadFilesTo);
         } catch (ProjectNotFoundException e) {
             //No project was found with id.
             return ResponseEntity.notFound().build();

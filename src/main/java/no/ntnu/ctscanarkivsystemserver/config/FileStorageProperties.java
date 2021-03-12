@@ -20,4 +20,9 @@ public class FileStorageProperties {
     private String dicomDir;
     private String tiffDir;
     private List<String> directories;
+
+    private String user;
+    private String pass;
+    private String domain;
+    private String url;
 }

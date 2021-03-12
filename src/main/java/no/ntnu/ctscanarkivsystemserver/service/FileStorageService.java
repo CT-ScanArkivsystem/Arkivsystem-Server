@@ -4,87 +4,115 @@ import jcifs.CIFSContext;
 import jcifs.Configuration;
 import jcifs.config.PropertyConfiguration;
 import jcifs.context.BaseContext;
-import jcifs.smb.Kerb5Authenticator;
-import jcifs.smb.SmbFile;
-import jcifs.smb.SmbFileOutputStream;
+import jcifs.smb.*;
 import no.ntnu.ctscanarkivsystemserver.config.FileStorageProperties;
+import no.ntnu.ctscanarkivsystemserver.exception.DirectoryCreationException;
 import no.ntnu.ctscanarkivsystemserver.exception.FileStorageException;
-import no.ntnu.ctscanarkivsystemserver.exception.MyFileNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.model.Project;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.security.auth.Subject;
-import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * This class has the job of handling files and creating project directories.
  * @author trymv
- * @source https://www.callicoder.com/spring-boot-file-upload-download-rest-api-example/
  */
 @Service
 public class FileStorageService {
 
-    private final Path DOCUMENT_PATH;
-    private final Path IMAGE_PATH;
-    private final Path LOG_PATH;
-    private final Path IMAGE_DICOM_PATH;
-    private final Path IMAGE_TIFF_PATH;
-    private final Path fileStorageLocation;
+    private final String DOCUMENT_PATH;
+    private final String IMAGE_PATH;
+    private final String LOG_PATH;
+    private final String IMAGE_DICOM_PATH;
+    private final String IMAGE_TIFF_PATH;
+    private final String fileStorageLocation;
+
+    private final String userName;
+    private final String password;
+    private final String domain;
+    private final String url;
+    private SmbFileOutputStream out;
 
     @Autowired
     public FileStorageService(FileStorageProperties fileStorageProperties) {
-        this.fileStorageLocation = Paths.get(fileStorageProperties.getUploadDir())
-                .toAbsolutePath().normalize();
-        this.DOCUMENT_PATH = Paths.get(fileStorageProperties.getDocumentDir())
-                .toAbsolutePath().normalize();
-        this.IMAGE_PATH = Paths.get(fileStorageProperties.getImageDir())
-                .toAbsolutePath().normalize();
-        this.LOG_PATH = Paths.get(fileStorageProperties.getLogDir())
-                .toAbsolutePath().normalize();
-        this.IMAGE_DICOM_PATH = Paths.get(fileStorageProperties.getDicomDir())
-                .toAbsolutePath().normalize();
-        this.IMAGE_TIFF_PATH = Paths.get(fileStorageProperties.getTiffDir())
-                .toAbsolutePath().normalize();
+        this.fileStorageLocation = fileStorageProperties.getUploadDir();
+        this.DOCUMENT_PATH = fileStorageProperties.getDocumentDir();
+        this.IMAGE_PATH = fileStorageProperties.getImageDir();
+        this.LOG_PATH = fileStorageProperties.getLogDir();
+        this.IMAGE_DICOM_PATH = fileStorageProperties.getDicomDir();
+        this.IMAGE_TIFF_PATH = fileStorageProperties.getTiffDir();
+        this.userName = fileStorageProperties.getUser();
+        this.password = fileStorageProperties.getPass();
+        this.domain = fileStorageProperties.getDomain();
+        this.url = fileStorageProperties.getUrl();
+    }
 
+    public void test(MultipartFile files) {
+        System.out.println("Test");
         try {
-            Files.createDirectories(this.fileStorageLocation);
-        } catch (Exception ex) {
-            throw new FileStorageException("Could not create the directory where the uploaded files will be stored.", ex);
+            Configuration config = new PropertyConfiguration(new Properties());
+            CIFSContext context = new BaseContext(config);
+            context = context.withCredentials(new NtlmPasswordAuthentication(null, domain, userName, password));
+
+            //SmbFileInputStream in = new SmbFileInputStream(url + "/Test.txt", context);
+            System.out.println("Test1");
+            out = new SmbFileOutputStream(new SmbFile(url + "/" + getFileName(files), context));
+            out.write(files.getBytes());
+            System.out.println("Test2");
+            /*byte[] b = new byte[8192];
+            int n;
+            byte[] bytes = "in.read()".getBytes();
+            String test = Base64.getEncoder().encodeToString(bytes);
+            System.out.println("Test5: " + test);
+            while(( n = in.read( b )) > 0 ) {
+                System.out.println("Test6");
+                System.out.write( b, 0, n );
+            }*/
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                out.close();
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
         }
     }
 
-    public void storeFile(MultipartFile file, Project project) throws FileStorageException {
-        String fileName;
-        // Normalize file name
-        if(file != null && file.getOriginalFilename() != null) {
-            fileName = StringUtils.cleanPath(file.getOriginalFilename());
-            try {
-                // Check if the file's name contains invalid characters
-                if(fileName.contains("..")) {
-                    throw new FileStorageException("Sorry! Filename contains invalid path sequence " + fileName);
+    /**
+     * Return the name of file including file type.
+     * @param file file to get name from.
+     * @return name of file incudling file type.
+     */
+    private String getFileName(MultipartFile file) {
+        return StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
+    }
+
+    /**
+     * Tries to create directories then sort files into correct directory.
+     * @param files files to store.
+     * @param project project linked to files.
+     * @throws FileStorageException if storing of files failed.
+     * @throws DirectoryCreationException if creation of directories failed.
+     */
+    public void storeFile(MultipartFile[] files, Project project) throws FileStorageException, DirectoryCreationException {
+        createProjectDirectories(project);
+        for(MultipartFile file:files) {
+            if (file != null && file.getOriginalFilename() != null) {
+                try {
+                    // Check if the file's name contains invalid characters
+                    if (getFileName(file).contains("..")) {
+                        throw new FileStorageException("Sorry! Filename contains invalid path sequence " + getFileName(file));
+                    }
+                    storeFileInDirectory(file, fileStorageLocation + dateNameToPath(project));
+                } catch (Exception ex) {
+                    throw new FileStorageException("Could not store file " + getFileName(file) + ". Please try again!\nMessage: "
+                            + ex.getMessage(), ex);
                 }
-                if(!createProjectDirectories(this.fileStorageLocation.toString() + dateNameToPath(project))) {
-                    throw new FileStorageException("Something went wrong when trying to create project directories!");
-                }
-                storeFileInDirectory(file, fileStorageLocation.toString() + dateNameToPath(project), fileName);
-            } catch (IOException ex) {
-                throw new FileStorageException("Could not store file " + fileName + ". Please try again!", ex);
             }
         }
     }
@@ -93,34 +121,33 @@ public class FileStorageService {
      * Save the file into the correct directory depending on the file type.
      * @param file to save.
      * @param path to project folder.
-     * @param fileName name of file.
-     * @throws IOException if something went wrong when trying to save file.
+     * @throws FileStorageException if something went wrong when trying to save file.
      */
-    private void storeFileInDirectory(MultipartFile file, String path, String fileName) throws IOException{
+    private void storeFileInDirectory(MultipartFile file, String path) throws FileStorageException {
         if(file.getOriginalFilename() != null) {
             String fileType = getFileType(file.getOriginalFilename());
             System.out.println("File type is: " + fileType);
             switch (fileType) {
                 case "IMA":
                     System.out.println("DICOM file!");
-                    saveFile(file, path + IMAGE_DICOM_PATH, fileName);
+                    saveFile(file, path + IMAGE_DICOM_PATH);
                     break;
 
                 case "tiff":
                     System.out.println("Tiff file!");
-                    saveFile(file, path + IMAGE_TIFF_PATH, fileName);
+                    saveFile(file, path + IMAGE_TIFF_PATH);
                     break;
 
                 default:
                     System.out.println("Default!");
-                    saveFile(file, path + DOCUMENT_PATH, fileName);
+                    saveFile(file, path + DOCUMENT_PATH);
             }
         } else {
             System.out.println("File type was null.");
         }
     }
 
-    public Resource loadFileAsResource(String fileName) {
+    /*public Resource loadFileAsResource(String fileName) {
         try {
             Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
             Resource resource = new UrlResource(filePath.toUri());
@@ -132,46 +159,34 @@ public class FileStorageService {
         } catch (MalformedURLException ex) {
             throw new MyFileNotFoundException("File not found " + fileName, ex);
         }
-    }
+    }*/
 
     /**
      * Save a file into the given path.
      * @param file to save into the given path.
      * @param path of where to save the given file.
-     * @param fileName name of file.
-     * @throws IOException if something went wrong when trying to save file.
+     * @throws FileStorageException if something went wrong when trying to save file.
      */
-    private void saveFile(MultipartFile file, String path, String fileName) throws IOException {
-        Path projectPath = Paths.get(path)
-                .toAbsolutePath().normalize();
-        // Copy file to the target location (Replacing existing file with the same name)
-        Path targetLocation = projectPath.resolve(fileName);
-        Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-
-        SmbFileOutputStream out = null;
-
+    private void saveFile(MultipartFile file, String path) throws FileStorageException {
+        System.out.println("Test");
         try {
-            String user = "username";
-            String password = "password";
-            String domain = "Nothing";
+            Configuration config = new PropertyConfiguration(new Properties());
+            CIFSContext context = new BaseContext(config);
+            context = context.withCredentials(new NtlmPasswordAuthentication(null, domain, userName, password));
 
-            Properties prop = new Properties();
-            prop.put( "jcifs.smb.client.enableSMB2", "true");
-            prop.put( "jcifs.smb.client.disableSMB1", "false");
-            prop.put( "jcifs.traceResources", "true" );
-            Configuration config = new PropertyConfiguration(prop);
-            CIFSContext baseContext = new BaseContext(config);
-            CIFSContext contextWithCred = baseContext.withCredentials(new Kerb5Authenticator(new Subject(), domain, user, password));
-
-            // URL: smb://user:passwd@host/share/filname
-            out = new SmbFileOutputStream(new SmbFile("smb://" + user + ":" + password + "@" + path
-                    + File.separator + fileName, contextWithCred));
+            System.out.println("Test1");
+            out = new SmbFileOutputStream(new SmbFile(url + "/" + path + "/" + getFileName(file), context));
             out.write(file.getBytes());
+            System.out.println("Test2");
+        } catch (SmbException e) {
+            throw new FileStorageException(e.getMessage());
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            if(out != null) {
+            try {
                 out.close();
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
             }
         }
     }
@@ -203,13 +218,44 @@ public class FileStorageService {
     }
 
     /**
-     * Makes directories for a project if the project does not have them already.
-     * @param directoryPath path to directories including project directory.
-     * @return true if directories was made or already exists.
+     * Creates directories for a project if the project does not have them already.
+     * @param project project to make directories for.
+     * @throws DirectoryCreationException if creation of directories failed.
      */
-    private boolean createProjectDirectories(String directoryPath) {
+    private void createProjectDirectories(Project project) throws DirectoryCreationException {
+        List<String> directoriesToMake = createProjectDirList(project);
+
+        for(String dirPath:directoriesToMake) {
+            SmbFile smbFile = null;
+            try {
+                Configuration config = new PropertyConfiguration(new Properties());
+                CIFSContext context = new BaseContext(config);
+                context = context.withCredentials(new NtlmPasswordAuthentication(null, domain, userName, password));
+
+                smbFile = new SmbFile(url + "/" + dirPath, context);
+                if(!smbFile.exists()) {
+                    smbFile.mkdir();
+                }
+            } catch (Exception e) {
+                throw new DirectoryCreationException(e.getMessage());
+            } finally {
+                if(smbFile != null) {
+                    smbFile.close();
+                }
+            }
+        }
+    }
+
+    /**
+     * Creates a list of all directories leading up to the project directory and folders inside.
+     * @param project project to make directories for.
+     * @return List of all directories leading up to the project directory and folders inside.
+     */
+    private List<String> createProjectDirList(Project project) {
+        String directoryPath = fileStorageLocation + dateNameToPath(project);
         List<String> directoriesToMake = new ArrayList<>();
         //To create the project directory:
+        directoriesToMake.add(fileStorageLocation);
         directoriesToMake.add(directoryPath);
         //Directories inside project directory:
         directoriesToMake.add(directoryPath + IMAGE_PATH);
@@ -218,19 +264,7 @@ public class FileStorageService {
         //Sub directories of directories inside project directory:
         directoriesToMake.add(directoryPath + IMAGE_DICOM_PATH);
         directoriesToMake.add(directoryPath + IMAGE_TIFF_PATH);
-
-        for(String dirPath:directoriesToMake) {
-            File dirPathFile = new File(dirPath);
-            if (!dirPathFile.exists()) {
-                try {
-                    dirPathFile.mkdir();
-                } catch (Exception e) {
-                    System.out.println(e.getMessage());
-                    return false;
-                }
-            }
-        }
-        return true;
+        return directoriesToMake;
     }
 
     /**
