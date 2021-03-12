@@ -402,19 +402,19 @@ public class AcademicController {
     }
 
     @PostMapping(path = "/uploadFiles")
-    public ResponseEntity<?> uploadFiles(@RequestParam("files") MultipartFile[] files, @RequestParam("projectId") UUID projectId) {
+    public ResponseEntity<List<String>> uploadFiles(@RequestParam("files") MultipartFile[] files, @RequestParam("projectId") UUID projectId) {
+        List<String> notAddedFiles;
         try {
             Project projectToUploadFilesTo = projectService.getProject(projectId);
-            //fileStorageService.test(files[0]);
-            fileStorageService.storeFile(files, projectToUploadFilesTo);
+            notAddedFiles = fileStorageService.storeFile(files, projectToUploadFilesTo);
         } catch (ProjectNotFoundException e) {
             //No project was found with id.
             return ResponseEntity.notFound().build();
-        } catch (FileStorageException e) {
+        } catch (FileStorageException | DirectoryCreationException e) {
             //TODO Maybe change to something else?
             System.out.println(e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(notAddedFiles);
     }
 }

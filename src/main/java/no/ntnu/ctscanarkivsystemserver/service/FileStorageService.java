@@ -16,6 +16,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.security.auth.Subject;
+import javax.ws.rs.ForbiddenException;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -100,8 +102,10 @@ public class FileStorageService {
      * @param project project linked to files.
      * @throws FileStorageException if storing of files failed.
      * @throws DirectoryCreationException if creation of directories failed.
+     * @return list of all files which was not added.
      */
-    public void storeFile(MultipartFile[] files, Project project) throws FileStorageException, DirectoryCreationException {
+    public List<String> storeFile(MultipartFile[] files, Project project) throws FileStorageException, DirectoryCreationException {
+        List<String> notAddedFiles = new ArrayList<>();
         createProjectDirectories(project);
         for(MultipartFile file:files) {
             if (file != null && file.getOriginalFilename() != null) {
@@ -110,13 +114,17 @@ public class FileStorageService {
                     if (getFileName(file).contains("..")) {
                         throw new FileStorageException("Sorry! Filename contains invalid path sequence " + getFileName(file));
                     }
-                    storeFileInDirectory(file, fileStorageLocation + dateNameToPath(project));
+                    String notAddedFile = storeFileInDirectory(file, fileStorageLocation + dateNameToPath(project));
+                    if(notAddedFile != null) {
+                        notAddedFiles.add(notAddedFile);
+                    }
                 } catch (Exception ex) {
                     throw new FileStorageException("Could not store file " + getFileName(file) + ". Please try again!\nMessage: "
                             + ex.getMessage(), ex);
                 }
             }
         }
+        return notAddedFiles;
     }
 
     /**
@@ -124,29 +132,33 @@ public class FileStorageService {
      * @param file to save.
      * @param path to project folder.
      * @throws FileStorageException if something went wrong when trying to save file.
+     * @throws IOException if saveFile failed to close outputStream.
+     * @return null if file was successfully saved else return name of file.
      */
-    private void storeFileInDirectory(MultipartFile file, String path) throws FileStorageException {
+    private String storeFileInDirectory(MultipartFile file, String path) throws FileStorageException, IOException{
+        String notAddedFile = null;
         if(file.getOriginalFilename() != null) {
             String fileType = getFileType(file.getOriginalFilename());
             System.out.println("File type is: " + fileType);
             switch (fileType) {
                 case "IMA":
                     System.out.println("DICOM file!");
-                    saveFile(file, path + IMAGE_DICOM_PATH);
+                    notAddedFile = saveFile(file, path + IMAGE_DICOM_PATH);
                     break;
 
                 case "tiff":
                     System.out.println("Tiff file!");
-                    saveFile(file, path + IMAGE_TIFF_PATH);
+                    notAddedFile = saveFile(file, path + IMAGE_TIFF_PATH);
                     break;
 
                 default:
                     System.out.println("Default!");
-                    saveFile(file, path + DOCUMENT_PATH);
+                    notAddedFile = saveFile(file, path + DOCUMENT_PATH);
             }
         } else {
             System.out.println("File type was null.");
         }
+        return notAddedFile;
     }
 
     /*public Resource loadFileAsResource(String fileName) {
@@ -168,25 +180,59 @@ public class FileStorageService {
      * @param file to save into the given path.
      * @param path of where to save the given file.
      * @throws FileStorageException if something went wrong when trying to save file.
+     * @throws IOException if outputStream failed to close.
+     * @return null if file was successfully saved else return name of file.
      */
-    private void saveFile(MultipartFile file, String path) throws FileStorageException {
-        System.out.println("Test");
+    private String saveFile(MultipartFile file, String path) throws FileStorageException, IOException {
+        String notCreatedFile = null;
+        SmbFile smbFile = null;
+        SmbFileOutputStream outputStream = null;
         try {
-            System.out.println("Test1");
-            out = new SmbFileOutputStream(new SmbFile(url + "/" + path + "/" + getFileName(file), getContextWithCred()));
-            out.write(file.getBytes());
-            System.out.println("Test2");
-        } catch (SmbException e) {
-            throw new FileStorageException(e.getMessage());
+            if(doesFileExist(file, path)) {
+                notCreatedFile = getFileName(file);
+                System.out.println("File already exist!");
+            } else {
+                smbFile = new SmbFile(url + "/" + path + "/" + getFileName(file), getContextWithCred());
+                outputStream = new SmbFileOutputStream(smbFile);
+                outputStream.write(file.getBytes());
+            }
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new FileStorageException(e.getMessage());
         } finally {
-            try {
-                out.close();
-            } catch (Exception e) {
-                System.out.println(e.getMessage());
+            if(smbFile != null) {
+                smbFile.close();
+            }
+            if(outputStream != null) {
+                outputStream.close();
             }
         }
+        return notCreatedFile;
+    }
+
+    /**
+     * Checks if a file already exists in the folder.
+     * @param file file to see if already exists.
+     * @param path path to file including folder file is in.
+     * @return true if file already exist
+     */
+    private boolean doesFileExist(MultipartFile file, String path) {
+        SmbFile smbFile = null;
+        try {
+            smbFile = new SmbFile(url + "/" + path + "/", getContextWithCred());
+            for (SmbFile existingFile:smbFile.listFiles()) {
+                System.out.println("SmbFile name is: " + existingFile.getName() + "\nMultipartFile name is: " + getFileName(file));
+                if(getFileName(file).equals(existingFile.getName())) {
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            throw  new ForbiddenException("Exception while trying to see if file exists: " + e.getMessage());
+        } finally {
+            if(smbFile != null) {
+                smbFile.close();
+            }
+        }
+        return false;
     }
 
     /**
@@ -229,6 +275,7 @@ public class FileStorageService {
                 smbFile = new SmbFile(url + "/" + dirPath, getContextWithCred());
                 if(!smbFile.exists()) {
                     smbFile.mkdir();
+                    System.out.println("Making Dir");
                 }
             } catch (Exception e) {
                 throw new DirectoryCreationException(e.getMessage());
