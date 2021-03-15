@@ -410,21 +410,34 @@ public class AcademicController {
         }
     }
 
+    /**
+     * Uploads files into the correct folders in the file server.
+     * If the file already exist it wont be saved.
+     * @param files files to upload.
+     * @param projectId project files are associated with.
+     * @return If successful: 200 OK with a list of all files which where not uploaded.
+     *         If user or project does not exist: 404 Not Found
+     *         If logged in user is not allowed to do changes on the project: 403 Forbidden
+     */
     @PostMapping(path = "/uploadFiles")
-    public ResponseEntity<?> uploadFiles(@RequestParam("files") MultipartFile[] files, @RequestParam("projectId") UUID projectId) {
+    public ResponseEntity<List<String>> uploadFiles(@RequestParam("files") MultipartFile[] files, @RequestParam("projectId") UUID projectId) {
+        List<String> notAddedFiles;
         try {
             Project projectToUploadFilesTo = projectService.getProject(projectId);
-            for(MultipartFile file:files) {
-                fileStorageService.storeFile(file, projectToUploadFilesTo);
+            if(projectService.isUserPermittedToChangeProject(projectToUploadFilesTo, userService.getCurrentLoggedUser())) {
+                notAddedFiles = fileStorageService.storeFile(files, projectToUploadFilesTo);
+            } else {
+                //User is not permitted to do changes on this project.
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
         } catch (ProjectNotFoundException e) {
             //No project was found with id.
             return ResponseEntity.notFound().build();
-        } catch (FileStorageException e) {
+        } catch (FileStorageException | DirectoryCreationException e) {
             //TODO Maybe change to something else?
             System.out.println(e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(notAddedFiles);
     }
 }
