@@ -8,7 +8,7 @@ import java.util.UUID;
  */
 public class UserNotFoundException extends RuntimeException {
     public UserNotFoundException(String email) {
-        super("No users with the id: " + email + " found!");
+        super("No users with the email: " + email + " found!");
     }
 
     public UserNotFoundException(UUID id) {

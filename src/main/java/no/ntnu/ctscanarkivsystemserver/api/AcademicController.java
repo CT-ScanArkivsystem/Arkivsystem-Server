@@ -2,6 +2,7 @@ package no.ntnu.ctscanarkivsystemserver.api;
 
 import no.ntnu.ctscanarkivsystemserver.exception.*;
 import no.ntnu.ctscanarkivsystemserver.model.*;
+import no.ntnu.ctscanarkivsystemserver.service.FileStorageService;
 import no.ntnu.ctscanarkivsystemserver.service.ProjectService;
 import no.ntnu.ctscanarkivsystemserver.service.TagService;
 import no.ntnu.ctscanarkivsystemserver.service.UserService;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.ws.rs.ForbiddenException;
 import java.util.ArrayList;
@@ -27,12 +29,14 @@ public class AcademicController {
     private final ProjectService projectService;
     private final TagService tagService;
     private final UserService userService;
+    private final FileStorageService fileStorageService;
 
     @Autowired
-    public AcademicController(ProjectService projectService, TagService tagService, UserService userService) {
+    public AcademicController(ProjectService projectService, TagService tagService, UserService userService, FileStorageService fileStorageService) {
         this.projectService = projectService;
         this.tagService = tagService;
         this.userService = userService;
+        this.fileStorageService = fileStorageService;
     }
 
     /**
@@ -404,5 +408,36 @@ public class AcademicController {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
             }
         }
+    }
+
+    /**
+     * Uploads files into the correct folders in the file server.
+     * If the file already exist it wont be saved.
+     * @param files files to upload.
+     * @param projectId project files are associated with.
+     * @return If successful: 200 OK with a list of all files which where not uploaded.
+     *         If user or project does not exist: 404 Not Found
+     *         If logged in user is not allowed to do changes on the project: 403 Forbidden
+     */
+    @PostMapping(path = "/uploadFiles")
+    public ResponseEntity<List<String>> uploadFiles(@RequestParam("files") MultipartFile[] files, @RequestParam("projectId") UUID projectId) {
+        List<String> notAddedFiles;
+        try {
+            Project projectToUploadFilesTo = projectService.getProject(projectId);
+            if(projectService.isUserPermittedToChangeProject(projectToUploadFilesTo, userService.getCurrentLoggedUser())) {
+                notAddedFiles = fileStorageService.storeFile(files, projectToUploadFilesTo);
+            } else {
+                //User is not permitted to do changes on this project.
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        } catch (ProjectNotFoundException e) {
+            //No project was found with id.
+            return ResponseEntity.notFound().build();
+        } catch (FileStorageException | DirectoryCreationException e) {
+            //TODO Maybe change to something else?
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+        return ResponseEntity.ok(notAddedFiles);
     }
 }

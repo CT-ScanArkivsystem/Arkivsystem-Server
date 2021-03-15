@@ -30,7 +30,6 @@ public class ProjectService {
         this.userDao = userDao;
     }
 
-
     /**
      * Method for creating a new project.
      * Checks if another project has this name and throws and exception if necessary
@@ -338,7 +337,7 @@ public class ProjectService {
      * @param user user to check.
      * @return true if user is permitted to do changes.
      */
-    private boolean isUserPermittedToChangeProject(Project project, User user) {
+    public boolean isUserPermittedToChangeProject(Project project, User user) {
         return project.getOwner().equals(user) ||
                isUserMember(project, user) ||
                user.getRoles().get(0).getRoleName().equals("ROLE_" + Role.ADMIN);

@@ -123,6 +123,17 @@
             <artifactId>jjwt</artifactId>
             <version>0.9.1</version>
         </dependency>
+        <!-- For FileStorageProperties -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>eu.agno3.jcifs</groupId>
+            <artifactId>jcifs-ng</artifactId>
+            <version>2.1.5</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
