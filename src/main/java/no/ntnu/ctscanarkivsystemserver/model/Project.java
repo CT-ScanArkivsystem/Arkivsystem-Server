@@ -1,12 +1,6 @@
 package no.ntnu.ctscanarkivsystemserver.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import no.ntnu.ctscanarkivsystemserver.dao.UserDao;
-import no.ntnu.ctscanarkivsystemserver.exception.UserNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 
 import javax.persistence.*;
 import java.util.ArrayList;
