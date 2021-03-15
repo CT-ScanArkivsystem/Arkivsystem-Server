@@ -31,15 +31,14 @@ public class FileStorageService {
     private final String DOCUMENT_PATH;
     private final String IMAGE_PATH;
     private final String LOG_PATH;
-    private final String IMAGE_DICOM_PATH;
-    private final String IMAGE_TIFF_PATH;
+    private final String DICOM_PATH;
+    private final String TIFF_PATH;
     private final String fileStorageLocation;
 
     private final String userName;
     private final String password;
     private final String domain;
     private final String url;
-    private SmbFileOutputStream out;
 
     @Autowired
     public FileStorageService(FileStorageProperties fileStorageProperties) {
@@ -47,50 +46,18 @@ public class FileStorageService {
         this.DOCUMENT_PATH = fileStorageProperties.getDocumentDir();
         this.IMAGE_PATH = fileStorageProperties.getImageDir();
         this.LOG_PATH = fileStorageProperties.getLogDir();
-        this.IMAGE_DICOM_PATH = fileStorageProperties.getDicomDir();
-        this.IMAGE_TIFF_PATH = fileStorageProperties.getTiffDir();
+        this.DICOM_PATH = fileStorageProperties.getDicomDir();
+        this.TIFF_PATH = fileStorageProperties.getTiffDir();
         this.userName = fileStorageProperties.getUser();
         this.password = fileStorageProperties.getPass();
         this.domain = fileStorageProperties.getDomain();
         this.url = fileStorageProperties.getUrl();
     }
 
-    public void test(MultipartFile files) {
-        System.out.println("Test");
-        try {
-            Configuration config = new PropertyConfiguration(new Properties());
-            CIFSContext context = new BaseContext(config);
-            context = context.withCredentials(new NtlmPasswordAuthentication(null, domain, userName, password));
-
-            //SmbFileInputStream in = new SmbFileInputStream(url + "/Test.txt", context);
-            System.out.println("Test1");
-            out = new SmbFileOutputStream(new SmbFile(url + "/" + getFileName(files), context));
-            out.write(files.getBytes());
-            System.out.println("Test2");
-            /*byte[] b = new byte[8192];
-            int n;
-            byte[] bytes = "in.read()".getBytes();
-            String test = Base64.getEncoder().encodeToString(bytes);
-            System.out.println("Test5: " + test);
-            while(( n = in.read( b )) > 0 ) {
-                System.out.println("Test6");
-                System.out.write( b, 0, n );
-            }*/
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                out.close();
-            } catch (Exception e) {
-                System.out.println(e.getMessage());
-            }
-        }
-    }
-
     /**
      * Return the name of file including file type.
      * @param file file to get name from.
-     * @return name of file incudling file type.
+     * @return name of file including file type.
      */
     private String getFileName(MultipartFile file) {
         return StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
@@ -143,12 +110,18 @@ public class FileStorageService {
             switch (fileType) {
                 case "IMA":
                     System.out.println("DICOM file!");
-                    notAddedFile = saveFile(file, path + IMAGE_DICOM_PATH);
+                    notAddedFile = saveFile(file, path + DICOM_PATH);
                     break;
 
                 case "tiff":
                     System.out.println("Tiff file!");
-                    notAddedFile = saveFile(file, path + IMAGE_TIFF_PATH);
+                    notAddedFile = saveFile(file, path + TIFF_PATH);
+                    break;
+
+                case "jpg":
+                case "png":
+                case "gif":
+                    notAddedFile = saveFile(file, path + IMAGE_PATH);
                     break;
 
                 default:
@@ -245,7 +218,6 @@ public class FileStorageService {
         fileName = sbFileName.reverse().toString();
         fileName = fileName.split("\\.")[0];
         return new StringBuilder(fileName).reverse().toString();
-
     }
 
     /**
@@ -275,7 +247,6 @@ public class FileStorageService {
                 smbFile = new SmbFile(url + "/" + dirPath, getContextWithCred());
                 if(!smbFile.exists()) {
                     smbFile.mkdir();
-                    System.out.println("Making Dir");
                 }
             } catch (Exception e) {
                 throw new DirectoryCreationException(e.getMessage());
@@ -303,8 +274,8 @@ public class FileStorageService {
         directoriesToMake.add(directoryPath + LOG_PATH);
         directoriesToMake.add(directoryPath + DOCUMENT_PATH);
         //Sub directories of directories inside project directory:
-        directoriesToMake.add(directoryPath + IMAGE_DICOM_PATH);
-        directoriesToMake.add(directoryPath + IMAGE_TIFF_PATH);
+        directoriesToMake.add(directoryPath + DICOM_PATH);
+        directoriesToMake.add(directoryPath + TIFF_PATH);
         return directoriesToMake;
     }
 
