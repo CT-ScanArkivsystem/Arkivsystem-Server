@@ -38,6 +38,9 @@ public class Project {
     @Column(name="creation")
     private Date creation;
 
+    @Column(name="description")
+    private String description;
+
     @ManyToMany(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
     @JoinTable(name = "project_tags",
             joinColumns = @JoinColumn(
