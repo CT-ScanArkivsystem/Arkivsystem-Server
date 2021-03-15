@@ -95,6 +95,66 @@ public class FileStorageService {
     }
 
     /**
+     * Gets the file content from a file in the file server as byte array.
+     * @param fileName Name of file including file type.
+     * @param project Project file is associated with.
+     * @return file content as a byte array.
+     * @throws IOException if this method failed to close stream.
+     * @throws FileStorageException if this method failed to setup connection or get file.
+     */
+    public byte[] loadFileAsBytes(String fileName, Project project) throws IOException, FileStorageException {
+        SmbFile smbFile = null;
+        SmbFileInputStream inputStream = null;
+        byte[] bytes;
+        try {
+            smbFile = new SmbFile(url + "/" + getFileLocation(fileName, project) + "/" + fileName, getContextWithCred());
+            inputStream = new SmbFileInputStream(smbFile);
+            bytes = inputStream.readAllBytes();
+        } catch (Exception e) {
+            throw new FileStorageException(e.getMessage());
+        } finally {
+            if(smbFile != null) {
+                smbFile.close();
+            }
+            if(inputStream != null) {
+                inputStream.close();
+            }
+        }
+        return bytes;
+    }
+
+    /**
+     * Return the full path to where the file is located.
+     * Does not include the file name.
+     * @param fileName name of file to find path location to including file type.
+     * @param project project file is associated with.
+     * @return Full path to where the file is located.
+     */
+    private String getFileLocation(String fileName, Project project) {
+        String fileType = getFileType(fileName);
+        String fileLocation = fileStorageLocation + dateNameToPath(project);
+        switch (fileType) {
+            case "IMA":
+                fileLocation += DICOM_PATH;
+                break;
+
+            case "tiff":
+                fileLocation += TIFF_PATH;
+                break;
+
+            case "jpg":
+            case "png":
+            case "gif":
+                fileLocation += IMAGE_PATH;
+                break;
+
+            default:
+                fileLocation += DOCUMENT_PATH;
+        }
+        return fileLocation;
+    }
+
+    /**
      * Save the file into the correct directory depending on the file type.
      * @param file to save.
      * @param path to project folder.
@@ -109,12 +169,10 @@ public class FileStorageService {
             System.out.println("File type is: " + fileType);
             switch (fileType) {
                 case "IMA":
-                    System.out.println("DICOM file!");
                     notAddedFile = saveFile(file, path + DICOM_PATH);
                     break;
 
                 case "tiff":
-                    System.out.println("Tiff file!");
                     notAddedFile = saveFile(file, path + TIFF_PATH);
                     break;
 
@@ -125,7 +183,6 @@ public class FileStorageService {
                     break;
 
                 default:
-                    System.out.println("Default!");
                     notAddedFile = saveFile(file, path + DOCUMENT_PATH);
             }
         } else {
@@ -133,20 +190,6 @@ public class FileStorageService {
         }
         return notAddedFile;
     }
-
-    /*public Resource loadFileAsResource(String fileName) {
-        try {
-            Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
-            Resource resource = new UrlResource(filePath.toUri());
-            if(resource.exists()) {
-                return resource;
-            } else {
-                throw new MyFileNotFoundException("File not found " + fileName);
-            }
-        } catch (MalformedURLException ex) {
-            throw new MyFileNotFoundException("File not found " + fileName, ex);
-        }
-    }*/
 
     /**
      * Save a file into the given path.
@@ -193,7 +236,6 @@ public class FileStorageService {
         try {
             smbFile = new SmbFile(url + "/" + path + "/", getContextWithCred());
             for (SmbFile existingFile:smbFile.listFiles()) {
-                System.out.println("SmbFile name is: " + existingFile.getName() + "\nMultipartFile name is: " + getFileName(file));
                 if(getFileName(file).equals(existingFile.getName())) {
                     return true;
                 }
