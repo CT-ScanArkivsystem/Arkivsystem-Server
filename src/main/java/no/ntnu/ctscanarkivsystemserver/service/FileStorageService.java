@@ -17,6 +17,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.security.auth.Subject;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ForbiddenException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -126,6 +127,90 @@ public class FileStorageService {
             }
         }
         return bytes;
+    }
+
+    /**
+     * Get all file names in a directory.
+     * Valid arguments is: documents, images, logs, dicom, tiff and all.
+     * @param directory directory to get all file names from.
+     * @param project project associated with directory you want to get file names from.
+     * @return list of file names from directory.
+     * @throws FileNotFoundException if directory was not found.
+     * @throws FileStorageException if getting file names failed.
+     * @throws BadRequestException if directory is not a valid directory.
+     * @throws IllegalArgumentException if project is null or directory is empty.
+     */
+    public List<String> getAllFileNames(String directory, Project project) throws FileNotFoundException, FileStorageException, BadRequestException, IllegalArgumentException {
+        List<String> filesInDir = new ArrayList<>();
+        if(directory.trim().isEmpty() || project == null) {
+            throw new IllegalArgumentException("Project is null or directory string is empty.");
+        } else {
+            //To make variable not case sensitive.
+            directory = directory.toUpperCase();
+        }
+        switch (directory) {
+            case "DOCUMENTS":
+                filesInDir = getAllFileNamesInDirectory(fileStorageLocation + dateNameToPath(project) + DOCUMENT_PATH);
+                break;
+
+            case "IMAGES":
+                filesInDir = getAllFileNamesInDirectory(fileStorageLocation + dateNameToPath(project) + IMAGE_PATH);
+                break;
+
+            case "LOGS":
+                filesInDir = getAllFileNamesInDirectory(fileStorageLocation + dateNameToPath(project) + LOG_PATH);
+                break;
+
+            case "DICOM":
+                filesInDir = getAllFileNamesInDirectory(fileStorageLocation + dateNameToPath(project) + DICOM_PATH);
+                break;
+
+            case "TIFF":
+                filesInDir = getAllFileNamesInDirectory(fileStorageLocation + dateNameToPath(project) + TIFF_PATH);
+                break;
+
+            case "ALL":
+                List<String> allDirs = createProjectDirList(project);
+                //Removing dir Archives.
+                allDirs.remove(0);
+                for(String dir:allDirs) {
+                    filesInDir.addAll(getAllFileNamesInDirectory(dir));
+                }
+                break;
+
+            default:
+                throw new BadRequestException(directory + " is not a valid document");
+        }
+        return filesInDir;
+    }
+
+    /**
+     * Return all files in a directory as a list.
+     * @param directoryPath path to directory to list out all files in.
+     * @return list with all files in a directory.
+     * @throws FileNotFoundException if directory was not found.
+     * @throws FileStorageException if something went wrong when trying to get files in directory.
+     */
+    private List<String> getAllFileNamesInDirectory(String directoryPath) throws FileNotFoundException, FileStorageException {
+        SmbFile smbFile = null;
+        List<String> filesInDir = new ArrayList<>();
+        try {
+            smbFile = new SmbFile(url + "/" + directoryPath + "/", getContextWithCred());
+            for(SmbFile fileInDir:smbFile.listFiles()) {
+                if(fileInDir.getName().contains(".")) {
+                    filesInDir.add(fileInDir.getName());
+                }
+            }
+        } catch (SmbException e) {
+            throw new FileNotFoundException(e.getMessage());
+        } catch (Exception e) {
+            throw new FileStorageException(e.getMessage());
+        } finally {
+            if(smbFile != null) {
+                smbFile.close();
+            }
+        }
+        return filesInDir;
     }
 
     /**

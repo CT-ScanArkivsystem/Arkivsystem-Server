@@ -19,9 +19,11 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.ws.rs.BadRequestException;
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -157,12 +159,12 @@ public class UserController {
             return ResponseEntity.badRequest().build();
         }
         try {
-            Project projectToUploadFilesTo = projectService.getProject(projectId);
-            if(!projectToUploadFilesTo.getIsPrivate() || projectService.hasSpecialPermission(projectToUploadFilesTo, userService.getCurrentLoggedUser())
-                    || projectService.isUserPermittedToChangeProject(projectToUploadFilesTo, userService.getCurrentLoggedUser())) {
-                fileBytes = fileStorageService.loadFileAsBytes(fileName, projectToUploadFilesTo);
+            Project projectToDownloadFilesFrom = projectService.getProject(projectId);
+            if(!projectToDownloadFilesFrom.getIsPrivate() || projectService.hasSpecialPermission(projectToDownloadFilesFrom, userService.getCurrentLoggedUser())
+                    || projectService.isUserPermittedToChangeProject(projectToDownloadFilesFrom, userService.getCurrentLoggedUser())) {
+                fileBytes = fileStorageService.loadFileAsBytes(fileName, projectToDownloadFilesFrom);
             } else {
-                //User is not permitted to do changes on this project.
+                //User is not permitted to see files on this project.
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
         } catch (ProjectNotFoundException | UserNotFoundException e) {
@@ -179,5 +181,44 @@ public class UserController {
                 .contentLength(fileBytes.length)
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(new InputStreamResource(new ByteArrayInputStream(fileBytes)));
+    }
+
+    /**
+     * Gets a list with all file names in a directory.
+     * Valid directory arguments: documents, images, logs, dicom, tiff and all.
+     * @param directory directory to get files from.
+     * @param projectId id of project directory is associated with.
+     * @return If successful: 200-OK with a list of all files in a directory.
+     *         If directory is not a valid directory: 400-Bad request
+     *         If user or project does not exist: 404-Not Found.
+     *         If logged in user is not allowed to see project files: 403-Forbidden.
+     *         If directory was not found: 410-Gone.
+     */
+    @GetMapping(path = "/getAllFileNames")
+    public ResponseEntity<List<String>> getAllFileNames(@RequestParam("directory") String directory, @RequestParam("projectId") UUID projectId) {
+        List<String> allFileNamesInDir;
+        try {
+            Project projectToGetFileNamesFrom = projectService.getProject(projectId);
+            if (!projectToGetFileNamesFrom.getIsPrivate() || projectService.hasSpecialPermission(projectToGetFileNamesFrom, userService.getCurrentLoggedUser())
+                    || projectService.isUserPermittedToChangeProject(projectToGetFileNamesFrom, userService.getCurrentLoggedUser())) {
+                allFileNamesInDir = fileStorageService.getAllFileNames(directory, projectToGetFileNamesFrom);
+            } else {
+                //User is not permitted to see files on this project.
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        } catch (FileStorageException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } catch (ProjectNotFoundException | UserNotFoundException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.notFound().build();
+        } catch (FileNotFoundException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.GONE).build();
+        } catch (IllegalArgumentException | BadRequestException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok(allFileNamesInDir);
     }
 }
