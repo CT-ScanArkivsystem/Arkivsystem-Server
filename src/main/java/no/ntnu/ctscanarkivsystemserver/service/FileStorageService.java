@@ -10,6 +10,7 @@ import no.ntnu.ctscanarkivsystemserver.config.FileStorageProperties;
 import no.ntnu.ctscanarkivsystemserver.exception.DirectoryCreationException;
 import no.ntnu.ctscanarkivsystemserver.exception.FileStorageException;
 import no.ntnu.ctscanarkivsystemserver.model.Project;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -111,7 +112,7 @@ public class FileStorageService {
         try {
             smbFile = new SmbFile(url + "/" + getFileLocation(fileName, project) + "/" + fileName, getContextWithCred());
             inputStream = new SmbFileInputStream(smbFile);
-            bytes = inputStream.readAllBytes();
+            bytes = IOUtils.toByteArray(inputStream);
         } catch (SmbException e) {
           throw new FileNotFoundException(e.getMessage());
         } catch (Exception e) {
