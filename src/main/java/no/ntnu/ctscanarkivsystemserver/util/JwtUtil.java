@@ -3,7 +3,8 @@ package no.ntnu.ctscanarkivsystemserver.util;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import org.springframework.beans.factory.annotation.Value;
+import no.ntnu.ctscanarkivsystemserver.config.Properties;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -19,8 +20,12 @@ import java.util.function.Function;
 @Service
 public class JwtUtil {
 
-    @Value("${random.uuid:DefaultValue}")
-    private String SECRET_KEY;
+    @Autowired
+    public JwtUtil(Properties properties) {
+        this.SECRET_KEY = properties.getJwtKey();
+    }
+
+    private final String SECRET_KEY;
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
