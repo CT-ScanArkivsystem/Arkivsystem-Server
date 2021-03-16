@@ -1,5 +1,6 @@
 package no.ntnu.ctscanarkivsystemserver.config;
 
+import com.ulisesbocchio.jasyptspringboot.annotation.EnableEncryptableProperties;
 import no.ntnu.ctscanarkivsystemserver.filter.JwtRequestFilter;
 import no.ntnu.ctscanarkivsystemserver.model.Role;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  */
 @Configuration
 @EnableWebSecurity
+@EnableEncryptableProperties
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Autowired
