@@ -268,7 +268,7 @@ public class ProjectService {
      * @param newOwner The new owner
      * @return True if he has special permissions, false otherwise
      */
-    private boolean hasSpecialPermission(Project project, User newOwner) {
+    public boolean hasSpecialPermission(Project project, User newOwner) {
         return project.getUsersWithSpecialPermission().contains(newOwner);
     }
 

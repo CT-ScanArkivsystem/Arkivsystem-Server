@@ -434,7 +434,6 @@ public class AcademicController {
             //No project was found with id.
             return ResponseEntity.notFound().build();
         } catch (FileStorageException | DirectoryCreationException e) {
-            //TODO Maybe change to something else?
             System.out.println(e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
