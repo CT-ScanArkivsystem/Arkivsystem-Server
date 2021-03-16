@@ -179,7 +179,7 @@ public class FileStorageService {
                 break;
 
             default:
-                throw new BadRequestException(directory + " is not a valid document");
+                throw new BadRequestException(directory + " is not a valid directory");
         }
         return filesInDir;
     }
@@ -234,6 +234,7 @@ public class FileStorageService {
 
             case "jpg":
             case "png":
+            case "PNG":
             case "gif":
                 fileLocation += IMAGE_PATH;
                 break;
@@ -268,6 +269,7 @@ public class FileStorageService {
 
                 case "jpg":
                 case "png":
+                case "PNG":
                 case "gif":
                     notAddedFile = saveFile(file, path + IMAGE_PATH);
                     break;
