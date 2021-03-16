@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
@@ -142,13 +143,19 @@ public class UserController {
      * Download a file from the file server.
      * @param fileName name of file to download including file type.
      * @param projectId Id of project file is associated with.
-     * @return If successful: 200 OK with the content of the file.
-     *         If user or project does not exist: 404 Not Found
-     *         If logged in user is not allowed to see project files: 403 Forbidden
+     * @return If successful: 200-OK with the content of the file.
+     *         If fileName does not include file type: 400-Bad request
+     *         If user or project does not exist: 404-Not Found.
+     *         If logged in user is not allowed to see project files: 403-Forbidden.
+     *         If file was not found: 410-Gone.
      */
     @GetMapping(path = "/downloadFile")
     public ResponseEntity<Resource> downloadFile(@RequestParam("fileName") String fileName, @RequestParam("projectId") UUID projectId) {
         byte[] fileBytes;
+        if(!fileStorageService.doesFileNameContainType(fileName)) {
+            //File name does not include file type.
+            return ResponseEntity.badRequest().build();
+        }
         try {
             Project projectToUploadFilesTo = projectService.getProject(projectId);
             if(!projectToUploadFilesTo.getIsPrivate() || projectService.hasSpecialPermission(projectToUploadFilesTo, userService.getCurrentLoggedUser())
@@ -161,6 +168,9 @@ public class UserController {
         } catch (ProjectNotFoundException | UserNotFoundException e) {
             System.out.println(e.getMessage());
             return ResponseEntity.notFound().build();
+        } catch (FileNotFoundException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.GONE).build();
         } catch (FileStorageException | IOException e) {
             System.out.println(e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

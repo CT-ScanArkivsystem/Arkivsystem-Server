@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.security.auth.Subject;
 import javax.ws.rs.ForbiddenException;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
@@ -101,8 +102,9 @@ public class FileStorageService {
      * @return file content as a byte array.
      * @throws IOException if this method failed to close stream.
      * @throws FileStorageException if this method failed to setup connection or get file.
+     * @throws FileNotFoundException if file with fileName was not found.
      */
-    public byte[] loadFileAsBytes(String fileName, Project project) throws IOException, FileStorageException {
+    public byte[] loadFileAsBytes(String fileName, Project project) throws IOException, FileStorageException, FileNotFoundException {
         SmbFile smbFile = null;
         SmbFileInputStream inputStream = null;
         byte[] bytes;
@@ -110,6 +112,8 @@ public class FileStorageService {
             smbFile = new SmbFile(url + "/" + getFileLocation(fileName, project) + "/" + fileName, getContextWithCred());
             inputStream = new SmbFileInputStream(smbFile);
             bytes = inputStream.readAllBytes();
+        } catch (SmbException e) {
+          throw new FileNotFoundException(e.getMessage());
         } catch (Exception e) {
             throw new FileStorageException(e.getMessage());
         } finally {
@@ -260,6 +264,20 @@ public class FileStorageService {
         fileName = sbFileName.reverse().toString();
         fileName = fileName.split("\\.")[0];
         return new StringBuilder(fileName).reverse().toString();
+    }
+
+    /**
+     * Checks if the fileName contain the file type.
+     * @param fileName name of file.
+     * @return true if file name contains "." and is not empty after.
+     */
+    public boolean doesFileNameContainType(String fileName) {
+        if(fileName.contains(".")) {
+            System.out.println("File type: " + getFileType(fileName).trim());
+            return !getFileType(fileName).trim().isEmpty();
+        } else {
+            return false;
+        }
     }
 
     /**
