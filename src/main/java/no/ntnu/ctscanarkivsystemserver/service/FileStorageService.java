@@ -374,8 +374,8 @@ public class FileStorageService {
     private String dateNameToPath(Project project) {
         LocalDate projectDate = convertToLocalDateViaSqlDate(project.getCreation());
         return "/" + projectDate.getYear() + "-" +
-                projectDate.getMonthValue() + "-" +
-                projectDate.getDayOfMonth() + "_" +
+                String.format("%02d", projectDate.getMonthValue()) + "-" +
+                String.format("%02d", projectDate.getDayOfMonth()) + "_" +
                 project.getProjectName();
     }
 
