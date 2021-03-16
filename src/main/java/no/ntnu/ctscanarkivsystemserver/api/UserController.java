@@ -1,19 +1,29 @@
 package no.ntnu.ctscanarkivsystemserver.api;
 
 
+import no.ntnu.ctscanarkivsystemserver.exception.FileStorageException;
 import no.ntnu.ctscanarkivsystemserver.exception.ProjectNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.exception.UserNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.exception.TagNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.model.Project;
 import no.ntnu.ctscanarkivsystemserver.model.User;
+import no.ntnu.ctscanarkivsystemserver.service.FileStorageService;
 import no.ntnu.ctscanarkivsystemserver.service.ProjectService;
 import no.ntnu.ctscanarkivsystemserver.service.TagService;
 import no.ntnu.ctscanarkivsystemserver.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.ws.rs.BadRequestException;
+import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,12 +34,14 @@ public class UserController {
     private final UserService userService;
     private final ProjectService projectService;
     private final TagService tagService;
+    private final FileStorageService fileStorageService;
 
     @Autowired
-    public UserController(UserService userService, ProjectService projectService, TagService tagService) {
+    public UserController(UserService userService, ProjectService projectService, TagService tagService, FileStorageService fileStorageService) {
         this.userService = userService;
         this.projectService = projectService;
         this.tagService = tagService;
+        this.fileStorageService = fileStorageService;
     }
 
     @GetMapping(path = "/allUsers")
@@ -127,5 +139,86 @@ public class UserController {
                 return ResponseEntity.badRequest().build();
             }
         }
+    }
+
+    /**
+     * Download a file from the file server.
+     * @param fileName name of file to download including file type.
+     * @param projectId Id of project file is associated with.
+     * @return If successful: 200-OK with the content of the file.
+     *         If fileName does not include file type: 400-Bad request
+     *         If user or project does not exist: 404-Not Found.
+     *         If logged in user is not allowed to see project files: 403-Forbidden.
+     *         If file was not found: 410-Gone.
+     */
+    @GetMapping(path = "/downloadFile")
+    public ResponseEntity<Resource> downloadFile(@RequestParam("fileName") String fileName, @RequestParam("projectId") UUID projectId) {
+        byte[] fileBytes;
+        if(!fileStorageService.doesFileNameContainType(fileName)) {
+            //File name does not include file type.
+            return ResponseEntity.badRequest().build();
+        }
+        try {
+            Project projectToDownloadFilesFrom = projectService.getProject(projectId);
+            if(!projectToDownloadFilesFrom.getIsPrivate() || projectService.hasSpecialPermission(projectToDownloadFilesFrom, userService.getCurrentLoggedUser())
+                    || projectService.isUserPermittedToChangeProject(projectToDownloadFilesFrom, userService.getCurrentLoggedUser())) {
+                fileBytes = fileStorageService.loadFileAsBytes(fileName, projectToDownloadFilesFrom);
+            } else {
+                //User is not permitted to see files on this project.
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        } catch (ProjectNotFoundException | UserNotFoundException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.notFound().build();
+        } catch (FileNotFoundException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.GONE).build();
+        } catch (FileStorageException | IOException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+        return ResponseEntity.ok()
+                .contentLength(fileBytes.length)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(new InputStreamResource(new ByteArrayInputStream(fileBytes)));
+    }
+
+    /**
+     * Gets a list with all file names in a directory.
+     * Valid directory arguments: documents, images, logs, dicom, tiff and all.
+     * @param directory directory to get files from.
+     * @param projectId id of project directory is associated with.
+     * @return If successful: 200-OK with a list of all files in a directory.
+     *         If directory is not a valid directory: 400-Bad request
+     *         If user or project does not exist: 404-Not Found.
+     *         If logged in user is not allowed to see project files: 403-Forbidden.
+     *         If directory was not found: 410-Gone.
+     */
+    @GetMapping(path = "/getAllFileNames")
+    public ResponseEntity<List<String>> getAllFileNames(@RequestParam("directory") String directory, @RequestParam("projectId") UUID projectId) {
+        List<String> allFileNamesInDir;
+        try {
+            Project projectToGetFileNamesFrom = projectService.getProject(projectId);
+            if (!projectToGetFileNamesFrom.getIsPrivate() || projectService.hasSpecialPermission(projectToGetFileNamesFrom, userService.getCurrentLoggedUser())
+                    || projectService.isUserPermittedToChangeProject(projectToGetFileNamesFrom, userService.getCurrentLoggedUser())) {
+                allFileNamesInDir = fileStorageService.getAllFileNames(directory, projectToGetFileNamesFrom);
+            } else {
+                //User is not permitted to see files on this project.
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        } catch (FileStorageException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } catch (ProjectNotFoundException | UserNotFoundException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.notFound().build();
+        } catch (FileNotFoundException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.GONE).build();
+        } catch (IllegalArgumentException | BadRequestException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok(allFileNamesInDir);
     }
 }

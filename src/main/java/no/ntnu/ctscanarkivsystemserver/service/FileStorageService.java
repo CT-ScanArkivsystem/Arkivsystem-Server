@@ -10,13 +10,16 @@ import no.ntnu.ctscanarkivsystemserver.config.FileStorageProperties;
 import no.ntnu.ctscanarkivsystemserver.exception.DirectoryCreationException;
 import no.ntnu.ctscanarkivsystemserver.exception.FileStorageException;
 import no.ntnu.ctscanarkivsystemserver.model.Project;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.security.auth.Subject;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ForbiddenException;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
@@ -95,6 +98,153 @@ public class FileStorageService {
     }
 
     /**
+     * Gets the file content from a file in the file server as byte array.
+     * @param fileName Name of file including file type.
+     * @param project Project file is associated with.
+     * @return file content as a byte array.
+     * @throws IOException if this method failed to close stream.
+     * @throws FileStorageException if this method failed to setup connection or get file.
+     * @throws FileNotFoundException if file with fileName was not found.
+     */
+    public byte[] loadFileAsBytes(String fileName, Project project) throws IOException, FileStorageException, FileNotFoundException {
+        SmbFile smbFile = null;
+        SmbFileInputStream inputStream = null;
+        byte[] bytes;
+        try {
+            smbFile = new SmbFile(url + "/" + getFileLocation(fileName, project) + "/" + fileName, getContextWithCred());
+            inputStream = new SmbFileInputStream(smbFile);
+            bytes = IOUtils.toByteArray(inputStream);
+        } catch (SmbException e) {
+          throw new FileNotFoundException(e.getMessage());
+        } catch (Exception e) {
+            throw new FileStorageException(e.getMessage());
+        } finally {
+            if(smbFile != null) {
+                smbFile.close();
+            }
+            if(inputStream != null) {
+                inputStream.close();
+            }
+        }
+        return bytes;
+    }
+
+    /**
+     * Get all file names in a directory.
+     * Valid arguments is: documents, images, logs, dicom, tiff and all.
+     * @param directory directory to get all file names from.
+     * @param project project associated with directory you want to get file names from.
+     * @return list of file names from directory.
+     * @throws FileNotFoundException if directory was not found.
+     * @throws FileStorageException if getting file names failed.
+     * @throws BadRequestException if directory is not a valid directory.
+     * @throws IllegalArgumentException if project is null or directory is empty.
+     */
+    public List<String> getAllFileNames(String directory, Project project) throws FileNotFoundException, FileStorageException, BadRequestException, IllegalArgumentException {
+        List<String> filesInDir = new ArrayList<>();
+        if(directory.trim().isEmpty() || project == null) {
+            throw new IllegalArgumentException("Project is null or directory string is empty.");
+        } else {
+            //To make variable not case sensitive.
+            directory = directory.toUpperCase();
+        }
+        switch (directory) {
+            case "DOCUMENTS":
+                filesInDir = getAllFileNamesInDirectory(fileStorageLocation + dateNameToPath(project) + DOCUMENT_PATH);
+                break;
+
+            case "IMAGES":
+                filesInDir = getAllFileNamesInDirectory(fileStorageLocation + dateNameToPath(project) + IMAGE_PATH);
+                break;
+
+            case "LOGS":
+                filesInDir = getAllFileNamesInDirectory(fileStorageLocation + dateNameToPath(project) + LOG_PATH);
+                break;
+
+            case "DICOM":
+                filesInDir = getAllFileNamesInDirectory(fileStorageLocation + dateNameToPath(project) + DICOM_PATH);
+                break;
+
+            case "TIFF":
+                filesInDir = getAllFileNamesInDirectory(fileStorageLocation + dateNameToPath(project) + TIFF_PATH);
+                break;
+
+            case "ALL":
+                List<String> allDirs = createProjectDirList(project);
+                //Removing dir Archives.
+                allDirs.remove(0);
+                for(String dir:allDirs) {
+                    filesInDir.addAll(getAllFileNamesInDirectory(dir));
+                }
+                break;
+
+            default:
+                throw new BadRequestException(directory + " is not a valid document");
+        }
+        return filesInDir;
+    }
+
+    /**
+     * Return all files in a directory as a list.
+     * @param directoryPath path to directory to list out all files in.
+     * @return list with all files in a directory.
+     * @throws FileNotFoundException if directory was not found.
+     * @throws FileStorageException if something went wrong when trying to get files in directory.
+     */
+    private List<String> getAllFileNamesInDirectory(String directoryPath) throws FileNotFoundException, FileStorageException {
+        SmbFile smbFile = null;
+        List<String> filesInDir = new ArrayList<>();
+        try {
+            smbFile = new SmbFile(url + "/" + directoryPath + "/", getContextWithCred());
+            for(SmbFile fileInDir:smbFile.listFiles()) {
+                if(fileInDir.getName().contains(".")) {
+                    filesInDir.add(fileInDir.getName());
+                }
+            }
+        } catch (SmbException e) {
+            throw new FileNotFoundException(e.getMessage());
+        } catch (Exception e) {
+            throw new FileStorageException(e.getMessage());
+        } finally {
+            if(smbFile != null) {
+                smbFile.close();
+            }
+        }
+        return filesInDir;
+    }
+
+    /**
+     * Return the full path to where the file is located.
+     * Does not include the file name.
+     * @param fileName name of file to find path location to including file type.
+     * @param project project file is associated with.
+     * @return Full path to where the file is located.
+     */
+    private String getFileLocation(String fileName, Project project) {
+        String fileType = getFileType(fileName);
+        String fileLocation = fileStorageLocation + dateNameToPath(project);
+        switch (fileType) {
+            case "IMA":
+                fileLocation += DICOM_PATH;
+                break;
+
+            case "tiff":
+                fileLocation += TIFF_PATH;
+                break;
+
+            case "jpg":
+            case "png":
+            case "gif":
+                fileLocation += IMAGE_PATH;
+                break;
+
+            default:
+                fileLocation += DOCUMENT_PATH;
+        }
+        return fileLocation;
+    }
+
+    /**
      * Save the file into the correct directory depending on the file type.
      * @param file to save.
      * @param path to project folder.
@@ -109,12 +259,10 @@ public class FileStorageService {
             System.out.println("File type is: " + fileType);
             switch (fileType) {
                 case "IMA":
-                    System.out.println("DICOM file!");
                     notAddedFile = saveFile(file, path + DICOM_PATH);
                     break;
 
                 case "tiff":
-                    System.out.println("Tiff file!");
                     notAddedFile = saveFile(file, path + TIFF_PATH);
                     break;
 
@@ -125,7 +273,6 @@ public class FileStorageService {
                     break;
 
                 default:
-                    System.out.println("Default!");
                     notAddedFile = saveFile(file, path + DOCUMENT_PATH);
             }
         } else {
@@ -133,20 +280,6 @@ public class FileStorageService {
         }
         return notAddedFile;
     }
-
-    /*public Resource loadFileAsResource(String fileName) {
-        try {
-            Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
-            Resource resource = new UrlResource(filePath.toUri());
-            if(resource.exists()) {
-                return resource;
-            } else {
-                throw new MyFileNotFoundException("File not found " + fileName);
-            }
-        } catch (MalformedURLException ex) {
-            throw new MyFileNotFoundException("File not found " + fileName, ex);
-        }
-    }*/
 
     /**
      * Save a file into the given path.
@@ -193,7 +326,6 @@ public class FileStorageService {
         try {
             smbFile = new SmbFile(url + "/" + path + "/", getContextWithCred());
             for (SmbFile existingFile:smbFile.listFiles()) {
-                System.out.println("SmbFile name is: " + existingFile.getName() + "\nMultipartFile name is: " + getFileName(file));
                 if(getFileName(file).equals(existingFile.getName())) {
                     return true;
                 }
@@ -221,6 +353,20 @@ public class FileStorageService {
     }
 
     /**
+     * Checks if the fileName contain the file type.
+     * @param fileName name of file.
+     * @return true if file name contains "." and is not empty after.
+     */
+    public boolean doesFileNameContainType(String fileName) {
+        if(fileName.contains(".")) {
+            System.out.println("File type: " + getFileType(fileName).trim());
+            return !getFileType(fileName).trim().isEmpty();
+        } else {
+            return false;
+        }
+    }
+
+    /**
      * Creates the directory name of the project as a path.
      * @param project to make directory to.
      * @return String of directory name.
@@ -228,8 +374,8 @@ public class FileStorageService {
     private String dateNameToPath(Project project) {
         LocalDate projectDate = convertToLocalDateViaSqlDate(project.getCreation());
         return "/" + projectDate.getYear() + "-" +
-                projectDate.getMonthValue() + "-" +
-                projectDate.getDayOfMonth() + "_" +
+                String.format("%02d", projectDate.getMonthValue()) + "-" +
+                String.format("%02d", projectDate.getDayOfMonth()) + "_" +
                 project.getProjectName();
     }
 
