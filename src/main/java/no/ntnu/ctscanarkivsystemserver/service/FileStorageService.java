@@ -26,6 +26,12 @@ import java.util.*;
 
 /**
  * This class has the job of handling files and creating project directories.
+ * <INFORMATION>
+ *     To add support for new file types add file type in the switch case in both "getFileLocation" and "storeFileInDirectory".
+ *     To add creation of new directory add directory path into list in "createProjectDirList".
+ *     To change where file type is stored look at switch case in "storeFileInDirectory" and "getFileLocation".
+ *     New directory paths is set in "application.properties", fetched by "FileStorageProperties.class" and set here as variables.
+ * </INFORMATION>
  * @author trymv
  */
 @Service
@@ -179,7 +185,7 @@ public class FileStorageService {
                 break;
 
             default:
-                throw new BadRequestException(directory + " is not a valid document");
+                throw new BadRequestException(directory + " is not a valid directory");
         }
         return filesInDir;
     }
@@ -234,6 +240,7 @@ public class FileStorageService {
 
             case "jpg":
             case "png":
+            case "PNG":
             case "gif":
                 fileLocation += IMAGE_PATH;
                 break;
@@ -268,6 +275,7 @@ public class FileStorageService {
 
                 case "jpg":
                 case "png":
+                case "PNG":
                 case "gif":
                     notAddedFile = saveFile(file, path + IMAGE_PATH);
                     break;
