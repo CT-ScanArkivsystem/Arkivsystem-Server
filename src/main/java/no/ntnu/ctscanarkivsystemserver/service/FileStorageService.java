@@ -163,23 +163,23 @@ public class FileStorageService {
         String filePath = fileStorageLocation + dateNameToPath(project) + subFolder;
         switch (directory) {
             case "DOCUMENTS":
-                filesInDir = getAllFileNamesInDirectory(filePath + DOCUMENT_PATH);
+                filesInDir = getAllFileNamesInDirectory(filePath + DOCUMENT_PATH, true);
                 break;
 
             case "IMAGES":
-                filesInDir = getAllFileNamesInDirectory(filePath + IMAGE_PATH);
+                filesInDir = getAllFileNamesInDirectory(filePath + IMAGE_PATH, true);
                 break;
 
             case "LOGS":
-                filesInDir = getAllFileNamesInDirectory(filePath + LOG_PATH);
+                filesInDir = getAllFileNamesInDirectory(filePath + LOG_PATH, true);
                 break;
 
             case "DICOM":
-                filesInDir = getAllFileNamesInDirectory(filePath + DICOM_PATH);
+                filesInDir = getAllFileNamesInDirectory(filePath + DICOM_PATH, true);
                 break;
 
             case "TIFF":
-                filesInDir = getAllFileNamesInDirectory(filePath + TIFF_PATH);
+                filesInDir = getAllFileNamesInDirectory(filePath + TIFF_PATH, true);
                 break;
 
             case "ALL":
@@ -187,7 +187,7 @@ public class FileStorageService {
                 //Removing dir Archives.
                 allDirs.remove(fileStorageLocation);
                 for(String dir:allDirs) {
-                    filesInDir.addAll(getAllFileNamesInDirectory(dir));
+                    filesInDir.addAll(getAllFileNamesInDirectory(dir, true));
                 }
                 break;
 
@@ -198,19 +198,36 @@ public class FileStorageService {
     }
 
     /**
+     * Return all folders of sub-projects in a project folder.
+     * Note: This will also return all files in the project folder.
+     * @param project project to get sub-project folders from.
+     * @return List of all sub-project folders.S
+     * @throws FileStorageException if directory was not found.
+     * @throws FileNotFoundException if something went wrong when trying to get directory.
+     */
+    public List<String> getAllProjectSubFolders(Project project) throws FileStorageException, FileNotFoundException {
+        if(project == null) {
+            throw new IllegalArgumentException("Project cannot be null!");
+        } else {
+            return getAllFileNamesInDirectory(fileStorageLocation + dateNameToPath(project), false);
+        }
+    }
+
+    /**
      * Return all files in a directory as a list.
      * @param directoryPath path to directory to list out all files in.
+     * @param ignoreFolders if true this will not return any folders.
      * @return list with all files in a directory.
      * @throws FileNotFoundException if directory was not found.
-     * @throws FileStorageException if something went wrong when trying to get files in directory.
+     * @throws FileStorageException if something went wrong when trying to get files in directory or directory.
      */
-    private List<String> getAllFileNamesInDirectory(String directoryPath) throws FileNotFoundException, FileStorageException {
+    private List<String> getAllFileNamesInDirectory(String directoryPath, boolean ignoreFolders) throws FileNotFoundException, FileStorageException {
         SmbFile smbFile = null;
         List<String> filesInDir = new ArrayList<>();
         try {
             smbFile = new SmbFile(url + "/" + directoryPath + "/", getContextWithCred());
             for(SmbFile fileInDir:smbFile.listFiles()) {
-                if(fileInDir.getName().contains(".")) {
+                if(fileInDir.getName().contains(".") || !ignoreFolders) {
                     filesInDir.add(fileInDir.getName());
                 }
             }

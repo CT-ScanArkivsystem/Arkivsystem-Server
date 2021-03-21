@@ -227,4 +227,32 @@ public class UserController {
         }
         return ResponseEntity.ok(allFileNamesInDir);
     }
+
+    @GetMapping(path = "/getAllProjectSubFolders")
+    public ResponseEntity<List<String>> getAllProjectSubFolders(@RequestParam("projectId") UUID projectId) {
+        List<String> allSubFolders;
+        try {
+            Project projectToGetFoldersNamesFrom = projectService.getProject(projectId);
+            if (!projectToGetFoldersNamesFrom.getIsPrivate() || projectService.hasSpecialPermission(projectToGetFoldersNamesFrom, userService.getCurrentLoggedUser())
+                    || projectService.isUserPermittedToChangeProject(projectToGetFoldersNamesFrom, userService.getCurrentLoggedUser())) {
+                allSubFolders = fileStorageService.getAllProjectSubFolders(projectToGetFoldersNamesFrom);
+            } else {
+                //User is not permitted to see files on this project.
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.noContent().build();
+        } catch (FileStorageException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } catch (ProjectNotFoundException | UserNotFoundException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException | BadRequestException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok(allSubFolders);
+    }
 }
