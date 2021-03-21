@@ -76,13 +76,15 @@ public class FileStorageService {
      * Tries to create directories then sort files into correct directory.
      * @param files files to store.
      * @param project project linked to files.
+     * @param subFolder Project sub-folder to store files in.
      * @throws FileStorageException if storing of files failed.
      * @throws DirectoryCreationException if creation of directories failed.
      * @return list of all files which was not added.
      */
-    public List<String> storeFile(MultipartFile[] files, Project project) throws FileStorageException, DirectoryCreationException {
+    public List<String> storeFile(MultipartFile[] files, Project project, String subFolder) throws FileStorageException, DirectoryCreationException {
         List<String> notAddedFiles = new ArrayList<>();
-        createProjectDirectories(project);
+        subFolder = backslashToStartOfString(subFolder);
+        createProjectDirectories(project, subFolder);
         for(MultipartFile file:files) {
             if (file != null && file.getOriginalFilename() != null) {
                 try {
@@ -90,7 +92,7 @@ public class FileStorageService {
                     if (getFileName(file).contains("..")) {
                         throw new FileStorageException("Sorry! Filename contains invalid path sequence " + getFileName(file));
                     }
-                    String notAddedFile = storeFileInDirectory(file, fileStorageLocation + dateNameToPath(project));
+                    String notAddedFile = storeFileInDirectory(file, fileStorageLocation + dateNameToPath(project) + subFolder);
                     if(notAddedFile != null) {
                         notAddedFiles.add(notAddedFile);
                     }
@@ -107,17 +109,19 @@ public class FileStorageService {
      * Gets the file content from a file in the file server as byte array.
      * @param fileName Name of file including file type.
      * @param project Project file is associated with.
+     * @param subFolder Folder of sub-project to get file from.
      * @return file content as a byte array.
      * @throws IOException if this method failed to close stream.
      * @throws FileStorageException if this method failed to setup connection or get file.
      * @throws FileNotFoundException if file with fileName was not found.
      */
-    public byte[] loadFileAsBytes(String fileName, Project project) throws IOException, FileStorageException, FileNotFoundException {
+    public byte[] loadFileAsBytes(String fileName, Project project, String subFolder) throws IOException, FileStorageException, FileNotFoundException {
         SmbFile smbFile = null;
         SmbFileInputStream inputStream = null;
+        subFolder = backslashToStartOfString(subFolder);
         byte[] bytes;
         try {
-            smbFile = new SmbFile(url + "/" + getFileLocation(fileName, project) + "/" + fileName, getContextWithCred());
+            smbFile = new SmbFile(url + "/" + getFileLocation(fileName, project, subFolder) + "/" + fileName, getContextWithCred());
             inputStream = new SmbFileInputStream(smbFile);
             bytes = IOUtils.toByteArray(inputStream);
         } catch (SmbException e) {
@@ -140,45 +144,48 @@ public class FileStorageService {
      * Valid arguments is: documents, images, logs, dicom, tiff and all.
      * @param directory directory to get all file names from.
      * @param project project associated with directory you want to get file names from.
+     * @param subFolder Folder of sub-project to get file names from.
      * @return list of file names from directory.
      * @throws FileNotFoundException if directory was not found.
      * @throws FileStorageException if getting file names failed.
      * @throws BadRequestException if directory is not a valid directory.
      * @throws IllegalArgumentException if project is null or directory is empty.
      */
-    public List<String> getAllFileNames(String directory, Project project) throws FileNotFoundException, FileStorageException, BadRequestException, IllegalArgumentException {
+    public List<String> getAllFileNames(String directory, Project project, String subFolder) throws FileNotFoundException, FileStorageException, BadRequestException, IllegalArgumentException {
         List<String> filesInDir = new ArrayList<>();
-        if(directory.trim().isEmpty() || project == null) {
-            throw new IllegalArgumentException("Project is null or directory string is empty.");
+        if(directory.trim().isEmpty() || project == null || subFolder.trim().isEmpty()) {
+            throw new IllegalArgumentException("Project is null, directory string is empty or subFolder is empty.");
         } else {
             //To make variable not case sensitive.
             directory = directory.toUpperCase();
         }
+        subFolder = backslashToStartOfString(subFolder);
+        String filePath = fileStorageLocation + dateNameToPath(project) + subFolder;
         switch (directory) {
             case "DOCUMENTS":
-                filesInDir = getAllFileNamesInDirectory(fileStorageLocation + dateNameToPath(project) + DOCUMENT_PATH);
+                filesInDir = getAllFileNamesInDirectory(filePath + DOCUMENT_PATH);
                 break;
 
             case "IMAGES":
-                filesInDir = getAllFileNamesInDirectory(fileStorageLocation + dateNameToPath(project) + IMAGE_PATH);
+                filesInDir = getAllFileNamesInDirectory(filePath + IMAGE_PATH);
                 break;
 
             case "LOGS":
-                filesInDir = getAllFileNamesInDirectory(fileStorageLocation + dateNameToPath(project) + LOG_PATH);
+                filesInDir = getAllFileNamesInDirectory(filePath + LOG_PATH);
                 break;
 
             case "DICOM":
-                filesInDir = getAllFileNamesInDirectory(fileStorageLocation + dateNameToPath(project) + DICOM_PATH);
+                filesInDir = getAllFileNamesInDirectory(filePath + DICOM_PATH);
                 break;
 
             case "TIFF":
-                filesInDir = getAllFileNamesInDirectory(fileStorageLocation + dateNameToPath(project) + TIFF_PATH);
+                filesInDir = getAllFileNamesInDirectory(filePath + TIFF_PATH);
                 break;
 
             case "ALL":
-                List<String> allDirs = createProjectDirList(project);
+                List<String> allDirs = createProjectDirList(project, subFolder);
                 //Removing dir Archives.
-                allDirs.remove(0);
+                allDirs.remove(fileStorageLocation);
                 for(String dir:allDirs) {
                     filesInDir.addAll(getAllFileNamesInDirectory(dir));
                 }
@@ -224,11 +231,12 @@ public class FileStorageService {
      * Does not include the file name.
      * @param fileName name of file to find path location to including file type.
      * @param project project file is associated with.
+     * @param subFolder Folder of sub-project to get file from.
      * @return Full path to where the file is located.
      */
-    private String getFileLocation(String fileName, Project project) {
+    private String getFileLocation(String fileName, Project project, String subFolder) {
         String fileType = getFileType(fileName);
-        String fileLocation = fileStorageLocation + dateNameToPath(project);
+        String fileLocation = fileStorageLocation + dateNameToPath(project) + subFolder;
         switch (fileType) {
             case "IMA":
                 fileLocation += DICOM_PATH;
@@ -392,8 +400,8 @@ public class FileStorageService {
      * @param project project to make directories for.
      * @throws DirectoryCreationException if creation of directories failed.
      */
-    private void createProjectDirectories(Project project) throws DirectoryCreationException {
-        List<String> directoriesToMake = createProjectDirList(project);
+    private void createProjectDirectories(Project project, String subFolder) throws DirectoryCreationException {
+        List<String> directoriesToMake = createProjectDirList(project, subFolder);
 
         for(String dirPath:directoriesToMake) {
             SmbFile smbFile = null;
@@ -417,19 +425,20 @@ public class FileStorageService {
      * @param project project to make directories for.
      * @return List of all directories leading up to the project directory and folders inside.
      */
-    private List<String> createProjectDirList(Project project) {
+    private List<String> createProjectDirList(Project project, String subFolder) {
         String directoryPath = fileStorageLocation + dateNameToPath(project);
         List<String> directoriesToMake = new ArrayList<>();
         //To create the project directory:
         directoriesToMake.add(fileStorageLocation);
         directoriesToMake.add(directoryPath);
+        directoriesToMake.add(directoryPath + subFolder);
         //Directories inside project directory:
-        directoriesToMake.add(directoryPath + IMAGE_PATH);
-        directoriesToMake.add(directoryPath + LOG_PATH);
-        directoriesToMake.add(directoryPath + DOCUMENT_PATH);
+        directoriesToMake.add(directoryPath + subFolder + IMAGE_PATH);
+        directoriesToMake.add(directoryPath + subFolder + LOG_PATH);
+        directoriesToMake.add(directoryPath + subFolder + DOCUMENT_PATH);
         //Sub directories of directories inside project directory:
-        directoriesToMake.add(directoryPath + DICOM_PATH);
-        directoriesToMake.add(directoryPath + TIFF_PATH);
+        directoriesToMake.add(directoryPath + subFolder + DICOM_PATH);
+        directoriesToMake.add(directoryPath + subFolder + TIFF_PATH);
         return directoriesToMake;
     }
 
@@ -455,5 +464,18 @@ public class FileStorageService {
         Configuration config = new PropertyConfiguration(prop);
         CIFSContext baseContext = new BaseContext(config);
         return baseContext.withCredentials(new Kerb5Authenticator(new Subject(), domain, userName, password));
+    }
+
+    /**
+     * Adds a backslash to the beginning of a string if the string
+     * does not have one already.
+     * @param string string to add backslash to.
+     * @return string with backslash.
+     */
+    private String backslashToStartOfString(String string) {
+        if(!string.substring(1).equals("/")) {
+            string = "/" + string;
+        }
+        return string;
     }
 }

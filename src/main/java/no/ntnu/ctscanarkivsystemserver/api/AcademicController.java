@@ -420,12 +420,16 @@ public class AcademicController {
      *         If logged in user is not allowed to do changes on the project: 403 Forbidden
      */
     @PostMapping(path = "/uploadFiles")
-    public ResponseEntity<List<String>> uploadFiles(@RequestParam("files") MultipartFile[] files, @RequestParam("projectId") UUID projectId) {
+    public ResponseEntity<List<String>> uploadFiles(@RequestParam("files") MultipartFile[] files, @RequestParam("projectId") UUID projectId,
+                                                    @RequestParam("subFolder") String subFolder) {
         List<String> notAddedFiles;
+        if(subFolder == null || subFolder.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
         try {
             Project projectToUploadFilesTo = projectService.getProject(projectId);
             if(projectService.isUserPermittedToChangeProject(projectToUploadFilesTo, userService.getCurrentLoggedUser())) {
-                notAddedFiles = fileStorageService.storeFile(files, projectToUploadFilesTo);
+                notAddedFiles = fileStorageService.storeFile(files, projectToUploadFilesTo, subFolder);
             } else {
                 //User is not permitted to do changes on this project.
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
