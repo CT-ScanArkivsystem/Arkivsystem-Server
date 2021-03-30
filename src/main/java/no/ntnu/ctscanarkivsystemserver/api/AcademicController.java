@@ -416,8 +416,9 @@ public class AcademicController {
      * @param files files to upload.
      * @param projectId project files are associated with.
      * @return If successful: 200 OK with a list of all files which where not uploaded.
-     *         If user or project does not exist: 404 Not Found
-     *         If logged in user is not allowed to do changes on the project: 403 Forbidden
+     *         If subFolder variable is null or empty: 400-Bad Request.
+     *         If user or project does not exist: 404 Not Found.
+     *         If logged in user is not allowed to do changes on the project: 403 Forbidden.
      */
     @PostMapping(path = "/uploadFiles")
     public ResponseEntity<List<String>> uploadFiles(@RequestParam("files") MultipartFile[] files, @RequestParam("projectId") UUID projectId,

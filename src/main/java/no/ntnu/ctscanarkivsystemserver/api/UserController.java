@@ -191,7 +191,8 @@ public class UserController {
      * @param projectId id of project directory is associated with.
      * @param subFolder Folder name of the sub-project.
      * @return If successful: 200-OK with a list of all files in a directory.
-     *         If directory is not a valid directory: 400-Bad request
+     *         If directory is not a valid directory: 400-Bad Request
+     *         If subFolder variable is null or empty: 400-Bad Request
      *         If user or project does not exist: 404-Not Found.
      *         If logged in user is not allowed to see project files: 403-Forbidden.
      *         If directory was not found: 410-Gone.
@@ -228,6 +229,14 @@ public class UserController {
         return ResponseEntity.ok(allFileNamesInDir);
     }
 
+    /**
+     * Return a list of all sub-projects of a project.
+     * @param projectId Id of project to get all sub-projects of.
+     * @return If successful: 200-OK with a list of all sub-project folder names.
+     *         If project folder was not found: 204-No Content
+     *         If user or project does not exist: 404-Not Found.
+     *         If logged in user is not allowed to see project: 403-Forbidden.
+     */
     @GetMapping(path = "/getAllProjectSubFolders")
     public ResponseEntity<List<String>> getAllProjectSubFolders(@RequestParam("projectId") UUID projectId) {
         List<String> allSubFolders;
@@ -243,15 +252,12 @@ public class UserController {
         } catch (FileNotFoundException e) {
             System.out.println(e.getMessage());
             return ResponseEntity.noContent().build();
-        } catch (FileStorageException e) {
+        } catch (FileStorageException | IllegalArgumentException | BadRequestException e) {
             System.out.println(e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         } catch (ProjectNotFoundException | UserNotFoundException e) {
             System.out.println(e.getMessage());
             return ResponseEntity.notFound().build();
-        } catch (IllegalArgumentException | BadRequestException e) {
-            System.out.println(e.getMessage());
-            return ResponseEntity.badRequest().build();
         }
         return ResponseEntity.ok(allSubFolders);
     }

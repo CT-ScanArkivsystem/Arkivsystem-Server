@@ -204,8 +204,9 @@ public class FileStorageService {
      * @return List of all sub-project folders.S
      * @throws FileStorageException if directory was not found.
      * @throws FileNotFoundException if something went wrong when trying to get directory.
+     * @throws IllegalArgumentException if project is null.
      */
-    public List<String> getAllProjectSubFolders(Project project) throws FileStorageException, FileNotFoundException {
+    public List<String> getAllProjectSubFolders(Project project) throws FileStorageException, FileNotFoundException, IllegalArgumentException {
         if(project == null) {
             throw new IllegalArgumentException("Project cannot be null!");
         } else {
