@@ -144,6 +144,7 @@ public class UserController {
      * Download a file from the file server.
      * @param fileName name of file to download including file type.
      * @param projectId Id of project file is associated with.
+     * @param subFolder Folder name of the sub-project.
      * @return If successful: 200-OK with the content of the file.
      *         If fileName does not include file type: 400-Bad request
      *         If user or project does not exist: 404-Not Found.
@@ -151,7 +152,8 @@ public class UserController {
      *         If file was not found: 410-Gone.
      */
     @GetMapping(path = "/downloadFile")
-    public ResponseEntity<Resource> downloadFile(@RequestParam("fileName") String fileName, @RequestParam("projectId") UUID projectId) {
+    public ResponseEntity<Resource> downloadFile(@RequestParam("fileName") String fileName, @RequestParam("projectId") UUID projectId,
+                                                 @RequestParam("subFolder") String subFolder) {
         byte[] fileBytes;
         if(!fileStorageService.doesFileNameContainType(fileName)) {
             //File name does not include file type.
@@ -161,7 +163,7 @@ public class UserController {
             Project projectToDownloadFilesFrom = projectService.getProject(projectId);
             if(!projectToDownloadFilesFrom.getIsPrivate() || projectService.hasSpecialPermission(projectToDownloadFilesFrom, userService.getCurrentLoggedUser())
                     || projectService.isUserPermittedToChangeProject(projectToDownloadFilesFrom, userService.getCurrentLoggedUser())) {
-                fileBytes = fileStorageService.loadFileAsBytes(fileName, projectToDownloadFilesFrom);
+                fileBytes = fileStorageService.loadFileAsBytes(fileName, projectToDownloadFilesFrom, subFolder);
             } else {
                 //User is not permitted to see files on this project.
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -187,20 +189,26 @@ public class UserController {
      * Valid directory arguments: documents, images, logs, dicom, tiff and all.
      * @param directory directory to get files from.
      * @param projectId id of project directory is associated with.
+     * @param subFolder Folder name of the sub-project.
      * @return If successful: 200-OK with a list of all files in a directory.
-     *         If directory is not a valid directory: 400-Bad request
+     *         If directory is not a valid directory: 400-Bad Request
+     *         If subFolder variable is null or empty: 400-Bad Request
      *         If user or project does not exist: 404-Not Found.
      *         If logged in user is not allowed to see project files: 403-Forbidden.
      *         If directory was not found: 410-Gone.
      */
     @GetMapping(path = "/getAllFileNames")
-    public ResponseEntity<List<String>> getAllFileNames(@RequestParam("directory") String directory, @RequestParam("projectId") UUID projectId) {
+    public ResponseEntity<List<String>> getAllFileNames(@RequestParam("directory") String directory, @RequestParam("projectId") UUID projectId,
+                                                        @RequestParam("subFolder") String subFolder) {
         List<String> allFileNamesInDir;
+        if(subFolder == null || subFolder.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
         try {
             Project projectToGetFileNamesFrom = projectService.getProject(projectId);
             if (!projectToGetFileNamesFrom.getIsPrivate() || projectService.hasSpecialPermission(projectToGetFileNamesFrom, userService.getCurrentLoggedUser())
                     || projectService.isUserPermittedToChangeProject(projectToGetFileNamesFrom, userService.getCurrentLoggedUser())) {
-                allFileNamesInDir = fileStorageService.getAllFileNames(directory, projectToGetFileNamesFrom);
+                allFileNamesInDir = fileStorageService.getAllFileNames(directory, projectToGetFileNamesFrom, subFolder);
             } else {
                 //User is not permitted to see files on this project.
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -219,5 +227,38 @@ public class UserController {
             return ResponseEntity.badRequest().build();
         }
         return ResponseEntity.ok(allFileNamesInDir);
+    }
+
+    /**
+     * Return a list of all sub-projects of a project.
+     * @param projectId Id of project to get all sub-projects of.
+     * @return If successful: 200-OK with a list of all sub-project folder names.
+     *         If project folder was not found: 204-No Content
+     *         If user or project does not exist: 404-Not Found.
+     *         If logged in user is not allowed to see project: 403-Forbidden.
+     */
+    @GetMapping(path = "/getAllProjectSubFolders")
+    public ResponseEntity<List<String>> getAllProjectSubFolders(@RequestParam("projectId") UUID projectId) {
+        List<String> allSubFolders;
+        try {
+            Project projectToGetFoldersNamesFrom = projectService.getProject(projectId);
+            if (!projectToGetFoldersNamesFrom.getIsPrivate() || projectService.hasSpecialPermission(projectToGetFoldersNamesFrom, userService.getCurrentLoggedUser())
+                    || projectService.isUserPermittedToChangeProject(projectToGetFoldersNamesFrom, userService.getCurrentLoggedUser())) {
+                allSubFolders = fileStorageService.getAllProjectSubFolders(projectToGetFoldersNamesFrom);
+            } else {
+                //User is not permitted to see files on this project.
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.noContent().build();
+        } catch (FileStorageException | IllegalArgumentException | BadRequestException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } catch (ProjectNotFoundException | UserNotFoundException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(allSubFolders);
     }
 }
