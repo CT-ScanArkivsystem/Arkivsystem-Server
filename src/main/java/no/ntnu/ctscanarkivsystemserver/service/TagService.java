@@ -56,7 +56,7 @@ public class TagService {
         if(tag == null) {
             throw new TagNotFoundException(tagName);
         }
-        return tagDao.getTag(tagName);
+        return tag;
     }
 
     /**
