@@ -15,7 +15,10 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @Entity(name = "files")
+@NamedQuery(name = File.FIND_FILE_BY_NAME_AND_PROJECT, query =
+        "SELECT f FROM files f WHERE f.fileName LIKE: fileName AND f.inProject =: projectId")
 public class File {
+    public static final String FIND_FILE_BY_NAME_AND_PROJECT = "File.findFileByNameAndProject";
 
     @Id
     @Column(name="file_id")
@@ -31,7 +34,7 @@ public class File {
     )
     private Project inProject;
 
-    @ManyToMany(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
+    @ManyToMany(cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
     @JoinTable(name = "file_tags",
             joinColumns = @JoinColumn(
                     name = "file_id",
@@ -40,4 +43,15 @@ public class File {
                     name = "tag_name",
                     referencedColumnName = "tag_name"))
     private List<Tag> tags = new ArrayList<>();
+
+    /**
+     *
+     * @param fileName
+     * @param project
+     */
+    public File(String fileName, Project project) {
+        this.fileId = UUID.randomUUID();
+        this.fileName = fileName;
+        this.inProject = project;
+    }
 }
