@@ -267,6 +267,7 @@ public class ProjectDao {
      * @param privacy true to set project as private else false.
      * @return true if change was successful.
      */
+    @Transactional
     public boolean setPrivacy(Project project, boolean privacy) {
         em.refresh(project);
         prepareProjectForEdit(project);
@@ -281,6 +282,7 @@ public class ProjectDao {
      * @param description description to set on project.
      * @return description if successful else null.
      */
+    @Transactional
     public String setDescription(Project project, String description) {
         em.refresh(project);
         prepareProjectForEdit(project);
