@@ -261,9 +261,17 @@ public class ProjectDao {
         return null;
     }
 
-
-
-
-
-
+    /**
+     * Set a projects privacy.
+     * @param project project to set privacy of.
+     * @param privacy true to set project as private else false.
+     * @return true if change was successful.
+     */
+    public boolean setPrivacy(Project project, boolean privacy) {
+        em.refresh(project);
+        prepareProjectForEdit(project);
+        project.setIsPrivate(privacy);
+        project = saveProject(project);
+        return project != null;
+    }
 }

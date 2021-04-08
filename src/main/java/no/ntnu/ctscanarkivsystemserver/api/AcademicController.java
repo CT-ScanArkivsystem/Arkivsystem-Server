@@ -439,4 +439,39 @@ public class AcademicController {
         }
         return ResponseEntity.ok(notAddedFiles);
     }
+
+    /**
+     * Set a projects privacy.
+     * @param projectId id of project to set privacy of.
+     * @param privacy true to set project as private else false.
+     * @return If successful: 200 OK.
+     *         If project was not found: 204-No Content.
+     *         If projectId or privacy is null: 400-Bad Request.
+     *         If user don't have permission to do changes on the project: 403-Forbidden.
+     */
+    @PostMapping(path = "/setProjectPrivacy")
+    public ResponseEntity<?> setProjectPrivacy(@RequestParam("projectId") UUID projectId, @RequestParam("privacy") Boolean privacy) {
+        boolean successfully;
+        if(projectId == null || privacy == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+        try {
+            Project project = projectService.getProject(projectId);
+            if(projectService.isUserPermittedToChangeProject(project, userService.getCurrentLoggedUser())) {
+                successfully = projectService.setProjectPrivacy(project, privacy);
+            } else {
+                //User is not permitted to do changes on this project.
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        } catch (ProjectNotFoundException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        }
+        if(!successfully) {
+            System.out.println("Something went wrong when trying to save project in database.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } else {
+            return ResponseEntity.ok().build();
+        }
+    }
 }

@@ -371,4 +371,14 @@ public class ProjectService {
         }
         return false;
     }
+
+    /**
+     * Set a projects privacy.
+     * @param project project to set privacy of.
+     * @param privacy true to set project as private else false.
+     * @return true if change was successful.
+     */
+    public boolean setProjectPrivacy(Project project, boolean privacy) {
+        return projectDao.setPrivacy(project, privacy);
+    }
 }
