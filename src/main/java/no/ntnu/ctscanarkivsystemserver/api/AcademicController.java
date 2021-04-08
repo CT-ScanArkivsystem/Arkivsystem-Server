@@ -449,7 +449,7 @@ public class AcademicController {
      *         If projectId or privacy is null: 400-Bad Request.
      *         If user don't have permission to do changes on the project: 403-Forbidden.
      */
-    @PostMapping(path = "/setProjectPrivacy")
+    @PutMapping(path = "/setProjectPrivacy")
     public ResponseEntity<?> setProjectPrivacy(@RequestParam("projectId") UUID projectId, @RequestParam("privacy") Boolean privacy) {
         boolean successfully;
         if(projectId == null || privacy == null) {
@@ -472,6 +472,43 @@ public class AcademicController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         } else {
             return ResponseEntity.ok().build();
+        }
+    }
+
+    /**
+     * Set the description of a project.
+     * @param projectId id of project to set description of.
+     * @param description description to set on project.
+     * @return If successful: 200 OK with description.
+     *         If project was not found: 204-No Content.
+     *         If projectId or privacy is null: 400-Bad Request.
+     *         If user don't have permission to do changes on the project: 403-Forbidden.
+     */
+    @PutMapping(path = "/setProjectDescription")
+    public ResponseEntity<String> setProjectDescription(@RequestParam("projectId") UUID projectId, @RequestParam("description") String description) {
+        if(projectId == null || description == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+        try {
+            Project project = projectService.getProject(projectId);
+            if(projectService.isUserPermittedToChangeProject(project, userService.getCurrentLoggedUser())) {
+                description = projectService.setProjectDescription(project, description);
+            } else {
+                //User is not permitted to do changes on this project.
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        } catch (ProjectNotFoundException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+        if(description == null) {
+            System.out.println("Something went wrong when trying to save project in database.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } else {
+            return ResponseEntity.ok(description);
         }
     }
 }

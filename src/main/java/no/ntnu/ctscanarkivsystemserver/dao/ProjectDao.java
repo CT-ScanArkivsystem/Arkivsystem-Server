@@ -274,4 +274,22 @@ public class ProjectDao {
         project = saveProject(project);
         return project != null;
     }
+
+    /**
+     * Set the description of a project.
+     * @param project project to set description of.
+     * @param description description to set on project.
+     * @return description if successful else null.
+     */
+    public String setDescription(Project project, String description) {
+        em.refresh(project);
+        prepareProjectForEdit(project);
+        project.setDescription(description);
+        project = saveProject(project);
+        if(project == null) {
+            return null;
+        } else {
+            return project.getDescription();
+        }
+    }
 }
