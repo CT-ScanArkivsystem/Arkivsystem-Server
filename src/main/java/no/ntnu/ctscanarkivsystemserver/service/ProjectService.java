@@ -371,4 +371,29 @@ public class ProjectService {
         }
         return false;
     }
+
+    /**
+     * Set a projects privacy.
+     * @param project project to set privacy of.
+     * @param privacy true to set project as private else false.
+     * @return true if change was successful.
+     */
+    public boolean setProjectPrivacy(Project project, boolean privacy) {
+        return projectDao.setPrivacy(project, privacy);
+    }
+
+    /**
+     * Set the description of a project.
+     * @param project project to set description of.
+     * @param description description to set on project.
+     * @return description if successful else null.
+     * @throws IllegalArgumentException if project or description is null.
+     */
+    public String setProjectDescription(Project project, String description) throws IllegalArgumentException {
+        if(project == null || description == null) {
+            throw new IllegalArgumentException("Project and description cannot be null!");
+        } else {
+            return projectDao.setDescription(project, description);
+        }
+    }
 }
