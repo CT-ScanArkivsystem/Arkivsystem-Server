@@ -540,4 +540,56 @@ public class AcademicController {
         //Throws TagExistsException.
         return fileService.addTag(file, tags);
     }
+
+    /**
+     * Removes tags from a file.
+     * @param tagNames list of all tags to be removed from file.
+     * @param projectId project id file is associated with.
+     * @param subFolder sub project folder file is in.
+     * @param fileName name of file tags are getting removed from. Including file type.
+     * @return If Successful: 200-Ok.
+     *         If everything went fine, but file does not exist: 204-No Content.
+     *         If tagName, projectId, subFolder is null or subFolder is empty: 400-Bad Request.
+     *         If tag, project, project dir or adder user is not found: 404-Not Found.
+     *         If user is not allowed to do changes on project: 403-Forbidden.
+     *         If database failed to add tag: 500-Internal Server Error.
+     *         If tagName has 2 or less characters: 400-Bad Request.
+     */
+    @PutMapping(path = ("/removeTagFromFile"))
+    public ResponseEntity<?> removeTagFromFile(@RequestParam List<String> tagNames, @RequestParam UUID projectId,
+                                                     @RequestParam("subFolder") String subFolder, @RequestParam("fileName") String fileName) {
+        boolean successful = false;
+        if(tagNames == null || projectId == null || tagNames.isEmpty() || subFolder == null || subFolder.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        } else {
+            try {
+                if (projectService.isUserPermittedToChangeProject(projectService.getProject(projectId), userService.getCurrentLoggedUser())) {
+                    List<Tag> tagsToBeRemoved = new ArrayList<>();
+                    for (String tagName : tagNames) {
+                        tagsToBeRemoved.add(tagService.getTag(tagName));
+                    }
+                    successful = fileService.removeTags(projectId, tagsToBeRemoved, subFolder, fileName);
+                } else {
+                    System.out.println("User is forbidden to do changes on this project!");
+                    ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                }
+            } catch (UserNotFoundException | TagNotFoundException | ProjectNotFoundException e) {
+                System.out.println(e.getMessage());
+                //Tag, project or user not found. Tag is either does not exist or is not found in project.
+                return ResponseEntity.notFound().build();
+            } catch (IndexOutOfBoundsException | IllegalArgumentException e) {
+                System.out.println(e.getMessage());
+                //tagName cannot have less than 2 characters.
+                return ResponseEntity.badRequest().build();
+            } catch (MyFileNotFoundException e) {
+                System.out.println(e.getMessage());
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+            }
+        }
+        if(!successful) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } else {
+            return ResponseEntity.ok().build();
+        }
+    }
 }

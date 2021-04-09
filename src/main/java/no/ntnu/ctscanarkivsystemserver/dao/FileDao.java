@@ -110,4 +110,20 @@ public class FileDao {
         }
         return null;
     }
+
+    /**
+     * Removes tags from a file in the database.
+     * @param file file to remove tags from.
+     * @param tagsToBeRemoved tags to be removed from file.
+     * @return true if saving file is successful.
+     */
+    @Transactional
+    public boolean removeTag(File file, List<Tag> tagsToBeRemoved) {
+        em.refresh(file);
+        prepareFileForEdit(file);
+        for(Tag tag:tagsToBeRemoved) {
+            file.getTags().remove(tag);
+        }
+        return saveFile(file) != null;
+    }
 }

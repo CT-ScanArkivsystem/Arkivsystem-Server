@@ -1,7 +1,9 @@
 package no.ntnu.ctscanarkivsystemserver.service;
 
 import no.ntnu.ctscanarkivsystemserver.dao.FileDao;
+import no.ntnu.ctscanarkivsystemserver.exception.MyFileNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.exception.TagExistsException;
+import no.ntnu.ctscanarkivsystemserver.exception.TagNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.model.File;
 import no.ntnu.ctscanarkivsystemserver.model.Project;
 import no.ntnu.ctscanarkivsystemserver.model.Tag;
@@ -104,5 +106,33 @@ public class FileService {
             }
         }
         return fileNamesWithTags;
+    }
+
+    /**
+     * Removes tags from a file in the database.
+     * @param projectId id of project the file is associated with.
+     * @param tagsToBeRemoved tags to be removed from file.
+     * @param subFolder sub project folder file is in (The folder name in the file-server).
+     * @param fileName name of file to remove tags from.
+     * @return true if removing of tags was successful.
+     * @throws MyFileNotFoundException if file was not found in the database.
+     * @throws IllegalArgumentException if projectId, subFolder, tagsToBeRemoved or fileName are null.
+     */
+    public boolean removeTags(UUID projectId, List<Tag> tagsToBeRemoved, String subFolder, String fileName) throws MyFileNotFoundException, IllegalArgumentException {
+        if (projectId == null || subFolder == null || subFolder.trim().isEmpty() || tagsToBeRemoved == null || fileName == null) {
+            throw new IllegalArgumentException("Fields projectId, subFolder, tagsToBeRemoved and fileName cannot be null!");
+        } else {
+            File file = getFile(fileName, subFolder, projectId);
+            if (file == null) {
+                throw new MyFileNotFoundException("File with name: " + fileName + ", in project with id: " + projectId
+                        + ", in sub-folder: " + subFolder + " was not found in the database.");
+            }
+            for (Tag tagToBeRemoved : tagsToBeRemoved) {
+                if (!doesTagExistInFile(tagToBeRemoved, file)) {
+                    throw new TagNotFoundException(tagToBeRemoved.getTagName());
+                }
+            }
+            return fileDao.removeTag(file, tagsToBeRemoved);
+        }
     }
 }
