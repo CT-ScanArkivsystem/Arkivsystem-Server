@@ -261,9 +261,37 @@ public class ProjectDao {
         return null;
     }
 
+    /**
+     * Set a projects privacy.
+     * @param project project to set privacy of.
+     * @param privacy true to set project as private else false.
+     * @return true if change was successful.
+     */
+    @Transactional
+    public boolean setPrivacy(Project project, boolean privacy) {
+        em.refresh(project);
+        prepareProjectForEdit(project);
+        project.setIsPrivate(privacy);
+        project = saveProject(project);
+        return project != null;
+    }
 
-
-
-
-
+    /**
+     * Set the description of a project.
+     * @param project project to set description of.
+     * @param description description to set on project.
+     * @return description if successful else null.
+     */
+    @Transactional
+    public String setDescription(Project project, String description) {
+        em.refresh(project);
+        prepareProjectForEdit(project);
+        project.setDescription(description);
+        project = saveProject(project);
+        if(project == null) {
+            return null;
+        } else {
+            return project.getDescription();
+        }
+    }
 }
