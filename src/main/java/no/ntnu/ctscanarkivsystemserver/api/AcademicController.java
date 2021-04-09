@@ -515,6 +515,7 @@ public class AcademicController {
      * @throws FileNotFoundException if file-server directory the file is in was not found
      * @throws ForbiddenException if user don't have permission to do changes on the project.
      * @throws TagExistsException if tag already exists in file.
+     * @throws MyFileNotFoundException if file don't exist in the file-server.
      */
     private File addTagToFile(List<Tag> tags, Project project, String subFolder, String fileName) throws FileNotFoundException, ForbiddenException, TagExistsException, MyFileNotFoundException {
         File file;
