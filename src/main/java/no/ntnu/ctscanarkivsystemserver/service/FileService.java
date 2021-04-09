@@ -8,8 +8,7 @@ import no.ntnu.ctscanarkivsystemserver.model.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class FileService {
@@ -35,14 +34,20 @@ public class FileService {
 
     /**
      * Adds a object File to the database.
+     * If file already exist this will just return the existing file.
      * @param fileName name of file to be added. (Including file type)
      * @param subFolder sub project folder file is in.
      * @param project project file is in.
-     * @return added file. Null if file was not added.
+     * @return added file. Null if file was not added. Existing file if it already exist.
      * @throws IllegalArgumentException if fileName is empty or projectId is null.
      */
     public File addFileToDatabase(String fileName, String subFolder, Project project) throws IllegalArgumentException {
-        return fileDao.insertFile(new File(fileName, subFolder, project));
+        File file = getFile(fileName, subFolder, project.getProjectId());
+        if(file != null) {
+            return file;
+        } else {
+            return fileDao.insertFile(new File(fileName, subFolder.toLowerCase(), project));
+        }
     }
 
     /**
@@ -74,5 +79,30 @@ public class FileService {
             }
         }
         return fileDao.addTagsToFile(file, tagsToBeAdded);
+    }
+
+    /**
+     * Gets all tags a file is associated with.
+     * @param projectId id of project files are associated with.
+     * @param subFolder sub project folder files are in (The folder name in the file-server).
+     * @param allFileNamesInDir a List of all the files to get tags from.
+     * @return HashMap with fileName as key and List of tags associated with the file.
+     * @throws IllegalArgumentException if projectId, subFolder or allFileNames are null.
+     */
+    public Map<String, List<Tag>> getTagsOnFiles(UUID projectId, String subFolder, List<String> allFileNamesInDir) throws IllegalArgumentException {
+        Map<String, List<Tag>> fileNamesWithTags = new HashMap<>();
+        if(projectId == null || subFolder == null || subFolder.trim().isEmpty() || allFileNamesInDir == null) {
+            throw new IllegalArgumentException("Fields projectId, subFolder and allFilesNamesInDir cannot be null!");
+        } else {
+            for(String fileName:allFileNamesInDir) {
+                File file = fileDao.getFileByNameAndProject(fileName, projectId, subFolder.toLowerCase());
+                if(file == null) {
+                    fileNamesWithTags.put(fileName, Collections.emptyList());
+                } else {
+                    fileNamesWithTags.put(fileName, file.getTags());
+                }
+            }
+        }
+        return fileNamesWithTags;
     }
 }
