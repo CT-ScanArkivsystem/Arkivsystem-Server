@@ -198,6 +198,23 @@ public class FileStorageService {
     }
 
     /**
+     * See if a file exists in a sub-project folder.
+     * @param fileName name of file to see if exists.
+     * @param project project associated with directory you want to see if file exists in.
+     * @param subFolder Folder of sub-project to see if file exists in.
+     * @return true if file was found in the file-server.
+     * @throws FileNotFoundException if directory was not found.
+     */
+    public boolean doesFileExist(String fileName, Project project, String subFolder) throws FileNotFoundException {
+        for(String file:getAllFileNames("all", project, subFolder)) {
+            if(file.equals(fileName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Return all folders of sub-projects in a project folder.
      * Note: This will also return all files in the project folder.
      * @param project project to get sub-project folders from.

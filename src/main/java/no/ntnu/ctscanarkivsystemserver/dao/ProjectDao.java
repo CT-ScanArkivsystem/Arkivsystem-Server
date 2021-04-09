@@ -255,7 +255,7 @@ public class ProjectDao {
                 em.flush();
                 return projectToSave;
             } catch (Exception e) {
-                System.out.println("Exception in save user: " + e.getMessage());
+                System.out.println("Exception in save project: " + e.getMessage());
             }
         }
         return null;
