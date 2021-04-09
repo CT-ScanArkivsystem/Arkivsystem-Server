@@ -7,4 +7,5 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "prop")
 public class Properties {
     private String jwtKey;
+    private String backendDomain;
 }
