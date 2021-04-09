@@ -8,4 +8,5 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class Properties {
     private String jwtKey;
     private String backendDomain;
+    private long jwtLifetimeInMin;
 }
