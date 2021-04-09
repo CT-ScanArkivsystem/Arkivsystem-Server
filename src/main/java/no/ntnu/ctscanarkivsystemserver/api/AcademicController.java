@@ -142,15 +142,16 @@ public class AcademicController {
      * This API request is used to add an existing user to the members of a project
      * @param projectDto The 'Data To Object' used to carry the required id's. Must contain userId and projectId
      * @return If successful: Response code 200 OK
-     *         If ProjectDto is null: 400 Bad request
+     *         If ProjectDto, userEmail or projectId is null: 400 Bad request
+     *         If user is already a member of the project: 400 Bad request
      *         If User is not allowed to add project members: 403 Forbidden
      *         If member is not added successfully or something else fails: 500 Internal server error
      */
     @PutMapping(path = "/addMemberToProject")
     public ResponseEntity<Project> addMemberToProject(@RequestBody ProjectDTO projectDto) {
         boolean success;
-        if (projectDto  == null) {
-            System.out.println("ProjectDto is null");
+        if (projectDto  == null || projectDto.getUserEmail() == null || projectDto.getProjectId() == null) {
+            System.out.println("ProjectDto, userEmail or projectId is null");
             return ResponseEntity.badRequest().build();
         } else {
             try {
@@ -158,6 +159,9 @@ public class AcademicController {
             } catch (ForbiddenException e) {
                 System.out.println(e.getMessage());
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            } catch (IllegalArgumentException e) {
+                System.out.println(e.getMessage());
+                return ResponseEntity.badRequest().build();
             }
             catch (Exception e) {
                 System.out.println(e.getMessage());
@@ -176,13 +180,14 @@ public class AcademicController {
      * This API request is used to remove an existing user from the members of a project
      * @param projectDto The 'Data To Object' used to carry the required id's. Must contain userId and projectId
      * @return If successful: Response code 200 OK and the modified project
-     *         If ProjectDto is null: Response Bad Request
+     *         If ProjectDto, userEmail or projectId is null: 400 Bad request
+     *         If User is not allowed to add project members: 403 Forbidden
      */
     @PutMapping(path = "/removeMemberFromProject")
     public ResponseEntity<Project> removeMemberFromProject(@RequestBody ProjectDTO projectDto) {
         boolean success;
-        if (projectDto  == null) {
-            System.out.println("ProjectDto is null");
+        if (projectDto  == null || projectDto.getUserEmail() == null || projectDto.getProjectId() == null) {
+            System.out.println("ProjectDto, userEmail or projectId is null");
             return ResponseEntity.badRequest().build();
         } else {
             try {

@@ -138,16 +138,21 @@ public class ProjectService {
 
     /**
      * This method takes the DTO from the controller and sends project and user to the DAO
-     * @param projectDto The ProjectDTO object used to pass data
+     * @param projectDto with userEmail (email of user to be added) and projectId.
      * @param user The logged in user
      * @return True if user has been successfully added, false otherwise
      * @throws ForbiddenException If user is not allowed to add members
+     * @throws IllegalArgumentException If user is already a member of the project.
      */
-    public boolean addMemberToProject(ProjectDTO projectDto, User user) throws ForbiddenException {
+    public boolean addMemberToProject(ProjectDTO projectDto, User user) throws ForbiddenException, IllegalArgumentException {
         Project thisProject = projectDao.getProjectById(projectDto.getProjectId());
-        User thisUser = userDao.getUserById(projectDto.getUserId());
+        User userToBeRemoved = userDao.getUserByEmail(projectDto.getUserEmail());
         if (userIsOwnerOrAdmin(thisProject, user)) {
-            return projectDao.addProjectMember(thisProject, thisUser);
+            if(!thisProject.getProjectMembers().contains(userToBeRemoved)) {
+                return projectDao.addProjectMember(thisProject, userToBeRemoved);
+            } else {
+                throw new IllegalArgumentException("User is already member of project.");
+            }
         } else {
             throw new ForbiddenException("The logged on user is not allowed to add members to this project");
         }
@@ -155,20 +160,19 @@ public class ProjectService {
 
     /**
      * This method takes the DTO from the controller and sends project and user to the DAO
-     * @param projectDto The ProjectDTO object used to pass data
+     * @param projectDto with userEmail (email of user to be removed) and projectId.
      * @param user The logged in user
      * @return The resulting Project object after it has been modified
      * @throws ForbiddenException If user is not allowed to add members
      */
     public boolean removeMemberFromProject(ProjectDTO projectDto, User user) throws ForbiddenException {
         Project thisProject = projectDao.getProjectById(projectDto.getProjectId());
-        User thisUser = userDao.getUserById(projectDto.getUserId());
+        User userToBeRemoved = userDao.getUserByEmail(projectDto.getUserEmail());
         if (userIsOwnerOrAdmin(thisProject, user)) {
-            return projectDao.removeProjectMember(thisProject, thisUser);
+            return projectDao.removeProjectMember(thisProject, userToBeRemoved);
         } else {
             throw new ForbiddenException("The logged on user is not allowed to remove members from this project");
         }
-
     }
 
     /**
