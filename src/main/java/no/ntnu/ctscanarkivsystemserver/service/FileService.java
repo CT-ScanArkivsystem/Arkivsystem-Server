@@ -12,6 +12,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 
+/**
+ * This class handles the business logic related to files in the database.
+ * @author TrymV
+ */
 @Service
 public class FileService {
 
