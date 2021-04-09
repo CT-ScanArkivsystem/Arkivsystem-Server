@@ -61,13 +61,11 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
      */
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        //TODO Fix this when developing the role system.
         http.csrf().disable().authorizeRequests()
                 .antMatchers("/admin/**").hasRole(Role.ADMIN)
                 .antMatchers("/academic/**").hasAnyRole(Role.ADMIN, Role.ACADEMIC)
                 .antMatchers("/user/**").hasAnyRole(Role.ADMIN, Role.ACADEMIC, Role.USER)
                 .antMatchers("/auth/**").permitAll()
-                .antMatchers("/api/**").permitAll()
                 .anyRequest().authenticated()
                 .and().addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling().authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));

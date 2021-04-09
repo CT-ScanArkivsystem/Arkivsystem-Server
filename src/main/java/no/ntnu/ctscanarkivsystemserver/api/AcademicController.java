@@ -416,16 +416,21 @@ public class AcademicController {
      * @param files files to upload.
      * @param projectId project files are associated with.
      * @return If successful: 200 OK with a list of all files which where not uploaded.
-     *         If user or project does not exist: 404 Not Found
-     *         If logged in user is not allowed to do changes on the project: 403 Forbidden
+     *         If subFolder variable is null or empty: 400-Bad Request.
+     *         If user or project does not exist: 404 Not Found.
+     *         If logged in user is not allowed to do changes on the project: 403 Forbidden.
      */
     @PostMapping(path = "/uploadFiles")
-    public ResponseEntity<List<String>> uploadFiles(@RequestParam("files") MultipartFile[] files, @RequestParam("projectId") UUID projectId) {
+    public ResponseEntity<List<String>> uploadFiles(@RequestParam("files") MultipartFile[] files, @RequestParam("projectId") UUID projectId,
+                                                    @RequestParam("subFolder") String subFolder) {
         List<String> notAddedFiles;
+        if(subFolder == null || subFolder.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
         try {
             Project projectToUploadFilesTo = projectService.getProject(projectId);
             if(projectService.isUserPermittedToChangeProject(projectToUploadFilesTo, userService.getCurrentLoggedUser())) {
-                notAddedFiles = fileStorageService.storeFile(files, projectToUploadFilesTo);
+                notAddedFiles = fileStorageService.storeFile(files, projectToUploadFilesTo, subFolder);
             } else {
                 //User is not permitted to do changes on this project.
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -438,5 +443,77 @@ public class AcademicController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
         return ResponseEntity.ok(notAddedFiles);
+    }
+
+    /**
+     * Set a projects privacy.
+     * @param projectId id of project to set privacy of.
+     * @param privacy true to set project as private else false.
+     * @return If successful: 200 OK.
+     *         If project was not found: 204-No Content.
+     *         If projectId or privacy is null: 400-Bad Request.
+     *         If user don't have permission to do changes on the project: 403-Forbidden.
+     */
+    @PutMapping(path = "/setProjectPrivacy")
+    public ResponseEntity<?> setProjectPrivacy(@RequestParam("projectId") UUID projectId, @RequestParam("privacy") Boolean privacy) {
+        boolean successfully;
+        if(projectId == null || privacy == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+        try {
+            Project project = projectService.getProject(projectId);
+            if(projectService.isUserPermittedToChangeProject(project, userService.getCurrentLoggedUser())) {
+                successfully = projectService.setProjectPrivacy(project, privacy);
+            } else {
+                //User is not permitted to do changes on this project.
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        } catch (ProjectNotFoundException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        }
+        if(!successfully) {
+            System.out.println("Something went wrong when trying to save project in database.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } else {
+            return ResponseEntity.ok().build();
+        }
+    }
+
+    /**
+     * Set the description of a project.
+     * @param projectId id of project to set description of.
+     * @param description description to set on project.
+     * @return If successful: 200 OK with description.
+     *         If project was not found: 204-No Content.
+     *         If projectId or privacy is null: 400-Bad Request.
+     *         If user don't have permission to do changes on the project: 403-Forbidden.
+     */
+    @PutMapping(path = "/setProjectDescription")
+    public ResponseEntity<String> setProjectDescription(@RequestParam("projectId") UUID projectId, @RequestParam("description") String description) {
+        if(projectId == null || description == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+        try {
+            Project project = projectService.getProject(projectId);
+            if(projectService.isUserPermittedToChangeProject(project, userService.getCurrentLoggedUser())) {
+                description = projectService.setProjectDescription(project, description);
+            } else {
+                //User is not permitted to do changes on this project.
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        } catch (ProjectNotFoundException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+        if(description == null) {
+            System.out.println("Something went wrong when trying to save project in database.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } else {
+            return ResponseEntity.ok(description);
+        }
     }
 }
