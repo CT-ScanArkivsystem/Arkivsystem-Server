@@ -9,7 +9,10 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * This is the model class for a file
+ * This is the model class for a file.
+ * The purpose of this class is to hold on information so the system can get tags a file in the file-server is
+ * associated with. For this the system needs to know what project the file is associated with and what sub project
+ * folder the file is in.
  * @author TrymV
  */
 @Data
@@ -48,9 +51,10 @@ public class File {
     private List<Tag> tags = new ArrayList<>();
 
     /**
-     *
-     * @param fileName
-     * @param project
+     * The constructor of file.
+     * @param fileName name of file in the file server. Including file type. Example: MyFile.txt
+     * @param subFolder sub project folder the file is in.
+     * @param project project file is associated with.
      */
     public File(String fileName, String subFolder, Project project) {
         this.fileId = UUID.randomUUID();
