@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This class handles the business logic related to files in the database.
@@ -110,6 +111,30 @@ public class FileService {
             }
         }
         return fileNamesWithTags;
+    }
+
+    /**
+     * Gets all tag names which are used on files.
+     * This will only return unique tag names.
+     * @param projectId id of project files are associated with.
+     * @param subFolder sub project folder files are in (The folder name in the file-server).
+     * @param allFileNamesInDir a List of all the files to get tag names from.
+     * @return set of all tag names which are used on files.
+     * @throws IllegalArgumentException if projectId, subFolder or allFileNames are null.
+     */
+    public Set<String> getAllFileTagNames(UUID projectId, String subFolder, List<String> allFileNamesInDir) throws IllegalArgumentException {
+        Set<String> fileTagNames = new LinkedHashSet<>();
+        if(projectId == null || subFolder == null || subFolder.trim().isEmpty() || allFileNamesInDir == null) {
+            throw new IllegalArgumentException("Fields projectId, subFolder and allFilesNamesInDir cannot be null!");
+        } else {
+            for(String fileName:allFileNamesInDir) {
+                File file = fileDao.getFileByNameAndProject(fileName, projectId, subFolder.toLowerCase());
+                if(file != null) {
+                    fileTagNames.addAll(file.getTags().stream().map(Tag::getTagName).collect(Collectors.toList()));
+                }
+            }
+        }
+        return fileTagNames;
     }
 
     /**
