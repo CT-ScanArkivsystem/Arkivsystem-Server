@@ -2,10 +2,7 @@ package no.ntnu.ctscanarkivsystemserver.api;
 
 import no.ntnu.ctscanarkivsystemserver.exception.*;
 import no.ntnu.ctscanarkivsystemserver.model.*;
-import no.ntnu.ctscanarkivsystemserver.service.FileStorageService;
-import no.ntnu.ctscanarkivsystemserver.service.ProjectService;
-import no.ntnu.ctscanarkivsystemserver.service.TagService;
-import no.ntnu.ctscanarkivsystemserver.service.UserService;
+import no.ntnu.ctscanarkivsystemserver.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.ws.rs.ForbiddenException;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -30,13 +28,16 @@ public class AcademicController {
     private final TagService tagService;
     private final UserService userService;
     private final FileStorageService fileStorageService;
+    private final FileService fileService;
 
     @Autowired
-    public AcademicController(ProjectService projectService, TagService tagService, UserService userService, FileStorageService fileStorageService) {
+    public AcademicController(ProjectService projectService, TagService tagService, UserService userService,
+                              FileStorageService fileStorageService, FileService fileService) {
         this.projectService = projectService;
         this.tagService = tagService;
         this.userService = userService;
         this.fileStorageService = fileStorageService;
+        this.fileService = fileService;
     }
 
     /**
@@ -141,15 +142,16 @@ public class AcademicController {
      * This API request is used to add an existing user to the members of a project
      * @param projectDto The 'Data To Object' used to carry the required id's. Must contain userId and projectId
      * @return If successful: Response code 200 OK
-     *         If ProjectDto is null: 400 Bad request
+     *         If ProjectDto, userEmail or projectId is null: 400 Bad request
+     *         If user is already a member of the project: 400 Bad request
      *         If User is not allowed to add project members: 403 Forbidden
      *         If member is not added successfully or something else fails: 500 Internal server error
      */
     @PutMapping(path = "/addMemberToProject")
     public ResponseEntity<Project> addMemberToProject(@RequestBody ProjectDTO projectDto) {
         boolean success;
-        if (projectDto  == null) {
-            System.out.println("ProjectDto is null");
+        if (projectDto  == null || projectDto.getUserEmail() == null || projectDto.getProjectId() == null) {
+            System.out.println("ProjectDto, userEmail or projectId is null");
             return ResponseEntity.badRequest().build();
         } else {
             try {
@@ -157,6 +159,9 @@ public class AcademicController {
             } catch (ForbiddenException e) {
                 System.out.println(e.getMessage());
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            } catch (IllegalArgumentException e) {
+                System.out.println(e.getMessage());
+                return ResponseEntity.badRequest().build();
             }
             catch (Exception e) {
                 System.out.println(e.getMessage());
@@ -175,13 +180,14 @@ public class AcademicController {
      * This API request is used to remove an existing user from the members of a project
      * @param projectDto The 'Data To Object' used to carry the required id's. Must contain userId and projectId
      * @return If successful: Response code 200 OK and the modified project
-     *         If ProjectDto is null: Response Bad Request
+     *         If ProjectDto, userEmail or projectId is null: 400 Bad request
+     *         If User is not allowed to add project members: 403 Forbidden
      */
     @PutMapping(path = "/removeMemberFromProject")
     public ResponseEntity<Project> removeMemberFromProject(@RequestBody ProjectDTO projectDto) {
         boolean success;
-        if (projectDto  == null) {
-            System.out.println("ProjectDto is null");
+        if (projectDto  == null || projectDto.getUserEmail() == null || projectDto.getProjectId() == null) {
+            System.out.println("ProjectDto, userEmail or projectId is null");
             return ResponseEntity.badRequest().build();
         } else {
             try {
@@ -227,22 +233,6 @@ public class AcademicController {
             }
         }
         return ResponseEntity.ok(tagToBeAdded);
-    }
-
-    /**
-     * Retrieves all tags from the database.
-     * @return If Successful: 200-OK and List with Tags
-     *         If there are no tags: 404-Not Found.
-     */
-    @GetMapping(path = "/getAllTags")
-    public ResponseEntity<List<Tag>> getAllTags() {
-        List<Tag> allTags = tagService.getAllTags();
-        if(allTags == null || allTags.isEmpty()) {
-            //No tags in the system.
-            return ResponseEntity.notFound().build();
-        } else {
-            return ResponseEntity.ok(allTags);
-        }
     }
 
     /**
@@ -352,7 +342,7 @@ public class AcademicController {
      */
     @PutMapping(path = ("/grantSpecialPermission"))
     public ResponseEntity<?> grantSpecialPermission(@RequestParam UUID projectId, @RequestParam String userEmail) {
-        boolean success = false;
+        boolean success;
         if (projectId == null || userEmail == null || projectId.toString().trim().isEmpty() || userEmail.trim().isEmpty()) {
             return ResponseEntity.badRequest().build();
         } else {
@@ -387,7 +377,7 @@ public class AcademicController {
      */
     @PutMapping(path = ("/revokeSpecialPermission"))
     public ResponseEntity<?> revokeSpecialPermission(@RequestParam UUID projectId, @RequestParam String userEmail) {
-        boolean success = false;
+        boolean success;
         if (projectId == null || userEmail == null || projectId.toString().trim().isEmpty() || userEmail.trim().isEmpty()) {
             return ResponseEntity.badRequest().build();
         } else {
@@ -443,6 +433,153 @@ public class AcademicController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
         return ResponseEntity.ok(notAddedFiles);
+    }
+
+    /**
+     * Add tags to a file.
+     * @param tagNames names of tags to be added.
+     * @param projectId id of project to which tags is getting added to.
+     * @param subFolder sub project folder file is in.
+     * @param fileName name of file to add tags to including file type.
+     * @return If Successful: 200-Ok with File.
+     *         If everything went fine, but file does not exist: 204-No Content.
+     *         If tagName, projectId, subFolder is null or subFolder is empty: 400-Bad Request.
+     *         If tag, project, project dir or adder user is not found: 404-Not Found.
+     *         If user is not allowed to do changes on project: 403-Forbidden.
+     *         If database failed to add tag: 500-Internal Server Error.
+     *         If tag already exist in file: 409-Conflict.
+     *         If tagName has 2 or less characters: 400-Bad Request.
+     */
+    @PutMapping(path = "/addFileTag")
+    public ResponseEntity<File> addTagsToFile(@RequestParam("tagNames") List<String> tagNames, @RequestParam("projectId") UUID projectId,
+                                                @RequestParam("subFolder") String subFolder, @RequestParam("fileName") String fileName) {
+        File fileToAddTagsTo;
+        if(tagNames == null || projectId == null || subFolder == null || subFolder.trim().isEmpty()) {
+            //Tag name cannot be empty and project id cannot be null!
+            return ResponseEntity.badRequest().build();
+        } else {
+            List<Tag> tagsToBeAdded = new ArrayList<>();
+            for(String tagName: tagNames) {
+                tagsToBeAdded.add(tagService.getTag(tagName));
+            }
+            try {
+                fileToAddTagsTo = addTagToFile(tagsToBeAdded, projectService.getProject(projectId), subFolder, fileName);
+            } catch (UserNotFoundException | TagNotFoundException | ProjectNotFoundException | FileNotFoundException e) {
+                System.out.println(e.getMessage());
+                //Tag, project or user not found.
+                return ResponseEntity.notFound().build();
+            } catch (ForbiddenException e) {
+                System.out.println(e.getMessage());
+                //User is forbidden to do changes on this project.
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            } catch (TagExistsException e) {
+                System.out.println(e.getMessage());
+                //Tag already exist in file.
+                return ResponseEntity.status(HttpStatus.CONFLICT).build();
+            } catch (IndexOutOfBoundsException e) {
+                System.out.println(e.getMessage());
+                //tagName cannot have less than 2 characters
+                return ResponseEntity.badRequest().build();
+            } catch (MyFileNotFoundException e) {
+                System.out.println(e.getMessage());
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+            }
+        }
+        if(fileToAddTagsTo == null) {
+            //Something went wrong when trying to add tag!
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } else {
+            return ResponseEntity.ok(fileToAddTagsTo);
+        }
+    }
+
+    /**
+     * Adds a tag to a file if user has permission to do changes on the project and
+     * if file exists in the file-server. If file does not exist in the database a new instance will be created.
+     * @param tags tags to be added to file.
+     * @param project project file is associated with.
+     * @param subFolder sub project folder file is associated with.
+     * @param fileName name of file including file type.
+     * @return file tags was added to.
+     * @throws FileNotFoundException if file-server directory the file is in was not found
+     * @throws ForbiddenException if user don't have permission to do changes on the project.
+     * @throws TagExistsException if tag already exists in file.
+     * @throws MyFileNotFoundException if file don't exist in the file-server.
+     */
+    private File addTagToFile(List<Tag> tags, Project project, String subFolder, String fileName) throws FileNotFoundException, ForbiddenException, TagExistsException, MyFileNotFoundException {
+        File file;
+        if (projectService.isUserPermittedToChangeProject(project, userService.getCurrentLoggedUser())) {
+            if (fileStorageService.doesFileExist(fileName, project, subFolder)) {
+                file = fileService.getFile(fileName, subFolder, project.getProjectId());
+                if (file == null) {
+                    file = fileService.addFileToDatabase(fileName, subFolder, project);
+                    if (file == null) {
+                        System.out.println("ERROR: File was not created in database!");
+                        return null;
+                    }
+                }
+            } else {
+                System.out.println("ERROR: File does not exist in file-server!");
+                throw new MyFileNotFoundException("File with the name: " + fileName + " does not exist in: " +
+                        project.getProjectName() + " in sub folder: " + subFolder);
+            }
+        } else {
+            throw new ForbiddenException("User is forbidden to do changes on this project!");
+        }
+        //Throws TagExistsException.
+        return fileService.addTag(file, tags);
+    }
+
+    /**
+     * Removes tags from a file.
+     * @param tagNames list of all tags to be removed from file.
+     * @param projectId project id file is associated with.
+     * @param subFolder sub project folder file is in.
+     * @param fileName name of file tags are getting removed from. Including file type.
+     * @return If Successful: 200-Ok.
+     *         If everything went fine, but file does not exist: 204-No Content.
+     *         If tagName, projectId, subFolder is null or subFolder is empty: 400-Bad Request.
+     *         If tag, project, project dir or adder user is not found: 404-Not Found.
+     *         If user is not allowed to do changes on project: 403-Forbidden.
+     *         If database failed to add tag: 500-Internal Server Error.
+     *         If tagName has 2 or less characters: 400-Bad Request.
+     */
+    @PutMapping(path = ("/removeTagFromFile"))
+    public ResponseEntity<?> removeTagFromFile(@RequestParam List<String> tagNames, @RequestParam UUID projectId,
+                                                     @RequestParam("subFolder") String subFolder, @RequestParam("fileName") String fileName) {
+        boolean successful = false;
+        if(tagNames == null || projectId == null || tagNames.isEmpty() || subFolder == null || subFolder.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        } else {
+            try {
+                if (projectService.isUserPermittedToChangeProject(projectService.getProject(projectId), userService.getCurrentLoggedUser())) {
+                    List<Tag> tagsToBeRemoved = new ArrayList<>();
+                    for (String tagName : tagNames) {
+                        tagsToBeRemoved.add(tagService.getTag(tagName));
+                    }
+                    successful = fileService.removeTags(projectId, tagsToBeRemoved, subFolder, fileName);
+                } else {
+                    System.out.println("User is forbidden to do changes on this project!");
+                    ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                }
+            } catch (UserNotFoundException | TagNotFoundException | ProjectNotFoundException e) {
+                System.out.println(e.getMessage());
+                //Tag, project or user not found. Tag is either does not exist or is not found in project.
+                return ResponseEntity.notFound().build();
+            } catch (IndexOutOfBoundsException | IllegalArgumentException e) {
+                System.out.println(e.getMessage());
+                //tagName cannot have less than 2 characters.
+                return ResponseEntity.badRequest().build();
+            } catch (MyFileNotFoundException e) {
+                System.out.println(e.getMessage());
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+            }
+        }
+        if(!successful) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } else {
+            return ResponseEntity.ok().build();
+        }
     }
 
     /**

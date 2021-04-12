@@ -8,10 +8,7 @@ import no.ntnu.ctscanarkivsystemserver.exception.TagNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.model.Project;
 import no.ntnu.ctscanarkivsystemserver.model.Tag;
 import no.ntnu.ctscanarkivsystemserver.model.User;
-import no.ntnu.ctscanarkivsystemserver.service.FileStorageService;
-import no.ntnu.ctscanarkivsystemserver.service.ProjectService;
-import no.ntnu.ctscanarkivsystemserver.service.TagService;
-import no.ntnu.ctscanarkivsystemserver.service.UserService;
+import no.ntnu.ctscanarkivsystemserver.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
@@ -25,6 +22,7 @@ import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RequestMapping("/user")
@@ -34,14 +32,19 @@ public class UserController {
     private final UserService userService;
     private final ProjectService projectService;
     private final TagService tagService;
+    //For getting files from file-server.
     private final FileStorageService fileStorageService;
+    //For files in database.
+    private final FileService fileService;
 
     @Autowired
-    public UserController(UserService userService, ProjectService projectService, TagService tagService, FileStorageService fileStorageService) {
+    public UserController(UserService userService, ProjectService projectService, TagService tagService,
+                          FileStorageService fileStorageService, FileService fileService) {
         this.userService = userService;
         this.projectService = projectService;
         this.tagService = tagService;
         this.fileStorageService = fileStorageService;
+        this.fileService = fileService;
     }
 
     @GetMapping(path = "/allUsers")
@@ -203,11 +206,12 @@ public class UserController {
 
     /**
      * Gets a list with all file names in a directory.
+     * This will also return a list of all tags which are associated with the files.
      * Valid directory arguments: documents, images, logs, dicom, tiff and all.
      * @param directory directory to get files from.
      * @param projectId id of project directory is associated with.
      * @param subFolder Folder name of the sub-project.
-     * @return If successful: 200-OK with a list of all files in a directory.
+     * @return If successful: 200-OK with a map of all files in a directory and tags which are associated with each file.
      *         If directory is not a valid directory: 400-Bad Request
      *         If subFolder variable is null or empty: 400-Bad Request
      *         If user or project does not exist: 404-Not Found.
@@ -215,9 +219,9 @@ public class UserController {
      *         If directory was not found: 410-Gone.
      */
     @GetMapping(path = "/getAllFileNames")
-    public ResponseEntity<List<String>> getAllFileNames(@RequestParam("directory") String directory, @RequestParam("projectId") UUID projectId,
+    public ResponseEntity<Map<String, List<Tag>>> getAllFileNames(@RequestParam("directory") String directory, @RequestParam("projectId") UUID projectId,
                                                         @RequestParam("subFolder") String subFolder) {
-        List<String> allFileNamesInDir;
+        Map<String, List<Tag>> fileNamesWithTags;
         if(subFolder == null || subFolder.trim().isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
@@ -225,7 +229,8 @@ public class UserController {
             Project projectToGetFileNamesFrom = projectService.getProject(projectId);
             if (!projectToGetFileNamesFrom.getIsPrivate() || projectService.hasSpecialPermission(projectToGetFileNamesFrom, userService.getCurrentLoggedUser())
                     || projectService.isUserPermittedToChangeProject(projectToGetFileNamesFrom, userService.getCurrentLoggedUser())) {
-                allFileNamesInDir = fileStorageService.getAllFileNames(directory, projectToGetFileNamesFrom, subFolder);
+                List<String> allFileNamesInDir = fileStorageService.getAllFileNames(directory, projectToGetFileNamesFrom, subFolder);
+                fileNamesWithTags = fileService.getTagsOnFiles(projectId, subFolder, allFileNamesInDir);
             } else {
                 //User is not permitted to see files on this project.
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -243,7 +248,7 @@ public class UserController {
             System.out.println(e.getMessage());
             return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.ok(allFileNamesInDir);
+        return ResponseEntity.ok(fileNamesWithTags);
     }
 
     /**
@@ -277,5 +282,21 @@ public class UserController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(allSubFolders);
+    }
+
+    /**
+     * Retrieves all tags from the database.
+     * @return If Successful: 200-OK and List with Tags
+     *         If there are no tags: 404-Not Found.
+     */
+    @GetMapping(path = "/getAllTags")
+    public ResponseEntity<List<Tag>> getAllTags() {
+        List<Tag> allTags = tagService.getAllTags();
+        if(allTags == null || allTags.isEmpty()) {
+            //No tags in the system.
+            return ResponseEntity.notFound().build();
+        } else {
+            return ResponseEntity.ok(allTags);
+        }
     }
 }

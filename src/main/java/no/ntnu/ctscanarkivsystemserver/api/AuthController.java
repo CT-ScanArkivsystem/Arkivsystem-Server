@@ -1,5 +1,6 @@
 package no.ntnu.ctscanarkivsystemserver.api;
 
+import no.ntnu.ctscanarkivsystemserver.config.Properties;
 import no.ntnu.ctscanarkivsystemserver.model.AuthenticationRequest;
 import no.ntnu.ctscanarkivsystemserver.service.UserService;
 import no.ntnu.ctscanarkivsystemserver.util.JwtUtil;
@@ -26,6 +27,9 @@ import java.net.URLEncoder;
 @RestController
 public class AuthController {
 
+    private final String domain;
+    private final Long jwtLifetime;
+
     @Autowired
     private AuthenticationManager authManager;
 
@@ -34,6 +38,12 @@ public class AuthController {
 
     @Autowired
     private JwtUtil jwtTokenUtil;
+
+    @Autowired
+    public AuthController(Properties properties) {
+        this.domain = properties.getBackendDomain();
+        this.jwtLifetime = properties.getJwtLifetimeInMin();
+    }
 
     @PostMapping(path = "/login")
     public ResponseEntity<?> login(@RequestBody AuthenticationRequest authenticationRequest, HttpServletResponse response) throws BadCredentialsException, UnsupportedEncodingException {
@@ -52,9 +62,9 @@ public class AuthController {
         // to it being old and SameSite being rather new. Use something like:
         // response.setHeader("Set-Cookie", "jwt=Bearer " + jwt + "; HttpOnly; SameSite=lax; path=/; domain=localhost");
         Cookie cookie = new Cookie("jwt", URLEncoder.encode("Bearer " + jwt, "UTF-8"));
-        cookie.setMaxAge(1800);
+        cookie.setMaxAge(jwtLifetime.intValue());
         cookie.setPath("/");
-        cookie.setDomain("localhost");
+        cookie.setDomain(domain);
         cookie.setSecure(false); // TODO: When the connection becomes secure (HTTPS), change this to true!
         cookie.setHttpOnly(true);
         response.addCookie(cookie);
@@ -69,7 +79,7 @@ public class AuthController {
         Cookie cookie = new Cookie("jwt", "");
         cookie.setMaxAge(0);
         cookie.setPath("/");
-        cookie.setDomain("localhost");
+        cookie.setDomain(domain);
         response.addCookie(cookie);
         return new ResponseEntity<>("{\"success\": true}", HttpStatus.OK);
     }

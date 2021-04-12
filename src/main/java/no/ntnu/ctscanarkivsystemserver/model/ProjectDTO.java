@@ -23,5 +23,6 @@ public class ProjectDTO {
     private List<User> usersWithSpecialPermission;
     private List<User> projectMembers;
     private UUID userId;
+    private String userEmail;
 
 }

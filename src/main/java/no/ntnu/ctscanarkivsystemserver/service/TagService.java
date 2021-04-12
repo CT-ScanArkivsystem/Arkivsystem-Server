@@ -10,6 +10,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * This class handles the business logic related to tags.
+ * @author TrymV
+ */
 @Service
 public class TagService {
 
@@ -56,7 +60,7 @@ public class TagService {
         if(tag == null) {
             throw new TagNotFoundException(tagName);
         }
-        return tagDao.getTag(tagName);
+        return tag;
     }
 
     /**
