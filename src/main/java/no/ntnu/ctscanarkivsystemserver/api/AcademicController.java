@@ -236,22 +236,6 @@ public class AcademicController {
     }
 
     /**
-     * Retrieves all tags from the database.
-     * @return If Successful: 200-OK and List with Tags
-     *         If there are no tags: 404-Not Found.
-     */
-    @GetMapping(path = "/getAllTags")
-    public ResponseEntity<List<Tag>> getAllTags() {
-        List<Tag> allTags = tagService.getAllTags();
-        if(allTags == null || allTags.isEmpty()) {
-            //No tags in the system.
-            return ResponseEntity.notFound().build();
-        } else {
-            return ResponseEntity.ok(allTags);
-        }
-    }
-
-    /**
      * Add tags to a project.
      * @param tagNames names of tags to be added.
      * @param projectId id of project to which tags is getting added to.
@@ -358,7 +342,7 @@ public class AcademicController {
      */
     @PutMapping(path = ("/grantSpecialPermission"))
     public ResponseEntity<?> grantSpecialPermission(@RequestParam UUID projectId, @RequestParam String userEmail) {
-        boolean success = false;
+        boolean success;
         if (projectId == null || userEmail == null || projectId.toString().trim().isEmpty() || userEmail.trim().isEmpty()) {
             return ResponseEntity.badRequest().build();
         } else {
@@ -393,7 +377,7 @@ public class AcademicController {
      */
     @PutMapping(path = ("/revokeSpecialPermission"))
     public ResponseEntity<?> revokeSpecialPermission(@RequestParam UUID projectId, @RequestParam String userEmail) {
-        boolean success = false;
+        boolean success;
         if (projectId == null || userEmail == null || projectId.toString().trim().isEmpty() || userEmail.trim().isEmpty()) {
             return ResponseEntity.badRequest().build();
         } else {
