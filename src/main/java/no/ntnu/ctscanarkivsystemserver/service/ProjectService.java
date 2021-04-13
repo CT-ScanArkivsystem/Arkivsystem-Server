@@ -416,9 +416,9 @@ public class ProjectService {
      * @throws IllegalArgumentException if search word is empty.
      * @throws ProjectNotFoundException if no project was found in the database.
      */
-    public Map<Project, String> searchForProject(String searchWord) throws IllegalArgumentException, ProjectNotFoundException {
+    public Map<String, Project> searchForProject(String searchWord) throws IllegalArgumentException, ProjectNotFoundException {
         List<Project> allProjects = projectDao.getAllProjects();
-        HashMap<Project, String> result = new HashMap<>();
+        HashMap<String, Project> result = new HashMap<>();
         if(searchWord == null || searchWord.trim().isEmpty()) {
             throw new IllegalArgumentException("Search word cannot be null or empty!");
         } else if(allProjects.isEmpty()) {
@@ -427,7 +427,7 @@ public class ProjectService {
             for(Project project:allProjects) {
                 String resultInfo = searchInProject(project, searchWord);
                 if(resultInfo != null) {
-                    result.put(project, resultInfo);
+                    result.put(resultInfo, project);
                 }
             }
         }
