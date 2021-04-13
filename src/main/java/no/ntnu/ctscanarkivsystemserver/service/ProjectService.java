@@ -416,8 +416,11 @@ public class ProjectService {
      * @throws IllegalArgumentException if search word is empty.
      * @throws ProjectNotFoundException if no project was found in the database.
      */
-    public Map<String, Project> searchForProject(String searchWord) throws IllegalArgumentException, ProjectNotFoundException {
+    public Map<String, Project> searchForProject(String searchWord, List<Tag> tagFilter) throws IllegalArgumentException, ProjectNotFoundException {
         List<Project> allProjects = projectDao.getAllProjects();
+        if(tagFilter != null && !tagFilter.isEmpty()) {
+            allProjects.removeIf(project -> !doesProjectContainTag(project, tagFilter));
+        }
         HashMap<String, Project> result = new HashMap<>();
         if(searchWord == null || searchWord.trim().isEmpty()) {
             throw new IllegalArgumentException("Search word cannot be null or empty!");
@@ -432,6 +435,21 @@ public class ProjectService {
             }
         }
         return result;
+    }
+
+    /**
+     * Checks if a project has a tag.
+     * @param project project to see if has tag.
+     * @param tagFilter tags to see if project has.
+     * @return true if project has at least one of tags in tagFilter.
+     */
+    private boolean doesProjectContainTag(Project project, List<Tag> tagFilter) {
+        for (Tag projectTag:project.getTags()) {
+            if(tagFilter.contains(projectTag)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

@@ -21,6 +21,7 @@ import javax.ws.rs.BadRequestException;
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -287,17 +288,27 @@ public class UserController {
     /**
      * Search for project name, description,
      * @param searchWord word to use to search for a project.
-     * @return
+     * @return If Successful: 200-OK with list of all found projects.
+     *         If searchWord is empty: 400-Bad request.
+     *         If no projects was found in the database: 204-No Content.
      */
     @GetMapping(path = "/search")
-    public ResponseEntity<Map<String, Project>> searchForProject(@RequestParam("search") String searchWord) {
+    public ResponseEntity<Map<String, Project>> searchForProject(@RequestParam("search") String searchWord, @RequestParam("tagFilter") List<String> filters) {
         Map<String, Project> searchResult;
+        List<Tag> filterList = new ArrayList<>();
         if(searchWord.trim().isEmpty()) {
             return ResponseEntity.badRequest().build();
         } else {
+            if(filters != null && !filters.isEmpty()) {
+                for (String filter : filters) {
+                    Tag tag = tagService.getTag(filter);
+                    if (tag != null) {
+                        filterList.add(tag);
+                    }
+                }
+            }
             try {
-                searchResult = projectService.searchForProject(searchWord);
-                System.out.println("Test1");
+                searchResult = projectService.searchForProject(searchWord, filterList);
             } catch (IllegalArgumentException e) {
                 System.out.println(e.getMessage());
                 return ResponseEntity.badRequest().build();
@@ -306,7 +317,6 @@ public class UserController {
                 return ResponseEntity.noContent().build();
             }
         }
-        System.out.println("Test2");
         return ResponseEntity.ok(searchResult);
     }
 }
