@@ -70,6 +70,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .and().addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling().authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+        http.cors();
     }
 
     @Override
