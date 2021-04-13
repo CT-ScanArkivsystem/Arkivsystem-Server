@@ -45,6 +45,21 @@ public class FileDao {
     }
 
     /**
+     * Gets files from the database by project id.
+     * @param projectId id of project files are associated with.
+     * @return files with projectId like the params.
+     * @throws IllegalArgumentException if subFolder is empty or projectId is null.
+     */
+    public List<File> getFilesByProject(UUID projectId) throws IllegalArgumentException {
+        Query query = em.createNamedQuery(File.FIND_FILE_BY_PROJECT);
+        if(projectId == null) {
+            throw new IllegalArgumentException("projectId is null!");
+        }
+        query.setParameter("projectId", projectId);
+        return query.getResultList();
+    }
+
+    /**
      * Insert a file into the database.
      * @param file file to be added into the database.
      * @return the added file.

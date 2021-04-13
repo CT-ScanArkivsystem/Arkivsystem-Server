@@ -9,24 +9,30 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import javax.ws.rs.ForbiddenException;
-import java.util.List;
-import java.util.UUID;
+import java.io.FileNotFoundException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This class handles the business logic related to projects
- * @author Brage
+ * @author Brage, trymv
  */
 @Service
 public class ProjectService {
 
     private final ProjectDao projectDao;
     private final UserDao userDao;
+    private final FileService fileService;
+    private final FileStorageService fileStorageService;
 
     @Autowired
     public ProjectService(@Qualifier("projectDaoRepository") ProjectDao projectDao,
-                          @Qualifier("postgreSQL") UserDao userDao) {
+                          @Qualifier("postgreSQL") UserDao userDao,
+                          FileService fileService, FileStorageService fileStorageService) {
         this.projectDao = projectDao;
         this.userDao = userDao;
+        this.fileService = fileService;
+        this.fileStorageService = fileStorageService;
     }
 
     /**
@@ -399,5 +405,156 @@ public class ProjectService {
         } else {
             return projectDao.setDescription(project, description);
         }
+    }
+
+    /**
+     * Search thought all projects for name, description, owner and members (first name, last name, email),
+     * project tags, file tags and file names if they contain the search word.
+     * @param searchWord word to use to search for in projects.
+     * @return map of all projects where at least one search result was ture in, and a String with information
+     * about where each place in the project search result was found in.
+     * @throws IllegalArgumentException if search word is empty.
+     * @throws ProjectNotFoundException if no project was found in the database.
+     */
+    public Map<String, Project> searchForProject(String searchWord, List<Tag> tagFilter) throws IllegalArgumentException, ProjectNotFoundException {
+        List<Project> allProjects = projectDao.getAllProjects();
+        if(tagFilter != null && !tagFilter.isEmpty()) {
+            allProjects.removeIf(project -> !doesProjectContainTag(project, tagFilter));
+        }
+        HashMap<String, Project> result = new HashMap<>();
+        if(searchWord == null || searchWord.trim().isEmpty()) {
+            throw new IllegalArgumentException("Search word cannot be null or empty!");
+        } else if(allProjects.isEmpty()) {
+            throw new ProjectNotFoundException("No projects found in the database!");
+        } else {
+            for(Project project:allProjects) {
+                String resultInfo = searchInProject(project, searchWord);
+                if(resultInfo != null) {
+                    result.put(resultInfo, project);
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Checks if a project has a tag.
+     * @param project project to see if has tag.
+     * @param tagFilter tags to see if project has.
+     * @return true if project has at least one of tags in tagFilter.
+     */
+    private boolean doesProjectContainTag(Project project, List<Tag> tagFilter) {
+        for (Tag projectTag:project.getTags()) {
+            if(tagFilter.contains(projectTag)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Search in a project for search word in project name, description, owner and members (first name, last name, email),
+     * project tags, file tags and file names if they contain the search word.
+     * @param project project to search thought.
+     * @param searchWord word to search with thought the project.
+     * @return string with information about where search word was found in project. Null if search word did not exist.
+     */
+    private String searchInProject(Project project, String searchWord) {
+        StringBuilder resultInfo = new StringBuilder();
+        searchWord = searchWord.toLowerCase();
+        if(project.getProjectName().toLowerCase().contains(searchWord)) {
+            resultInfo.append("name, ");
+        }
+        if(project.getDescription().toLowerCase().contains(searchWord)) {
+            resultInfo.append("description, ");
+        }
+        List<User> owner = new ArrayList<>();
+        owner.add(project.getOwner());
+        if(doesAtLeastOneUserContainWord(searchWord, owner)) {
+            resultInfo.append("owner, ");
+        }
+        if(doesAtLeastOneUserContainWord(searchWord, project.getProjectMembers())) {
+            resultInfo.append("member, ");
+        }
+        if(doesAtLeastOneStringContainWord(searchWord, project.getTags().stream().map(Tag::getTagName).collect(Collectors.toList()))) {
+            resultInfo.append("project_Tag, ");
+        }
+        if(doesAtLeastOneStringContainWord(searchWord, fileService.getAllTagNamesAssociatedWithProject(project))) {
+            resultInfo.append("file_tag, ");
+        }
+        String fileResultInfo = searchInProjectFiles(project, searchWord, true);
+        if(fileResultInfo != null) {
+            resultInfo.append(fileResultInfo);
+        }
+        if(resultInfo.length() == 0) {
+            return null;
+        }
+        return resultInfo.toString();
+    }
+
+    /**
+     * Search though all file names in the file server under a project if they contain the search word.
+     * @param project project to search.
+     * @param searchWord word to search for.
+     * @param ignore if true this function will be ignored.
+     * @return string with information if at least one file contains the search word.
+     * If subFolder or project was not found this will return null.
+     */
+    private String searchInProjectFiles(Project project, String searchWord, boolean ignore) {
+        List<String> allFiles = new ArrayList<>();
+        String result = "";
+        if(ignore) {
+            return null;
+        } else {
+            try {
+                for (String subFolder : fileStorageService.getAllProjectSubFolders(project)) {
+                    allFiles.addAll(fileStorageService.getAllFileNames("all", project, subFolder));
+                }
+            } catch (FileNotFoundException e) {
+                System.out.println(e.getMessage());
+                return null;
+            }
+            if (doesAtLeastOneStringContainWord(searchWord, allFiles)) {
+                result = "file_name, ";
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Checks if at least one user in the list contains the search word in first name,
+     * last name or email.
+     * @param searchWord word to see if exist in a user.
+     * @param users list of user to check.
+     * @return true if at least one user contains the search word.
+     */
+    private boolean doesAtLeastOneUserContainWord(String searchWord, List<User> users) {
+        if(!users.isEmpty()) {
+            for(User user:users) {
+                if(user.getFirstName().toLowerCase().contains(searchWord) ||
+                        user.getLastName().toLowerCase().contains(searchWord) ||
+                        user.getEmail().contains(searchWord)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Checks if at least one string contain the search word.
+     * @param searchWord word to see if at least one string contains.
+     * @param strings list of strings to check.
+     * @return true if at least one string contains the search word.
+     */
+    private boolean doesAtLeastOneStringContainWord(String searchWord, List<String> strings) {
+        if(!strings.isEmpty()) {
+          for(String stringsInList:strings) {
+              if(stringsInList.toLowerCase().contains(searchWord)) {
+                  return true;
+              }
+          }
+        }
+        return false;
     }
 }

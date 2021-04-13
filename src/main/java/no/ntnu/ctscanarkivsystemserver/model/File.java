@@ -20,8 +20,10 @@ import java.util.UUID;
 @Entity(name = "files")
 @NamedQuery(name = File.FIND_FILE_BY_NAME_AND_PROJECT, query =
         "SELECT f FROM files f WHERE f.fileName LIKE: fileName AND f.inProject.projectId =: projectId AND f.subFolder LIKE: subFolder")
+@NamedQuery(name = File.FIND_FILE_BY_PROJECT, query = "SELECT f FROM files f WHERE f.inProject.projectId =:projectId")
 public class File {
     public static final String FIND_FILE_BY_NAME_AND_PROJECT = "File.findFileByNameAndProject";
+    public static final String FIND_FILE_BY_PROJECT = "File.findFileProject";
 
     @Id
     @Column(name="file_id")

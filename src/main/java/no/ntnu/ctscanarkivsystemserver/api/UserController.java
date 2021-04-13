@@ -21,6 +21,7 @@ import javax.ws.rs.BadRequestException;
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -192,7 +193,7 @@ public class UserController {
      * Gets a list with all file names in a directory.
      * This will also return a list of all tags which are associated with the files.
      * Valid directory arguments: documents, images, logs, dicom, tiff and all.
-     * @param directory directory to get files from.
+     * @param directory directory to get files from (Folders inside sub folder).
      * @param projectId id of project directory is associated with.
      * @param subFolder Folder name of the sub-project.
      * @return If successful: 200-OK with a map of all files in a directory and tags which are associated with each file.
@@ -282,5 +283,40 @@ public class UserController {
         } else {
             return ResponseEntity.ok(allTags);
         }
+    }
+
+    /**
+     * Search for project name, description,
+     * @param searchWord word to use to search for a project.
+     * @return If Successful: 200-OK with list of all found projects.
+     *         If searchWord is empty: 400-Bad request.
+     *         If no projects was found in the database: 204-No Content.
+     */
+    @GetMapping(path = "/search")
+    public ResponseEntity<Map<String, Project>> searchForProject(@RequestParam("search") String searchWord, @RequestParam("tagFilter") List<String> filters) {
+        Map<String, Project> searchResult;
+        List<Tag> filterList = new ArrayList<>();
+        if(searchWord.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        } else {
+            if(filters != null && !filters.isEmpty()) {
+                for (String filter : filters) {
+                    Tag tag = tagService.getTag(filter);
+                    if (tag != null) {
+                        filterList.add(tag);
+                    }
+                }
+            }
+            try {
+                searchResult = projectService.searchForProject(searchWord, filterList);
+            } catch (IllegalArgumentException e) {
+                System.out.println(e.getMessage());
+                return ResponseEntity.badRequest().build();
+            } catch (ProjectNotFoundException e) {
+                System.out.println(e.getMessage());
+                return ResponseEntity.noContent().build();
+            }
+        }
+        return ResponseEntity.ok(searchResult);
     }
 }
