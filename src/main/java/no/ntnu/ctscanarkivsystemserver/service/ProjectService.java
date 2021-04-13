@@ -461,11 +461,13 @@ public class ProjectService {
         if(doesAtLeastOneStringContainWord(searchWord, project.getTags().stream().map(Tag::getTagName).collect(Collectors.toList()))) {
             resultInfo.append("project_Tag, ");
         }
-        String fileResultInfo = searchInProjectFiles(project, searchWord);
+        if(doesAtLeastOneStringContainWord(searchWord, fileService.getAllTagNamesAssociatedWithProject(project))) {
+            resultInfo.append("file_tag, ");
+        }
+        String fileResultInfo = searchInProjectFiles(project, searchWord, true);
         if(fileResultInfo != null) {
             resultInfo.append(fileResultInfo);
         }
-        System.out.println("Returning search result!");
         if(resultInfo.length() == 0) {
             return null;
         }
@@ -473,33 +475,32 @@ public class ProjectService {
     }
 
     /**
-     * Search though all file names and their tag in a project if they contain the search word.
+     * Search though all file names in the file server under a project if they contain the search word.
      * @param project project to search.
      * @param searchWord word to search for.
-     * @return string with information if at least one file or/and tag contains the search word.
+     * @param ignore if true this function will be ignored.
+     * @return string with information if at least one file contains the search word.
      * If subFolder or project was not found this will return null.
      */
-    private String searchInProjectFiles(Project project, String searchWord) {
+    private String searchInProjectFiles(Project project, String searchWord, boolean ignore) {
         List<String> allFiles = new ArrayList<>();
-        Set<String> allTagsUsed = new LinkedHashSet<>();
-        StringBuilder result = new StringBuilder();
-        try {
-            for (String subFolder : fileStorageService.getAllProjectSubFolders(project)) {
-                List<String> allFileNamesInDir = fileStorageService.getAllFileNames("all", project, subFolder);
-                allFiles.addAll(allFileNamesInDir);
-                allTagsUsed.addAll(fileService.getAllFileTagNames(project.getProjectId(), subFolder, allFileNamesInDir));
-            }
-        } catch (FileNotFoundException e) {
-            System.out.println(e.getMessage());
+        String result = "";
+        if(ignore) {
             return null;
+        } else {
+            try {
+                for (String subFolder : fileStorageService.getAllProjectSubFolders(project)) {
+                    allFiles.addAll(fileStorageService.getAllFileNames("all", project, subFolder));
+                }
+            } catch (FileNotFoundException e) {
+                System.out.println(e.getMessage());
+                return null;
+            }
+            if (doesAtLeastOneStringContainWord(searchWord, allFiles)) {
+                result = "file_name, ";
+            }
         }
-        if(doesAtLeastOneStringContainWord(searchWord, allFiles)) {
-            result.append("file_name, ");
-        }
-        if(doesAtLeastOneStringContainWord(searchWord, new ArrayList<>(allTagsUsed))) {
-            result.append("file_tag, ");
-        }
-        return result.toString();
+        return result;
     }
 
     /**

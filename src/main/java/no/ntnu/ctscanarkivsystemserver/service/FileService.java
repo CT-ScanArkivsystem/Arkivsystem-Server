@@ -28,7 +28,7 @@ public class FileService {
     }
 
     /**
-     *
+     * Return a file from the database which has projectId, subFolder and fileName like params.
      * @param fileName name of file to get.
      * @param projectId sub project folder file is in.
      * @param subFolder project file is in.
@@ -37,6 +37,29 @@ public class FileService {
      */
     public File getFile(String fileName, String subFolder, UUID projectId) throws IllegalArgumentException {
         return  fileDao.getFileByNameAndProject(fileName, projectId, subFolder);
+    }
+
+    /**
+     * Return all files in database which has projectId like params.
+     * @param projectId sub project folder files are in.
+     * @return files with projectId like the params. Null if no file was found.
+     * @throws IllegalArgumentException if projectId is null.
+     */
+    public List<File> getFiles(UUID projectId) throws IllegalArgumentException {
+        return  fileDao.getFilesByProject(projectId);
+    }
+
+    /**
+     * Return a list of all unique file tag names associated with a project.
+     * @param project project to get all file tag names associated with it.
+     * @return list of all unique file tag names associated with a project.
+     */
+    public List<String> getAllTagNamesAssociatedWithProject(Project project) {
+        Set<String> allTagNames = new HashSet<>();
+        for(File file:getFiles(project.getProjectId())) {
+            allTagNames.addAll(file.getTags().stream().map(Tag::getTagName).collect(Collectors.toList()));
+        }
+        return new ArrayList<>(allTagNames);
     }
 
     /**
