@@ -156,7 +156,7 @@ public class UserController {
      *         If logged in user is not allowed to see project files: 403-Forbidden.
      *         If file was not found: 410-Gone.
      */
-    @GetMapping(path = "/downloadFile")
+    @PostMapping(path = "/downloadFile")
     public ResponseEntity<Resource> downloadFile(@RequestParam("fileName") List<String> fileNames, @RequestParam("projectId") UUID projectId,
                                                  @RequestParam("subFolder") String subFolder) {
         byte[] fileBytes;
