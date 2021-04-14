@@ -123,7 +123,7 @@ public class UserService implements UserDetailsService {
      */
     public User editUser(UserDTO changes) throws UserNotFoundException, EmailExistsException, IllegalArgumentException{
         User user;
-        if(!changes.getUserId().toString().isEmpty()) {
+        if(changes.getUserId() != null && !changes.getUserId().toString().isEmpty()) {
             user = getUserById(changes.getUserId());
             if(!user.getEmail().equals(changes.getEmail()) && userDao.doesEmailExist(changes.getEmail())) {
                 throw new EmailExistsException(changes.getEmail());
