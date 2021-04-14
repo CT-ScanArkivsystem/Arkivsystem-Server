@@ -411,7 +411,6 @@ public class FileStorageService {
      */
     public boolean doesFileNameContainType(String fileName) {
         if(fileName.contains(".")) {
-            System.out.println("File type: " + getFileType(fileName).trim());
             return !getFileType(fileName).trim().isEmpty();
         } else {
             return false;
