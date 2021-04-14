@@ -89,13 +89,13 @@ public class UserDataAccessService implements UserDao{
         if(!changes.getEmail().trim().isEmpty()) {
             userToBeChanged.setEmail(changes.getEmail().trim().toLowerCase());
         }
-        if(!changes.getFirstName().trim().isEmpty()) {
+        if(changes.getFirstName() != null && !changes.getFirstName().trim().isEmpty()) {
             userToBeChanged.setFirstName(changes.getFirstName().trim());
         }
-        if(!changes.getLastName().trim().isEmpty()) {
+        if(changes.getLastName() != null && !changes.getLastName().trim().isEmpty()) {
             userToBeChanged.setLastName(changes.getLastName().trim());
         }
-        if(!changes.getPassword().trim().isEmpty()) {
+        if(changes.getPassword() != null && !changes.getPassword().trim().isEmpty()) {
             userToBeChanged.setPassword(changes.getPassword().trim());
         }
 

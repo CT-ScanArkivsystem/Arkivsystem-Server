@@ -131,7 +131,7 @@ public class UserService implements UserDetailsService {
         } else {
             user = getUserByEmail(changes.getEmail());
         }
-        if(!changes.getPassword().trim().isEmpty()) {
+        if(changes.getPassword() != null && !changes.getPassword().trim().isEmpty()) {
             changes.setPassword(passwordEncoder.encode(changes.getPassword()));
         }
         return userDao.editUser(user, changes);
