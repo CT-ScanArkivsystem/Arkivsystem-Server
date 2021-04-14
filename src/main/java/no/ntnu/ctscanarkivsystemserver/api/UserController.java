@@ -293,8 +293,8 @@ public class UserController {
      *         If no projects was found in the database: 204-No Content.
      */
     @GetMapping(path = "/search")
-    public ResponseEntity<Map<String, Project>> searchForProject(@RequestParam("search") String searchWord, @RequestParam("tagFilter") List<String> filters) {
-        Map<String, Project> searchResult;
+    public ResponseEntity<Map<UUID, List<String>>> searchForProject(@RequestParam("search") String searchWord, @RequestParam("tagFilter") List<String> filters) {
+        Map<UUID, List<String>> searchResult;
         List<Tag> filterList = new ArrayList<>();
         if(searchWord.trim().isEmpty()) {
             return ResponseEntity.badRequest().build();
