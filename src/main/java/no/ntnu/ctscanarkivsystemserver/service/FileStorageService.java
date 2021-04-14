@@ -517,11 +517,11 @@ public class FileStorageService {
     /**
      * Package all files in param into a zip and return them as a byte array.
      * Source: https://www.baeldung.com/java-compress-and-uncompress
-     * @param filesToZip
-     * @param project
-     * @param subFolder
-     * @return
-     * @throws IOException
+     * @param filesToZip list of file names to download.
+     * @param project project to download files from.
+     * @param subFolder sub project folder files are in.
+     * @return all files in a zip as a byte array.
+     * @throws IOException if a file was not found.
      */
     public byte[] getFilesAsZip(List<String> filesToZip, Project project, String subFolder) throws IOException {
         try (FileOutputStream fos = new FileOutputStream("multiCompressed.zip"); ZipOutputStream zipOut = new ZipOutputStream(fos)) {
