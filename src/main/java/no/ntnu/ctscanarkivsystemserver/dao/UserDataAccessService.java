@@ -35,7 +35,6 @@ public class UserDataAccessService implements UserDao{
         user.getRoles().add(userRole);
         em.persist(user);
         em.flush();
-        System.out.println("New user id: " + user.getUserId());
         return user;
     }
 

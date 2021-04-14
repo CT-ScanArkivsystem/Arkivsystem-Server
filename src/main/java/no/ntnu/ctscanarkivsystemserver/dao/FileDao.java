@@ -96,7 +96,6 @@ public class FileDao {
      * @param file to be changed in the database.
      */
     private void prepareFileForEdit(File file) {
-        System.out.println("File getting ready for edit.");
         if(file != null) {
             try {
                 em.lock(file, LockModeType.PESSIMISTIC_WRITE);
@@ -112,7 +111,6 @@ public class FileDao {
      * @return file if merge was successful else null.
      */
     private File saveFile(File file) {
-        System.out.println("Trying to save file.");
         if(file != null) {
             try {
                 em.merge(file);
