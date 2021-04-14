@@ -152,15 +152,19 @@ public class ProjectService {
      */
     public boolean addMemberToProject(ProjectDTO projectDto, User user) throws ForbiddenException, IllegalArgumentException {
         Project thisProject = projectDao.getProjectById(projectDto.getProjectId());
-        User userToBeRemoved = userDao.getUserByEmail(projectDto.getUserEmail());
-        if (userIsOwnerOrAdmin(thisProject, user)) {
-            if(!thisProject.getProjectMembers().contains(userToBeRemoved)) {
-                return projectDao.addProjectMember(thisProject, userToBeRemoved);
+        User userToBeAdded = userDao.getUserByEmail(projectDto.getUserEmail());
+        if(!userToBeAdded.getRoles().get(0).getRoleName().equals("ROLE_" + Role.USER)) {
+            if (userIsOwnerOrAdmin(thisProject, user)) {
+                if (!thisProject.getProjectMembers().contains(userToBeAdded)) {
+                    return projectDao.addProjectMember(thisProject, userToBeAdded);
+                } else {
+                    throw new IllegalArgumentException("User is already member of project.");
+                }
             } else {
-                throw new IllegalArgumentException("User is already member of project.");
+                throw new ForbiddenException("The logged on user is not allowed to add members to this project");
             }
         } else {
-            throw new ForbiddenException("The logged on user is not allowed to add members to this project");
+            throw new ForbiddenException("User with email " + userToBeAdded.getEmail() + " don't have high enough role to be added as a member.");
         }
     }
 
