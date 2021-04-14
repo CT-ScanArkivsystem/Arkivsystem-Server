@@ -10,6 +10,7 @@ import no.ntnu.ctscanarkivsystemserver.config.FileStorageProperties;
 import no.ntnu.ctscanarkivsystemserver.exception.DirectoryCreationException;
 import no.ntnu.ctscanarkivsystemserver.exception.FileStorageException;
 import no.ntnu.ctscanarkivsystemserver.model.Project;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,10 +20,11 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.security.auth.Subject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ForbiddenException;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * This class has the job of handling files and creating project directories.
@@ -306,7 +308,6 @@ public class FileStorageService {
         String notAddedFile = null;
         if(file.getOriginalFilename() != null) {
             String fileType = getFileType(file.getOriginalFilename());
-            System.out.println("File type is: " + fileType);
             switch (fileType) {
                 case "IMA":
                     notAddedFile = saveFile(file, path + DICOM_PATH);
@@ -512,5 +513,42 @@ public class FileStorageService {
             string = "/" + string;
         }
         return string;
+    }
+
+    /**
+     * Package all files in param into a zip and return them as a byte array.
+     * Source: https://www.baeldung.com/java-compress-and-uncompress
+     * @param filesToZip
+     * @param project
+     * @param subFolder
+     * @return
+     * @throws IOException
+     */
+    public byte[] getFilesAsZip(List<String> filesToZip, Project project, String subFolder) throws IOException {
+        try (FileOutputStream fos = new FileOutputStream("multiCompressed.zip"); ZipOutputStream zipOut = new ZipOutputStream(fos)) {
+            for (String srcFile : filesToZip) {
+                File fileToZip = new File(srcFile);
+                byte[] fileBytes = loadFileAsBytes(fileToZip.getName(), project, subFolder);
+                ZipEntry zipEntry = new ZipEntry(fileToZip.getName());
+                zipOut.putNextEntry(zipEntry);
+
+                zipOut.write(fileBytes, 0, fileBytes.length);
+            }
+        }
+        return FileUtils.readFileToByteArray(new File("multiCompressed.zip"));
+    }
+
+    /**
+     * Checks if every file name in list contain file type.
+     * @param fileNames file names to check.
+     * @return true if all file names contain file type.
+     */
+    public boolean doesAllFileNamesContainType(List<String> fileNames) {
+        for(String fileName:fileNames) {
+            if(!doesFileNameContainType(fileName)) {
+                return false;
+            }
+        }
+        return true;
     }
 }

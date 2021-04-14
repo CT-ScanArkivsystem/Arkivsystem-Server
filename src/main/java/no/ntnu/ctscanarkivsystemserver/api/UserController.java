@@ -147,7 +147,7 @@ public class UserController {
 
     /**
      * Download a file from the file server.
-     * @param fileName name of file to download including file type.
+     * @param fileNames name of file to download including file type.
      * @param projectId Id of project file is associated with.
      * @param subFolder Folder name of the sub-project.
      * @return If successful: 200-OK with the content of the file.
@@ -157,18 +157,25 @@ public class UserController {
      *         If file was not found: 410-Gone.
      */
     @GetMapping(path = "/downloadFile")
-    public ResponseEntity<Resource> downloadFile(@RequestParam("fileName") String fileName, @RequestParam("projectId") UUID projectId,
+    public ResponseEntity<Resource> downloadFile(@RequestParam("fileName") List<String> fileNames, @RequestParam("projectId") UUID projectId,
                                                  @RequestParam("subFolder") String subFolder) {
         byte[] fileBytes;
-        if(!fileStorageService.doesFileNameContainType(fileName)) {
+        if(!fileStorageService.doesAllFileNamesContainType(fileNames)) {
             //File name does not include file type.
+            System.out.println("One or more files does not contain file type!");
             return ResponseEntity.badRequest().build();
         }
         try {
             Project projectToDownloadFilesFrom = projectService.getProject(projectId);
             if(!projectToDownloadFilesFrom.getIsPrivate() || projectService.hasSpecialPermission(projectToDownloadFilesFrom, userService.getCurrentLoggedUser())
                     || projectService.isUserPermittedToChangeProject(projectToDownloadFilesFrom, userService.getCurrentLoggedUser())) {
-                fileBytes = fileStorageService.loadFileAsBytes(fileName, projectToDownloadFilesFrom, subFolder);
+                if(fileNames.size() == 1) {
+                    fileBytes = fileStorageService.loadFileAsBytes(fileNames.get(0), projectToDownloadFilesFrom, subFolder);
+                } else if(fileNames.size() > 1) {
+                    fileBytes = fileStorageService.getFilesAsZip(fileNames, projectToDownloadFilesFrom, subFolder);
+                } else {
+                    return ResponseEntity.badRequest().build();
+                }
             } else {
                 //User is not permitted to see files on this project.
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
