@@ -41,7 +41,7 @@ public class AuthController {
 
     @Autowired
     public AuthController(Properties properties) {
-        this.domain = properties.getBackendDomain();
+        this.domain = properties.getDomain();
         this.jwtLifetime = properties.getJwtLifetimeInMin();
     }
 
