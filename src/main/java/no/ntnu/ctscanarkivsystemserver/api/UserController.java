@@ -80,7 +80,6 @@ public class UserController {
      */
     @GetMapping(path = "/getAllProjects")
     public ResponseEntity<List<Project>> getAllProject() {
-        System.out.println("Getting all projects!");
         List<Project> allProjects = projectService.getAllProjects();
         if(allProjects == null || allProjects.isEmpty()) {
             return ResponseEntity.notFound().build();
