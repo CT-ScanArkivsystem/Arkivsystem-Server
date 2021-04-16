@@ -144,11 +144,23 @@ public class UserDataAccessService implements UserDao{
     @Override
     public boolean removeUser(User userToBeRemoved) {
         if(userToBeRemoved != null) {
+            removeRoleFromUser(userToBeRemoved);
             em.remove(userToBeRemoved);
             em.flush();
             return getUserById(userToBeRemoved.getUserId()) == null;
         }
         return false;
+    }
+
+    /**
+     * Remove role from the user.
+     * @param user user to remove role from.
+     */
+    private void removeRoleFromUser(User user) {
+        em.refresh(user);
+        prepareUserForEdit(user);
+        user.getRoles().remove(0);
+        saveUser(user);
     }
 
     /**

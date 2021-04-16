@@ -5,6 +5,7 @@ import no.ntnu.ctscanarkivsystemserver.exception.MyFileNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.exception.TagExistsException;
 import no.ntnu.ctscanarkivsystemserver.exception.TagNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.model.File;
+import no.ntnu.ctscanarkivsystemserver.model.FileOTD;
 import no.ntnu.ctscanarkivsystemserver.model.Project;
 import no.ntnu.ctscanarkivsystemserver.model.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -119,21 +120,21 @@ public class FileService {
      * @return HashMap with fileName as key and List of tags associated with the file.
      * @throws IllegalArgumentException if projectId, subFolder or allFileNames are null.
      */
-    public Map<String, List<Tag>> getTagsOnFiles(UUID projectId, String subFolder, List<String> allFileNamesInDir) throws IllegalArgumentException {
-        Map<String, List<Tag>> fileNamesWithTags = new HashMap<>();
+    public List<FileOTD> getTagsOnFiles(UUID projectId, String subFolder, List<String> allFileNamesInDir) throws IllegalArgumentException {
+        List<FileOTD> files = new ArrayList<>();
         if(projectId == null || subFolder == null || subFolder.trim().isEmpty() || allFileNamesInDir == null) {
             throw new IllegalArgumentException("Fields projectId, subFolder and allFilesNamesInDir cannot be null!");
         } else {
             for(String fileName:allFileNamesInDir) {
                 File file = fileDao.getFileByNameAndProject(fileName, projectId, subFolder.toLowerCase());
                 if(file == null) {
-                    fileNamesWithTags.put(fileName, Collections.emptyList());
+                    files.add(new FileOTD(fileName, Collections.emptyList()));
                 } else {
-                    fileNamesWithTags.put(fileName, file.getTags());
+                    files.add(new FileOTD(fileName, file.getTags()));
                 }
             }
         }
-        return fileNamesWithTags;
+        return files;
     }
 
     /**
