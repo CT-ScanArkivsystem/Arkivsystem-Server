@@ -212,12 +212,7 @@ public class AdminController {
 
     @PostMapping(path = "/restartServer")
     public ResponseEntity<?> restartServer(@RequestBody ProjectDTO time) {
-        System.out.println("Time is: " + time.getCreation().getTime());
-        try {
-            serverService.scheduleServerRestart(time.getCreation());
-        } catch (ParseException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        serverService.scheduleServerRestart(time.getCreation());
         return ResponseEntity.ok().build();
     }
 }
