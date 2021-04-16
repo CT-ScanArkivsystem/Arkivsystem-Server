@@ -283,6 +283,11 @@ public class FileStorageService {
                 fileLocation += TIFF_PATH;
                 break;
 
+            case "xlsx":
+            case "txt":
+                fileLocation += LOG_PATH;
+                break;
+
             case "jpg":
             case "png":
             case "PNG":
@@ -315,6 +320,11 @@ public class FileStorageService {
 
                 case "tiff":
                     notAddedFile = saveFile(file, path + TIFF_PATH);
+                    break;
+
+                case "xlsx":
+                case "txt":
+                    notAddedFile = saveFile(file, path + LOG_PATH);
                     break;
 
                 case "jpg":
