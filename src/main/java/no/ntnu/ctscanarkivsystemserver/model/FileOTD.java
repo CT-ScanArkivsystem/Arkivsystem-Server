@@ -13,12 +13,12 @@ import java.util.List;
 @NoArgsConstructor
 public class FileOTD {
 
-    private String fineName;
+    private String fileName;
 
     private List<Tag> fileTags;
 
-    public FileOTD(String fineName, List<Tag> fileTags) {
+    public FileOTD(String fileName, List<Tag> fileTags) {
         this.fileTags = fileTags;
-        this.fineName = fineName;
+        this.fileName = fileName;
     }
 }
