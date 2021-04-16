@@ -1,10 +1,13 @@
 package no.ntnu.ctscanarkivsystemserver.api;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import no.ntnu.ctscanarkivsystemserver.exception.EmailExistsException;
 import no.ntnu.ctscanarkivsystemserver.exception.TagNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.exception.UserNotFoundException;
+import no.ntnu.ctscanarkivsystemserver.model.ProjectDTO;
 import no.ntnu.ctscanarkivsystemserver.model.User;
 import no.ntnu.ctscanarkivsystemserver.model.UserDTO;
+import no.ntnu.ctscanarkivsystemserver.service.ServerService;
 import no.ntnu.ctscanarkivsystemserver.service.TagService;
 import no.ntnu.ctscanarkivsystemserver.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +15,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -26,11 +31,13 @@ public class AdminController {
 
     private final UserService userService;
     private final TagService tagService;
+    private final ServerService serverService;
 
     @Autowired
-    public AdminController(UserService userService, TagService tagService) {
+    public AdminController(UserService userService, TagService tagService, ServerService serverService) {
         this.userService = userService;
         this.tagService = tagService;
+        this.serverService = serverService;
     }
 
     /**
@@ -201,5 +208,16 @@ public class AdminController {
         } else {
             return ResponseEntity.ok(allUsers);
         }
+    }
+
+    @PostMapping(path = "/restartServer")
+    public ResponseEntity<?> restartServer(@RequestBody ProjectDTO time) {
+        System.out.println("Time is: " + time.getCreation().getTime());
+        try {
+            serverService.scheduleServerRestart(time.getCreation());
+        } catch (ParseException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+        return ResponseEntity.ok().build();
     }
 }
