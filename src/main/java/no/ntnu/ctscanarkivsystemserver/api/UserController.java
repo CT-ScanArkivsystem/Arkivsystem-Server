@@ -5,6 +5,7 @@ import no.ntnu.ctscanarkivsystemserver.exception.FileStorageException;
 import no.ntnu.ctscanarkivsystemserver.exception.ProjectNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.exception.UserNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.exception.TagNotFoundException;
+import no.ntnu.ctscanarkivsystemserver.model.FileOTD;
 import no.ntnu.ctscanarkivsystemserver.model.Project;
 import no.ntnu.ctscanarkivsystemserver.model.Tag;
 import no.ntnu.ctscanarkivsystemserver.model.User;
@@ -210,9 +211,9 @@ public class UserController {
      *         If directory was not found: 410-Gone.
      */
     @GetMapping(path = "/getAllFileNames")
-    public ResponseEntity<Map<String, List<Tag>>> getAllFileNames(@RequestParam("directory") String directory, @RequestParam("projectId") UUID projectId,
+    public ResponseEntity<List<FileOTD>> getAllFileNames(@RequestParam("directory") String directory, @RequestParam("projectId") UUID projectId,
                                                         @RequestParam("subFolder") String subFolder) {
-        Map<String, List<Tag>> fileNamesWithTags;
+        List<FileOTD> files;
         if(subFolder == null || subFolder.trim().isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
@@ -221,7 +222,7 @@ public class UserController {
             if (!projectToGetFileNamesFrom.getIsPrivate() || projectService.hasSpecialPermission(projectToGetFileNamesFrom, userService.getCurrentLoggedUser())
                     || projectService.isUserPermittedToChangeProject(projectToGetFileNamesFrom, userService.getCurrentLoggedUser())) {
                 List<String> allFileNamesInDir = fileStorageService.getAllFileNames(directory, projectToGetFileNamesFrom, subFolder);
-                fileNamesWithTags = fileService.getTagsOnFiles(projectId, subFolder, allFileNamesInDir);
+                files = fileService.getTagsOnFiles(projectId, subFolder, allFileNamesInDir);
             } else {
                 //User is not permitted to see files on this project.
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -239,7 +240,7 @@ public class UserController {
             System.out.println(e.getMessage());
             return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.ok(fileNamesWithTags);
+        return ResponseEntity.ok(files);
     }
 
     /**
