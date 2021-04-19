@@ -428,7 +428,7 @@ public class ProjectService {
     public Map<UUID, List<String>> searchForProject(String searchWord, List<Tag> tagFilter) throws IllegalArgumentException, ProjectNotFoundException {
         List<Project> allProjects = projectDao.getAllProjects();
         if(tagFilter != null && !tagFilter.isEmpty()) {
-            allProjects.removeIf(project -> !doesProjectContainTag(project, tagFilter));
+            allProjects.removeIf(project -> !doesProjectContainTags(project, tagFilter));
         }
         HashMap<UUID, List<String>> result = new HashMap<>();
         if(searchWord == null || searchWord.trim().isEmpty()) {
@@ -451,18 +451,13 @@ public class ProjectService {
     }
 
     /**
-     * Checks if a project has a tag.
-     * @param project project to see if has tag.
-     * @param tagFilter tags to see if project has.
-     * @return true if project has at least one of tags in tagFilter.
+     * Checks if a project contains all tags in filter
+     * @param project project to see if contain tags.
+     * @param tagFilter tags to see if project contains.
+     * @return true if project contain all tags in tagFilter.
      */
-    private boolean doesProjectContainTag(Project project, List<Tag> tagFilter) {
-        for (Tag projectTag:project.getTags()) {
-            if(tagFilter.contains(projectTag)) {
-                return true;
-            }
-        }
-        return false;
+    private boolean doesProjectContainTags(Project project, List<Tag> tagFilter) {
+        return project.getTags().containsAll(tagFilter);
     }
 
     /**
