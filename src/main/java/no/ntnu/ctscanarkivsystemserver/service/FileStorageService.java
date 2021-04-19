@@ -21,6 +21,8 @@ import javax.security.auth.Subject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ForbiddenException;
 import java.io.*;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.zip.ZipEntry;
@@ -91,7 +93,7 @@ public class FileStorageService {
             if (file != null && file.getOriginalFilename() != null) {
                 try {
                     // Check if the file's name contains invalid characters
-                    if (getFileName(file).contains("..")) {
+                    if (isFilenameInvalid(getFileName(file))) {
                         throw new FileStorageException("Sorry! Filename contains invalid path sequence " + getFileName(file));
                     }
                     String notAddedFile = storeFileInDirectory(file, fileStorageLocation + dateNameToPath(project) + subFolder);
@@ -559,5 +561,33 @@ public class FileStorageService {
             }
         }
         return true;
+    }
+
+    /**
+     * Checks if a folder contain any illegal characters.
+     * @param name name of folder.
+     * @return true if folder name is invalid.
+     */
+    public boolean isFolderNameInvalid(String name) {
+        if(name.matches(".*[/;,=].*") || name.contains("\\")) {
+            System.out.println("Illegal char in: " + name +
+                    "\nIllegal characters is: /;,.=\\?*:|\"<>");
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Checks if a file contain any illegal characters.
+     * @param filename name of file.
+     * @return true if file name is invalid.
+     */
+    public boolean isFilenameInvalid(String filename) {
+        if(filename.matches(".*[/;,=].*") || filename.contains("\\") || filename.contains("..")) {
+            System.out.println("Illegal char in: " + filename +
+                    "\nIllegal characters is: /;,=\\?*:|\"<>");
+            return true;
+        }
+        return false;
     }
 }

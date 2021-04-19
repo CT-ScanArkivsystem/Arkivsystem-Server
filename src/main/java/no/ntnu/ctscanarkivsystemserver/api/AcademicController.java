@@ -55,8 +55,7 @@ public class AcademicController {
     @PostMapping(path = "/createProject")
     public ResponseEntity<Project> createProject(@RequestBody ProjectDTO projectDto) {
         Project result;
-        if (projectDto == null) {
-            System.out.println("projectDto cannot be null");
+        if (projectDto == null || projectDto.getProjectName() == null || fileStorageService.isFolderNameInvalid(projectDto.getProjectName())) {
             return ResponseEntity.badRequest().build();
         } else {
             try {
@@ -410,7 +409,7 @@ public class AcademicController {
      * @param files files to upload.
      * @param projectId project files are associated with.
      * @return If successful: 200 OK with a list of all files which where not uploaded.
-     *         If subFolder variable is null or empty: 400-Bad Request.
+     *         If subFolder variable is null, empty or contain any invalid characters: 400-Bad Request.
      *         If user or project does not exist: 404 Not Found.
      *         If logged in user is not allowed to do changes on the project: 403 Forbidden.
      */
@@ -418,7 +417,7 @@ public class AcademicController {
     public ResponseEntity<List<String>> uploadFiles(@RequestParam("files") MultipartFile[] files, @RequestParam("projectId") UUID projectId,
                                                     @RequestParam("subFolder") String subFolder) {
         List<String> notAddedFiles;
-        if(subFolder == null || subFolder.trim().isEmpty()) {
+        if(subFolder == null || subFolder.trim().isEmpty() || fileStorageService.isFolderNameInvalid(subFolder)) {
             return ResponseEntity.badRequest().build();
         }
         try {
