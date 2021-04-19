@@ -224,7 +224,6 @@ public class AdminController {
         Date dateOfRestart = serverService.parseStringToDate(timeOfRestart.getDate() + "T" + timeOfRestart.getTime() + timeOfRestart.getZone());
         try {
             if (dateOfRestart != null) {
-                System.out.println("Not null.");
                 serverService.scheduleServerRestart(dateOfRestart);
             } else {
                 return ResponseEntity.badRequest().build();
