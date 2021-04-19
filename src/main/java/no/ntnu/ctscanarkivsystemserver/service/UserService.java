@@ -40,14 +40,26 @@ public class UserService implements UserDetailsService {
      * @param user to be added into the database.
      * @return user which was added into the database.
      * @throws EmailExistsException if a user with given email already exists in the database.
-     * @throws IllegalArgumentException if email is null in UserDTO object.
+     * @throws IllegalArgumentException if email is null in UserDTO object or password is not valid.
      */
     public User addUser(UserDTO user) throws EmailExistsException, IllegalArgumentException {
         if(userDao.doesEmailExist(user.getEmail())) {
             throw new EmailExistsException(user.getEmail());
+        } else if(!isPasswordValid(user.getPassword())) {
+            throw new IllegalArgumentException("Password of user is not valid. Password must at least contain 5 characters.");
+        } else {
+            User newUser = new User(user.getFirstName(), user.getLastName(), user.getEmail(), passwordEncoder.encode(user.getPassword()));
+            return userDao.insertUser(newUser, user.getRole());
         }
-        User newUser = new User(user.getFirstName(), user.getLastName(), user.getEmail(), passwordEncoder.encode(user.getPassword()));
-        return userDao.insertUser(newUser, user.getRole());
+    }
+
+    /**
+     * Checks if password is valid.
+     * @param password password to see if is valid.
+     * @return true if password is valid.
+     */
+    private boolean isPasswordValid(String password) {
+        return password.length() >= 5;
     }
 
     public List<User> getAllUsers() {
@@ -119,7 +131,7 @@ public class UserService implements UserDetailsService {
      * @return changed user.
      * @throws UserNotFoundException if no user was found with id or email.
      * @throws EmailExistsException if you try to change email to one which already exist.
-     * @throws IllegalArgumentException if email in UserDTO object is null.
+     * @throws IllegalArgumentException if email in UserDTO object is null or if password is not valid.
      */
     public User editUser(UserDTO changes) throws UserNotFoundException, EmailExistsException, IllegalArgumentException{
         User user;
@@ -132,7 +144,11 @@ public class UserService implements UserDetailsService {
             user = getUserByEmail(changes.getEmail());
         }
         if(changes.getPassword() != null && !changes.getPassword().trim().isEmpty()) {
-            changes.setPassword(passwordEncoder.encode(changes.getPassword()));
+            if(isPasswordValid(changes.getPassword())) {
+                changes.setPassword(passwordEncoder.encode(changes.getPassword()));
+            } else {
+                throw new IllegalArgumentException("Password is not valid.");
+            }
         }
         return userDao.editUser(user, changes);
     }

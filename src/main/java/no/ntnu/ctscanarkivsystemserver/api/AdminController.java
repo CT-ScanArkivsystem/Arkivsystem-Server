@@ -58,7 +58,6 @@ public class AdminController {
                 return ResponseEntity.status(HttpStatus.CONFLICT).build();
             } catch (IllegalArgumentException e) {
                 System.out.println(e.getMessage());
-                //Email is null
                 return ResponseEntity.badRequest().build();
             }
         } else {
