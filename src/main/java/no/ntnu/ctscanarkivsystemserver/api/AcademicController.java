@@ -141,11 +141,12 @@ public class AcademicController {
     /**
      * This API request is used to add an existing user to the members of a project
      * @param projectDto The 'Data To Object' used to carry the required id's. Must contain userId and projectId
-     * @return If successful: Response code 200 OK
-     *         If ProjectDto, userEmail or projectId is null: 400 Bad request
-     *         If user is already a member of the project: 400 Bad request
-     *         If User is not allowed to add project members: 403 Forbidden
-     *         If member is not added successfully or something else fails: 500 Internal server error
+     * @return If successful: Response code 200 OK.
+     *         If ProjectDto, userEmail or projectId is null: 400 Bad request.
+     *         If user is already a member of the project: 400 Bad request.
+     *         If User is not allowed to add project members: 403 Forbidden.
+     *         If no user with email in projectDto was found: 404 Not Found.
+     *         If member is not added successfully or something else fails: 500 Internal server error.
      */
     @PutMapping(path = "/addMemberToProject")
     public ResponseEntity<Project> addMemberToProject(@RequestBody ProjectDTO projectDto) {
@@ -162,6 +163,9 @@ public class AcademicController {
             } catch (IllegalArgumentException e) {
                 System.out.println(e.getMessage());
                 return ResponseEntity.badRequest().build();
+            } catch (UserNotFoundException e) {
+                System.out.println(e.getMessage());
+                return ResponseEntity.notFound().build();
             }
             catch (Exception e) {
                 System.out.println(e.getMessage());

@@ -149,22 +149,27 @@ public class ProjectService {
      * @return True if user has been successfully added, false otherwise
      * @throws ForbiddenException If user is not allowed to add members
      * @throws IllegalArgumentException If user is already a member of the project.
+     * @throws UserNotFoundException If no user with email was found.
      */
-    public boolean addMemberToProject(ProjectDTO projectDto, User user) throws ForbiddenException, IllegalArgumentException {
+    public boolean addMemberToProject(ProjectDTO projectDto, User user) throws ForbiddenException, IllegalArgumentException, UserNotFoundException {
         Project thisProject = projectDao.getProjectById(projectDto.getProjectId());
         User userToBeAdded = userDao.getUserByEmail(projectDto.getUserEmail());
-        if(!userToBeAdded.getRoles().get(0).getRoleName().equals("ROLE_" + Role.USER)) {
-            if (userIsOwnerOrAdmin(thisProject, user)) {
-                if (!thisProject.getProjectMembers().contains(userToBeAdded)) {
-                    return projectDao.addProjectMember(thisProject, userToBeAdded);
+        if(userToBeAdded != null) {
+            if (!userToBeAdded.getRoles().get(0).getRoleName().equals("ROLE_" + Role.USER)) {
+                if (userIsOwnerOrAdmin(thisProject, user)) {
+                    if (!thisProject.getProjectMembers().contains(userToBeAdded)) {
+                        return projectDao.addProjectMember(thisProject, userToBeAdded);
+                    } else {
+                        throw new IllegalArgumentException("User is already member of project.");
+                    }
                 } else {
-                    throw new IllegalArgumentException("User is already member of project.");
+                    throw new ForbiddenException("The logged on user is not allowed to add members to this project");
                 }
             } else {
-                throw new ForbiddenException("The logged on user is not allowed to add members to this project");
+                throw new ForbiddenException("User with email " + userToBeAdded.getEmail() + " don't have high enough role to be added as a member.");
             }
         } else {
-            throw new ForbiddenException("User with email " + userToBeAdded.getEmail() + " don't have high enough role to be added as a member.");
+            throw new UserNotFoundException("Cannot find any user with email: " + projectDto.getUserEmail());
         }
     }
 
