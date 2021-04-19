@@ -144,6 +144,23 @@ public class FileStorageService {
     }
 
     /**
+     * Gets a image as a byte array.
+     * @param imageName name of image file including file type.
+     * @param project Project image is associated with.
+     * @param subFolder Folder of sub-project to get image from.
+     * @return image content as a byte array.
+     * @throws IOException if loadFileAsBytes method failed to close stream.
+     * @throws FileStorageException if file with imageName was not found.
+     */
+    public byte[] getImageAsBytes(String imageName, Project project, String subFolder) throws IOException, FileStorageException {
+        if(isFileAnImage(imageName)) {
+            return loadFileAsBytes(imageName, project, subFolder);
+        } else {
+            throw new IllegalArgumentException("File is not a image or the system does not know about it. File name is: " + imageName);
+        }
+    }
+
+    /**
      * Get all file names in a directory.
      * Valid arguments is: documents, images, logs, dicom, tiff and all.
      * @param directory directory to get all file names from.
@@ -294,6 +311,9 @@ public class FileStorageService {
             case "png":
             case "PNG":
             case "gif":
+            case "raw":
+            case "eps":
+            case "bmp":
                 fileLocation += IMAGE_PATH;
                 break;
 
@@ -333,6 +353,9 @@ public class FileStorageService {
                 case "png":
                 case "PNG":
                 case "gif":
+                case "raw":
+                case "eps":
+                case "bmp":
                     notAddedFile = saveFile(file, path + IMAGE_PATH);
                     break;
 
@@ -575,6 +598,21 @@ public class FileStorageService {
             System.out.println("Illegal char in: " + filename +
                     "\nIllegal characters is: /;,=\\?*:|\"<>");
             return true;
+        }
+        return false;
+    }
+
+    /**
+     * Checks if file is a image.
+     * @param fileName name of file including file type
+     * @return true if the file is a image the system supports.
+     */
+    private boolean isFileAnImage(String fileName) {
+        List<String> imageTypes = new ArrayList<>(Arrays.asList(".jpg", ".png", ".PNG", ".gif", ".raw", ".eps", ".bmp", ".tif", ".tiff"));
+        for(String imageType:imageTypes) {
+            if(fileName.contains(imageType)) {
+                return true;
+            }
         }
         return false;
     }
