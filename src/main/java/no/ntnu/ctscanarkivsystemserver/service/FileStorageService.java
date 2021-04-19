@@ -386,20 +386,14 @@ public class FileStorageService {
      * @return true if file already exist
      */
     private boolean doesFileExist(MultipartFile file, String path) {
-        SmbFile smbFile = null;
-        try {
-            smbFile = new SmbFile(url + "/" + path + "/", getContextWithCred());
-            for (SmbFile existingFile:smbFile.listFiles()) {
-                if(getFileName(file).equals(existingFile.getName())) {
+        try (SmbFile smbFile = new SmbFile(url + "/" + path + "/", getContextWithCred())) {
+            for (SmbFile existingFile : smbFile.listFiles()) {
+                if (getFileName(file).equals(existingFile.getName())) {
                     return true;
                 }
             }
         } catch (Exception e) {
-            throw  new ForbiddenException("Exception while trying to see if file exists: " + e.getMessage());
-        } finally {
-            if(smbFile != null) {
-                smbFile.close();
-            }
+            throw new ForbiddenException("Exception while trying to see if file exists: " + e.getMessage());
         }
         return false;
     }
@@ -451,18 +445,12 @@ public class FileStorageService {
         List<String> directoriesToMake = createProjectDirList(project, subFolder);
 
         for(String dirPath:directoriesToMake) {
-            SmbFile smbFile = null;
-            try {
-                smbFile = new SmbFile(url + "/" + dirPath, getContextWithCred());
-                if(!smbFile.exists()) {
+            try (SmbFile smbFile = new SmbFile(url + "/" + dirPath, getContextWithCred())) {
+                if (!smbFile.exists()) {
                     smbFile.mkdir();
                 }
             } catch (Exception e) {
                 throw new DirectoryCreationException(e.getMessage());
-            } finally {
-                if(smbFile != null) {
-                    smbFile.close();
-                }
             }
         }
     }
