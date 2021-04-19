@@ -431,7 +431,7 @@ public class ProjectService {
             allProjects.removeIf(project -> !doesProjectContainTags(project, tagFilter));
         }
         HashMap<UUID, List<String>> result = new HashMap<>();
-        if(searchWord == null || searchWord.trim().isEmpty()) {
+        if(searchWord == null) {
             throw new IllegalArgumentException("Search word cannot be null or empty!");
         } else if(allProjects.isEmpty()) {
             throw new ProjectNotFoundException("No projects found in the database!");

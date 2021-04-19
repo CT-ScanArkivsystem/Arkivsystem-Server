@@ -303,26 +303,22 @@ public class UserController {
     public ResponseEntity<Map<UUID, List<String>>> searchForProject(@RequestParam("search") String searchWord, @RequestParam("tagFilter") List<String> filters) {
         Map<UUID, List<String>> searchResult;
         List<Tag> filterList = new ArrayList<>();
-        if(searchWord.trim().isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        } else {
-            if(filters != null && !filters.isEmpty()) {
-                for (String filter : filters) {
-                    Tag tag = tagService.getTag(filter);
-                    if (tag != null) {
-                        filterList.add(tag);
-                    }
+        if(filters != null && !filters.isEmpty()) {
+            for (String filter : filters) {
+                Tag tag = tagService.getTag(filter);
+                if (tag != null) {
+                    filterList.add(tag);
                 }
             }
-            try {
-                searchResult = projectService.searchForProject(searchWord, filterList);
-            } catch (IllegalArgumentException e) {
-                System.out.println(e.getMessage());
-                return ResponseEntity.badRequest().build();
-            } catch (ProjectNotFoundException e) {
-                System.out.println(e.getMessage());
-                return ResponseEntity.noContent().build();
-            }
+        }
+        try {
+            searchResult = projectService.searchForProject(searchWord, filterList);
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.badRequest().build();
+        } catch (ProjectNotFoundException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(searchResult);
     }
