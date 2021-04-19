@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import no.ntnu.ctscanarkivsystemserver.exception.EmailExistsException;
 import no.ntnu.ctscanarkivsystemserver.exception.TagNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.exception.UserNotFoundException;
+import no.ntnu.ctscanarkivsystemserver.model.DateDTO;
 import no.ntnu.ctscanarkivsystemserver.model.ProjectDTO;
 import no.ntnu.ctscanarkivsystemserver.model.User;
 import no.ntnu.ctscanarkivsystemserver.model.UserDTO;
@@ -210,9 +211,29 @@ public class AdminController {
         }
     }
 
+    /**
+     * Schedule a date and time for the server to restart.
+     * @param timeOfRestart a request body including: date, time and zone.
+     *                      date format: yyyy-MM-dd
+     *                      time format: HH:mm
+     *                      zone format: +0200
+     * @return If schedule was successful: 200-Ok.
+     *         If params could not be converted to date or date is before today: 400-Bad Request.
+     */
     @PostMapping(path = "/restartServer")
-    public ResponseEntity<?> restartServer(@RequestBody ProjectDTO time) {
-        serverService.scheduleServerRestart(time.getCreation());
+    public ResponseEntity<?> restartServer(@RequestBody DateDTO timeOfRestart) {
+        Date dateOfRestart = serverService.parseStringToDate(timeOfRestart.getDate() + "T" + timeOfRestart.getTime() + timeOfRestart.getZone());
+        try {
+            if (dateOfRestart != null) {
+                System.out.println("Not null.");
+                serverService.scheduleServerRestart(dateOfRestart);
+            } else {
+                return ResponseEntity.badRequest().build();
+            }
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
         return ResponseEntity.ok().build();
     }
 }
