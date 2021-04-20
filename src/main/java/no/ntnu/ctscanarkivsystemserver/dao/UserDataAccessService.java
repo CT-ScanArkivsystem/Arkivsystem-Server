@@ -35,7 +35,6 @@ public class UserDataAccessService implements UserDao{
         user.getRoles().add(userRole);
         em.persist(user);
         em.flush();
-        System.out.println("New user id: " + user.getUserId());
         return user;
     }
 
@@ -90,13 +89,13 @@ public class UserDataAccessService implements UserDao{
         if(!changes.getEmail().trim().isEmpty()) {
             userToBeChanged.setEmail(changes.getEmail().trim().toLowerCase());
         }
-        if(!changes.getFirstName().trim().isEmpty()) {
+        if(changes.getFirstName() != null && !changes.getFirstName().trim().isEmpty()) {
             userToBeChanged.setFirstName(changes.getFirstName().trim());
         }
-        if(!changes.getLastName().trim().isEmpty()) {
+        if(changes.getLastName() != null && !changes.getLastName().trim().isEmpty()) {
             userToBeChanged.setLastName(changes.getLastName().trim());
         }
-        if(!changes.getPassword().trim().isEmpty()) {
+        if(changes.getPassword() != null && !changes.getPassword().trim().isEmpty()) {
             userToBeChanged.setPassword(changes.getPassword().trim());
         }
 
@@ -108,7 +107,6 @@ public class UserDataAccessService implements UserDao{
      * @param user to be changed in the database.
      */
     private void prepareUserForEdit(User user) {
-        System.out.println("user getting ready for edit.");
         if(user != null) {
             try {
                 em.lock(user, LockModeType.PESSIMISTIC_WRITE);
@@ -124,7 +122,6 @@ public class UserDataAccessService implements UserDao{
      * @return user if merge was successful else null.
      */
     private User saveUser(User userToSave) {
-        System.out.println("Trying to save user.");
         if(userToSave != null) {
             try {
                 em.merge(userToSave);
@@ -147,11 +144,23 @@ public class UserDataAccessService implements UserDao{
     @Override
     public boolean removeUser(User userToBeRemoved) {
         if(userToBeRemoved != null) {
+            removeRoleFromUser(userToBeRemoved);
             em.remove(userToBeRemoved);
             em.flush();
             return getUserById(userToBeRemoved.getUserId()) == null;
         }
         return false;
+    }
+
+    /**
+     * Remove role from the user.
+     * @param user user to remove role from.
+     */
+    private void removeRoleFromUser(User user) {
+        em.refresh(user);
+        prepareUserForEdit(user);
+        user.getRoles().remove(0);
+        saveUser(user);
     }
 
     /**
@@ -168,7 +177,6 @@ public class UserDataAccessService implements UserDao{
         query.setParameter("userId", id);
         List<User> queryResult = query.getResultList();
         if(queryResult.size() == 1) {
-            System.out.println("Found a user with id: " + id);
             return queryResult.get(0);
         } else {
             System.out.println("Found no users with id: " + id);
@@ -191,7 +199,6 @@ public class UserDataAccessService implements UserDao{
         query.setParameter("email", email);
         List<User> queryResult = query.getResultList();
         if(queryResult.size() == 1) {
-            System.out.println("Found a user with email: " + email);
             return queryResult.get(0);
         } else {
             System.out.println("Found no users with email: " + email);

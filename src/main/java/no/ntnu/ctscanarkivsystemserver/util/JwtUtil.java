@@ -20,9 +20,12 @@ import java.util.function.Function;
 @Service
 public class JwtUtil {
 
+    private final long jwtLifetime;
+
     @Autowired
     public JwtUtil(Properties properties) {
         this.SECRET_KEY = properties.getJwtKey();
+        this.jwtLifetime = properties.getJwtLifetimeInMin();
     }
 
     private final String SECRET_KEY;
@@ -56,7 +59,7 @@ public class JwtUtil {
     private String createToken(Map<String, Object> claims, String subject) {
 
         return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 12)) //Token will expire in 12 hours!
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * jwtLifetime)) //Token will expire in 12 hours!
                 .signWith(SignatureAlgorithm.HS256, SECRET_KEY).compact();
     }
 

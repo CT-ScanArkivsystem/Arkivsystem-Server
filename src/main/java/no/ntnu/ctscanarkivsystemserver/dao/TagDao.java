@@ -9,6 +9,10 @@ import javax.persistence.Query;
 import javax.transaction.Transactional;
 import java.util.List;
 
+/**
+ * The job of this class is to access the tag database to get, remove or edit data.
+ * @author TrymV
+ */
 @Repository("tagRepo")
 public class TagDao {
 
@@ -60,6 +64,11 @@ public class TagDao {
         return query.getResultList();
     }
 
+    /**
+     * Deletes a tag from the database.
+     * @param tagToBeRemoved tag to be removed from the database.
+     * @return true if tag was successfully removed.
+     */
     @Transactional
     public boolean deleteTag(Tag tagToBeRemoved) {
         if(tagToBeRemoved != null) {

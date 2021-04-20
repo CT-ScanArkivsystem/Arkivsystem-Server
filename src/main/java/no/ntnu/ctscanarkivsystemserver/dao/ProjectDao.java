@@ -107,7 +107,6 @@ public class ProjectDao {
         query.setParameter("projectId", uuid);
         List<Project> queryResult = query.getResultList();
         if(queryResult.size() == 1) {
-            System.out.println("Found a project with id: " + uuid);
             return (Project) query.getResultList().get(0);
         } else {
             System.out.println("Found no project with id: " + uuid);
@@ -123,7 +122,6 @@ public class ProjectDao {
      */
     @Transactional
     public boolean changeProjectOwner(Project project, User newOwner) {
-        System.out.println("ProjectDao: attempting to set newOwner as owner");
         em.refresh(project);
         prepareProjectForEdit(project);
         project.setOwner(newOwner);
@@ -231,7 +229,6 @@ public class ProjectDao {
      * @param project the project you want to change
      */
     private void prepareProjectForEdit(Project project) {
-        System.out.println("Project getting ready for edit.");
         if(project != null) {
             try {
                 em.lock(project, LockModeType.PESSIMISTIC_WRITE);
@@ -247,7 +244,6 @@ public class ProjectDao {
      * @return
      */
     private Project saveProject(Project projectToSave) {
-        System.out.println("Trying to save project.");
         if(projectToSave != null) {
             try {
                 em.merge(projectToSave);
@@ -255,15 +251,43 @@ public class ProjectDao {
                 em.flush();
                 return projectToSave;
             } catch (Exception e) {
-                System.out.println("Exception in save user: " + e.getMessage());
+                System.out.println("Exception in save project: " + e.getMessage());
             }
         }
         return null;
     }
 
+    /**
+     * Set a projects privacy.
+     * @param project project to set privacy of.
+     * @param privacy true to set project as private else false.
+     * @return true if change was successful.
+     */
+    @Transactional
+    public boolean setPrivacy(Project project, boolean privacy) {
+        em.refresh(project);
+        prepareProjectForEdit(project);
+        project.setIsPrivate(privacy);
+        project = saveProject(project);
+        return project != null;
+    }
 
-
-
-
-
+    /**
+     * Set the description of a project.
+     * @param project project to set description of.
+     * @param description description to set on project.
+     * @return description if successful else null.
+     */
+    @Transactional
+    public String setDescription(Project project, String description) {
+        em.refresh(project);
+        prepareProjectForEdit(project);
+        project.setDescription(description);
+        project = saveProject(project);
+        if(project == null) {
+            return null;
+        } else {
+            return project.getDescription();
+        }
+    }
 }

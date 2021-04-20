@@ -1,10 +1,14 @@
 package no.ntnu.ctscanarkivsystemserver.api;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import no.ntnu.ctscanarkivsystemserver.exception.EmailExistsException;
 import no.ntnu.ctscanarkivsystemserver.exception.TagNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.exception.UserNotFoundException;
+import no.ntnu.ctscanarkivsystemserver.model.DateDTO;
+import no.ntnu.ctscanarkivsystemserver.model.ProjectDTO;
 import no.ntnu.ctscanarkivsystemserver.model.User;
 import no.ntnu.ctscanarkivsystemserver.model.UserDTO;
+import no.ntnu.ctscanarkivsystemserver.service.ServerService;
 import no.ntnu.ctscanarkivsystemserver.service.TagService;
 import no.ntnu.ctscanarkivsystemserver.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +16,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -26,11 +32,13 @@ public class AdminController {
 
     private final UserService userService;
     private final TagService tagService;
+    private final ServerService serverService;
 
     @Autowired
-    public AdminController(UserService userService, TagService tagService) {
+    public AdminController(UserService userService, TagService tagService, ServerService serverService) {
         this.userService = userService;
         this.tagService = tagService;
+        this.serverService = serverService;
     }
 
     /**
@@ -58,7 +66,6 @@ public class AdminController {
                 return ResponseEntity.status(HttpStatus.CONFLICT).build();
             } catch (IllegalArgumentException e) {
                 System.out.println(e.getMessage());
-                //Email is null
                 return ResponseEntity.badRequest().build();
             }
         } else {
@@ -195,12 +202,36 @@ public class AdminController {
      */
     @GetMapping(path = "/allUsers")
     public ResponseEntity<?> getAllUsers() {
-        System.out.println("Getting all users!");
         List<User> allUsers = userService.getAllUsers();
         if(allUsers == null || allUsers.isEmpty()) {
             return ResponseEntity.notFound().build();
         } else {
             return ResponseEntity.ok(allUsers);
         }
+    }
+
+    /**
+     * Schedule a date and time for the server to restart.
+     * @param timeOfRestart a request body including: date, time and zone.
+     *                      date format: yyyy-MM-dd
+     *                      time format: HH:mm
+     *                      zone format: +0200
+     * @return If schedule was successful: 200-Ok.
+     *         If params could not be converted to date or date is before today: 400-Bad Request.
+     */
+    @PostMapping(path = "/restartServer")
+    public ResponseEntity<?> restartServer(@RequestBody DateDTO timeOfRestart) {
+        Date dateOfRestart = serverService.parseStringToDate(timeOfRestart.getDate() + "T" + timeOfRestart.getTime() + timeOfRestart.getZone());
+        try {
+            if (dateOfRestart != null) {
+                serverService.scheduleServerRestart(dateOfRestart);
+            } else {
+                return ResponseEntity.badRequest().build();
+            }
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok().build();
     }
 }

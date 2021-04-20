@@ -28,6 +28,7 @@ import java.net.URLEncoder;
 public class AuthController {
 
     private final String domain;
+    private final Long jwtLifetime;
 
     @Autowired
     private AuthenticationManager authManager;
@@ -40,7 +41,8 @@ public class AuthController {
 
     @Autowired
     public AuthController(Properties properties) {
-        this.domain = properties.getBackendDomain();
+        this.domain = properties.getDomain();
+        this.jwtLifetime = properties.getJwtLifetimeInMin();
     }
 
     @PostMapping(path = "/login")
@@ -60,7 +62,7 @@ public class AuthController {
         // to it being old and SameSite being rather new. Use something like:
         // response.setHeader("Set-Cookie", "jwt=Bearer " + jwt + "; HttpOnly; SameSite=lax; path=/; domain=localhost");
         Cookie cookie = new Cookie("jwt", URLEncoder.encode("Bearer " + jwt, "UTF-8"));
-        cookie.setMaxAge(1800);
+        cookie.setMaxAge(jwtLifetime.intValue());
         cookie.setPath("/");
         cookie.setDomain(domain);
         cookie.setSecure(false); // TODO: When the connection becomes secure (HTTPS), change this to true!

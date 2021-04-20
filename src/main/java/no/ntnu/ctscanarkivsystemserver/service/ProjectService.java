@@ -9,24 +9,30 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import javax.ws.rs.ForbiddenException;
-import java.util.List;
-import java.util.UUID;
+import java.io.FileNotFoundException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This class handles the business logic related to projects
- * @author Brage
+ * @author Brage, trymv
  */
 @Service
 public class ProjectService {
 
     private final ProjectDao projectDao;
     private final UserDao userDao;
+    private final FileService fileService;
+    private final FileStorageService fileStorageService;
 
     @Autowired
     public ProjectService(@Qualifier("projectDaoRepository") ProjectDao projectDao,
-                          @Qualifier("postgreSQL") UserDao userDao) {
+                          @Qualifier("postgreSQL") UserDao userDao,
+                          FileService fileService, FileStorageService fileStorageService) {
         this.projectDao = projectDao;
         this.userDao = userDao;
+        this.fileService = fileService;
+        this.fileStorageService = fileStorageService;
     }
 
     /**
@@ -138,37 +144,50 @@ public class ProjectService {
 
     /**
      * This method takes the DTO from the controller and sends project and user to the DAO
-     * @param projectDto The ProjectDTO object used to pass data
+     * @param projectDto with userEmail (email of user to be added) and projectId.
      * @param user The logged in user
      * @return True if user has been successfully added, false otherwise
      * @throws ForbiddenException If user is not allowed to add members
+     * @throws IllegalArgumentException If user is already a member of the project.
+     * @throws UserNotFoundException If no user with email was found.
      */
-    public boolean addMemberToProject(ProjectDTO projectDto, User user) throws ForbiddenException {
+    public boolean addMemberToProject(ProjectDTO projectDto, User user) throws ForbiddenException, IllegalArgumentException, UserNotFoundException {
         Project thisProject = projectDao.getProjectById(projectDto.getProjectId());
-        User thisUser = userDao.getUserById(projectDto.getUserId());
-        if (userIsOwnerOrAdmin(thisProject, user)) {
-            return projectDao.addProjectMember(thisProject, thisUser);
+        User userToBeAdded = userDao.getUserByEmail(projectDto.getUserEmail());
+        if(userToBeAdded != null) {
+            if (!userToBeAdded.getRoles().get(0).getRoleName().equals("ROLE_" + Role.USER)) {
+                if (userIsOwnerOrAdmin(thisProject, user)) {
+                    if (!thisProject.getProjectMembers().contains(userToBeAdded)) {
+                        return projectDao.addProjectMember(thisProject, userToBeAdded);
+                    } else {
+                        throw new IllegalArgumentException("User is already member of project.");
+                    }
+                } else {
+                    throw new ForbiddenException("The logged on user is not allowed to add members to this project");
+                }
+            } else {
+                throw new ForbiddenException("User with email " + userToBeAdded.getEmail() + " don't have high enough role to be added as a member.");
+            }
         } else {
-            throw new ForbiddenException("The logged on user is not allowed to add members to this project");
+            throw new UserNotFoundException("Cannot find any user with email: " + projectDto.getUserEmail());
         }
     }
 
     /**
      * This method takes the DTO from the controller and sends project and user to the DAO
-     * @param projectDto The ProjectDTO object used to pass data
+     * @param projectDto with userEmail (email of user to be removed) and projectId.
      * @param user The logged in user
      * @return The resulting Project object after it has been modified
      * @throws ForbiddenException If user is not allowed to add members
      */
     public boolean removeMemberFromProject(ProjectDTO projectDto, User user) throws ForbiddenException {
         Project thisProject = projectDao.getProjectById(projectDto.getProjectId());
-        User thisUser = userDao.getUserById(projectDto.getUserId());
+        User userToBeRemoved = userDao.getUserByEmail(projectDto.getUserEmail());
         if (userIsOwnerOrAdmin(thisProject, user)) {
-            return projectDao.removeProjectMember(thisProject, thisUser);
+            return projectDao.removeProjectMember(thisProject, userToBeRemoved);
         } else {
             throw new ForbiddenException("The logged on user is not allowed to remove members from this project");
         }
-
     }
 
     /**
@@ -368,6 +387,181 @@ public class ProjectService {
             if(projectTag.equals(tag)) {
                 return true;
             }
+        }
+        return false;
+    }
+
+    /**
+     * Set a projects privacy.
+     * @param project project to set privacy of.
+     * @param privacy true to set project as private else false.
+     * @return true if change was successful.
+     */
+    public boolean setProjectPrivacy(Project project, boolean privacy) {
+        return projectDao.setPrivacy(project, privacy);
+    }
+
+    /**
+     * Set the description of a project.
+     * @param project project to set description of.
+     * @param description description to set on project.
+     * @return description if successful else null.
+     * @throws IllegalArgumentException if project or description is null.
+     */
+    public String setProjectDescription(Project project, String description) throws IllegalArgumentException {
+        if(project == null || description == null) {
+            throw new IllegalArgumentException("Project and description cannot be null!");
+        } else {
+            return projectDao.setDescription(project, description);
+        }
+    }
+
+    /**
+     * Search thought all projects for name, description, owner and members (first name, last name, email),
+     * project tags, file tags and file names if they contain the search word.
+     * @param searchWord word to use to search for in projects.
+     * @return map of all projects where at least one search result was ture in, and a String with information
+     * about where each place in the project search result was found in.
+     * @throws IllegalArgumentException if search word is empty.
+     * @throws ProjectNotFoundException if no project was found in the database.
+     */
+    public Map<UUID, List<String>> searchForProject(String searchWord, List<Tag> tagFilter) throws IllegalArgumentException, ProjectNotFoundException {
+        List<Project> allProjects = projectDao.getAllProjects();
+        if(tagFilter != null && !tagFilter.isEmpty()) {
+            allProjects.removeIf(project -> !doesProjectContainTags(project, tagFilter));
+        }
+        HashMap<UUID, List<String>> result = new HashMap<>();
+        if(searchWord == null) {
+            throw new IllegalArgumentException("Search word cannot be null or empty!");
+        } else if(allProjects.isEmpty()) {
+            throw new ProjectNotFoundException("No projects found in the database!");
+        } else {
+            for(Project project:allProjects) {
+                String resultInfo = searchInProject(project, searchWord);
+                if(resultInfo != null) {
+                    List<String> resultWithProjectName = new ArrayList<>();
+                    resultInfo = resultInfo.substring(0, resultInfo.length() -2);
+                    resultWithProjectName.add(project.getProjectName());
+                    resultWithProjectName.add(resultInfo);
+                    result.put(project.getProjectId(), resultWithProjectName);
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Checks if a project contains all tags in filter
+     * @param project project to see if contain tags.
+     * @param tagFilter tags to see if project contains.
+     * @return true if project contain all tags in tagFilter.
+     */
+    private boolean doesProjectContainTags(Project project, List<Tag> tagFilter) {
+        return project.getTags().containsAll(tagFilter);
+    }
+
+    /**
+     * Search in a project for search word in project name, description, owner and members (first name, last name, email),
+     * project tags, file tags and file names if they contain the search word.
+     * @param project project to search thought.
+     * @param searchWord word to search with thought the project.
+     * @return string with information about where search word was found in project. Null if search word did not exist.
+     */
+    private String searchInProject(Project project, String searchWord) {
+        StringBuilder resultInfo = new StringBuilder();
+        searchWord = searchWord.toLowerCase();
+        if(project.getProjectName().toLowerCase().contains(searchWord)) {
+            resultInfo.append("name, ");
+        }
+        if(project.getDescription().toLowerCase().contains(searchWord)) {
+            resultInfo.append("description, ");
+        }
+        List<User> owner = new ArrayList<>();
+        owner.add(project.getOwner());
+        if(doesAtLeastOneUserContainWord(searchWord, owner)) {
+            resultInfo.append("owner, ");
+        }
+        if(doesAtLeastOneUserContainWord(searchWord, project.getProjectMembers())) {
+            resultInfo.append("member, ");
+        }
+        if(doesAtLeastOneStringContainWord(searchWord, project.getTags().stream().map(Tag::getTagName).collect(Collectors.toList()))) {
+            resultInfo.append("project_Tag, ");
+        }
+        if(doesAtLeastOneStringContainWord(searchWord, fileService.getAllTagNamesAssociatedWithProject(project))) {
+            resultInfo.append("file_tag, ");
+        }
+        String fileResultInfo = searchInProjectFiles(project, searchWord, true);
+        if(fileResultInfo != null) {
+            resultInfo.append(fileResultInfo);
+        }
+        if(resultInfo.length() == 0) {
+            return null;
+        }
+        return resultInfo.toString();
+    }
+
+    /**
+     * Search though all file names in the file server under a project if they contain the search word.
+     * @param project project to search.
+     * @param searchWord word to search for.
+     * @param ignore if true this function will be ignored.
+     * @return string with information if at least one file contains the search word.
+     * If subFolder or project was not found this will return null.
+     */
+    private String searchInProjectFiles(Project project, String searchWord, boolean ignore) {
+        List<String> allFiles = new ArrayList<>();
+        String result = "";
+        if(ignore) {
+            return null;
+        } else {
+            try {
+                for (String subFolder : fileStorageService.getAllProjectSubFolders(project)) {
+                    allFiles.addAll(fileStorageService.getAllFileNames("all", project, subFolder));
+                }
+            } catch (FileNotFoundException e) {
+                System.out.println(e.getMessage());
+                return null;
+            }
+            if (doesAtLeastOneStringContainWord(searchWord, allFiles)) {
+                result = "file_name, ";
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Checks if at least one user in the list contains the search word in first name,
+     * last name or email.
+     * @param searchWord word to see if exist in a user.
+     * @param users list of user to check.
+     * @return true if at least one user contains the search word.
+     */
+    private boolean doesAtLeastOneUserContainWord(String searchWord, List<User> users) {
+        if(!users.isEmpty()) {
+            for(User user:users) {
+                if(user.getFirstName().toLowerCase().contains(searchWord) ||
+                        user.getLastName().toLowerCase().contains(searchWord) ||
+                        user.getEmail().contains(searchWord)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Checks if at least one string contain the search word.
+     * @param searchWord word to see if at least one string contains.
+     * @param strings list of strings to check.
+     * @return true if at least one string contains the search word.
+     */
+    private boolean doesAtLeastOneStringContainWord(String searchWord, List<String> strings) {
+        if(!strings.isEmpty()) {
+          for(String stringsInList:strings) {
+              if(stringsInList.toLowerCase().contains(searchWord)) {
+                  return true;
+              }
+          }
         }
         return false;
     }
