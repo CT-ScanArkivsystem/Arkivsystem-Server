@@ -20,11 +20,15 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.security.auth.Subject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ForbiddenException;
+import java.awt.*;
+import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -156,7 +160,7 @@ public class FileStorageService {
         if(isFileAnImage(imageName)) {
             return loadFileAsBytes(imageName, project, subFolder);
         } else {
-            throw new IllegalArgumentException("File is not a image or the system does not know about it. File name is: " + imageName);
+            throw new IllegalArgumentException("File is not a image or the system does not support it. File name is: " + imageName);
         }
     }
 
@@ -608,12 +612,33 @@ public class FileStorageService {
      * @return true if the file is a image the system supports.
      */
     private boolean isFileAnImage(String fileName) {
-        List<String> imageTypes = new ArrayList<>(Arrays.asList(".jpg", ".png", ".PNG", ".gif", ".raw", ".eps", ".bmp", ".tif", ".tiff"));
+        List<String> imageTypes = new ArrayList<>(Arrays.asList(".jpg", ".png", ".PNG", ".gif", ".raw", ".eps", ".bmp"));
         for(String imageType:imageTypes) {
             if(fileName.contains(imageType)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private BufferedImage scale(BufferedImage source, double ratio) {
+        int w = (int) (source.getWidth() * ratio);
+        int h = (int) (source.getHeight() * ratio);
+        BufferedImage bi = getCompatibleImage(w, h);
+        Graphics2D g2d = bi.createGraphics();
+        double xScale = (double) w / source.getWidth();
+        double yScale = (double) h / source.getHeight();
+        AffineTransform at = AffineTransform.getScaleInstance(xScale,yScale);
+        g2d.drawRenderedImage(source, at);
+        g2d.dispose();
+        return bi;
+    }
+
+    private BufferedImage getCompatibleImage(int w, int h) {
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice gd = ge.getDefaultScreenDevice();
+        GraphicsConfiguration gc = gd.getDefaultConfiguration();
+        BufferedImage image = gc.createCompatibleImage(w, h);
+        return image;
     }
 }
