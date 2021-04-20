@@ -425,29 +425,27 @@ public class ProjectService {
      * @throws IllegalArgumentException if search word is empty.
      * @throws ProjectNotFoundException if no project was found in the database.
      */
-    public Map<UUID, List<String>> searchForProject(String searchWord, List<Tag> tagFilter) throws IllegalArgumentException, ProjectNotFoundException {
+    public List<ProjectSearchResult> searchForProject(String searchWord, List<Tag> tagFilter) throws IllegalArgumentException, ProjectNotFoundException {
         List<Project> allProjects = projectDao.getAllProjects();
         if(tagFilter != null && !tagFilter.isEmpty()) {
             allProjects.removeIf(project -> !doesProjectContainTags(project, tagFilter));
         }
-        HashMap<UUID, List<String>> result = new HashMap<>();
+        List<ProjectSearchResult> searchResult = new ArrayList<>();
         if(searchWord == null) {
             throw new IllegalArgumentException("Search word cannot be null or empty!");
         } else if(allProjects.isEmpty()) {
             throw new ProjectNotFoundException("No projects found in the database!");
         } else {
             for(Project project:allProjects) {
-                String resultInfo = searchInProject(project, searchWord);
-                if(resultInfo != null) {
-                    List<String> resultWithProjectName = new ArrayList<>();
-                    resultInfo = resultInfo.substring(0, resultInfo.length() -2);
-                    resultWithProjectName.add(project.getProjectName());
-                    resultWithProjectName.add(resultInfo);
-                    result.put(project.getProjectId(), resultWithProjectName);
+                List<String> resultInfo = searchInProject(project, searchWord);
+                if(!resultInfo.isEmpty()) {
+                    searchResult.add(new ProjectSearchResult(project.getProjectName(), project.getProjectId(),
+                            project.getIsPrivate(), project.getCreation(),
+                            project.getOwner().getFirstName() + " " + project.getOwner().getLastName(), resultInfo));
                 }
             }
         }
-        return result;
+        return searchResult;
     }
 
     /**
@@ -467,37 +465,34 @@ public class ProjectService {
      * @param searchWord word to search with thought the project.
      * @return string with information about where search word was found in project. Null if search word did not exist.
      */
-    private String searchInProject(Project project, String searchWord) {
-        StringBuilder resultInfo = new StringBuilder();
+    private List<String> searchInProject(Project project, String searchWord) {
+        List<String> resultInfo = new ArrayList<>();
         searchWord = searchWord.toLowerCase();
         if(project.getProjectName().toLowerCase().contains(searchWord)) {
-            resultInfo.append("name, ");
+            resultInfo.add("name");
         }
         if(project.getDescription().toLowerCase().contains(searchWord)) {
-            resultInfo.append("description, ");
+            resultInfo.add("description");
         }
         List<User> owner = new ArrayList<>();
         owner.add(project.getOwner());
         if(doesAtLeastOneUserContainWord(searchWord, owner)) {
-            resultInfo.append("owner, ");
+            resultInfo.add("owner");
         }
         if(doesAtLeastOneUserContainWord(searchWord, project.getProjectMembers())) {
-            resultInfo.append("member, ");
+            resultInfo.add("member");
         }
         if(doesAtLeastOneStringContainWord(searchWord, project.getTags().stream().map(Tag::getTagName).collect(Collectors.toList()))) {
-            resultInfo.append("project_Tag, ");
+            resultInfo.add("project_Tag");
         }
         if(doesAtLeastOneStringContainWord(searchWord, fileService.getAllTagNamesAssociatedWithProject(project))) {
-            resultInfo.append("file_tag, ");
+            resultInfo.add("file_tag");
         }
         String fileResultInfo = searchInProjectFiles(project, searchWord, true);
         if(fileResultInfo != null) {
-            resultInfo.append(fileResultInfo);
+            resultInfo.add(fileResultInfo);
         }
-        if(resultInfo.length() == 0) {
-            return null;
-        }
-        return resultInfo.toString();
+        return resultInfo;
     }
 
     /**
@@ -523,7 +518,7 @@ public class ProjectService {
                 return null;
             }
             if (doesAtLeastOneStringContainWord(searchWord, allFiles)) {
-                result = "file_name, ";
+                result = "file_name";
             }
         }
         return result;
