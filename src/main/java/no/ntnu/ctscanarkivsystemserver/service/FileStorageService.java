@@ -21,8 +21,6 @@ import javax.security.auth.Subject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ForbiddenException;
 import java.io.*;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.zip.ZipEntry;
