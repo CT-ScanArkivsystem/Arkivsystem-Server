@@ -40,7 +40,7 @@ import java.util.zip.ZipOutputStream;
 @Service
 public class FileStorageService {
 
-    private ImageService imageService;
+    private final ImageService imageService;
 
     private final String DOCUMENT_PATH;
     private final String IMAGE_PATH;
@@ -536,10 +536,15 @@ public class FileStorageService {
      * does not have one already.
      * @param string string to add backslash to.
      * @return string with backslash.
+     * @throws IllegalArgumentException If param is null or empty.
      */
-    private String backslashToStartOfString(String string) {
-        if (!string.substring(1).equals("/")) {
-            string = "/" + string;
+    private String backslashToStartOfString(String string) throws IllegalArgumentException {
+        if(string == null || string.isEmpty()) {
+            throw new IllegalArgumentException("Cannot add back slash to empty or null string!");
+        } else {
+            if (!string.substring(1).equals("/")) {
+                string = "/" + string;
+            }
         }
         return string;
     }

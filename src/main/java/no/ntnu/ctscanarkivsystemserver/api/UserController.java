@@ -146,7 +146,7 @@ public class UserController {
      * @param projectId Id of project file is associated with.
      * @param subFolder Folder name of the sub-project.
      * @return If successful: 200-OK with the content of the file.
-     *         If fileName does not include file type: 400-Bad request
+     *         If fileName does not include file type or subFolder string is empty: 400-Bad request
      *         If user or project does not exist: 404-Not Found.
      *         If logged in user is not allowed to see project files: 403-Forbidden.
      *         If file was not found: 410-Gone.
@@ -184,6 +184,9 @@ public class UserController {
         } catch (FileStorageException | IOException e) {
             System.out.println(e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.badRequest().build();
         }
         return ResponseEntity.ok()
                 .contentLength(fileBytes.length)

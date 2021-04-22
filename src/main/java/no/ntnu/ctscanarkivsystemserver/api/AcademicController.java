@@ -434,6 +434,9 @@ public class AcademicController {
         } catch (FileStorageException | DirectoryCreationException e) {
             System.out.println(e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.badRequest().build();
         }
         return ResponseEntity.ok(notAddedFiles);
     }
