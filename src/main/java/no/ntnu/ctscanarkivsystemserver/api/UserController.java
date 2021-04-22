@@ -10,9 +10,7 @@ import no.ntnu.ctscanarkivsystemserver.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
 import javax.ws.rs.BadRequestException;
@@ -191,6 +189,48 @@ public class UserController {
                 .contentLength(fileBytes.length)
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(new InputStreamResource(new ByteArrayInputStream(fileBytes)));
+    }
+
+
+    /**
+     * Gets an image from the file server.
+     * @param imageName name of image including file type.
+     * @param projectId id of project image is associated with.
+     * @param subFolder Folder name of the sub-project.
+     * @return If successful: 200-OK with the image.
+     *         If imageName does not include file type or is not a supported image: 400-Bad request
+     *         If user or project does not exist: 404-Not Found.
+     *         If logged in user is not allowed to see project files: 403-Forbidden.
+     *         If image was not found: 410-Gone.
+     */
+    @ResponseBody
+    @PostMapping(path = "/getImage")
+    public ResponseEntity<byte[]> getImage(@RequestParam("imageName") String imageName, @RequestParam("projectId") UUID projectId,
+                                                 @RequestParam("subFolder") String subFolder, @RequestParam("size") int size) {
+        byte[] fileBytes;
+        try {
+            Project projectToDownloadImageFrom = projectService.getProject(projectId);
+            if(!projectToDownloadImageFrom.getIsPrivate() || projectService.hasSpecialPermission(projectToDownloadImageFrom, userService.getCurrentLoggedUser())
+                    || projectService.isUserPermittedToChangeProject(projectToDownloadImageFrom, userService.getCurrentLoggedUser())) {
+                fileBytes = fileStorageService.getImageAsBytes(imageName, projectToDownloadImageFrom, subFolder, size);
+            } else {
+                //User is not permitted to see files on this project.
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        } catch (ProjectNotFoundException | UserNotFoundException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.notFound().build();
+        } catch (FileNotFoundException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.GONE).build();
+        } catch (FileStorageException | IOException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(fileBytes);
     }
 
     /**
