@@ -5,9 +5,13 @@ import no.ntnu.ctscanarkivsystemserver.exception.TagExistsException;
 import no.ntnu.ctscanarkivsystemserver.exception.TagNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.model.database.Project;
 import no.ntnu.ctscanarkivsystemserver.model.database.Tag;
+import no.ntnu.ctscanarkivsystemserver.model.database.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -18,10 +22,12 @@ import java.util.List;
 public class TagService {
 
     private final TagDao tagDao;
+    private final ProjectService projectService;
 
     @Autowired
-    public TagService(TagDao tagDao) {
+    public TagService(TagDao tagDao, ProjectService projectService) {
         this.tagDao = tagDao;
+        this.projectService = projectService;
     }
 
     /**
@@ -95,13 +101,22 @@ public class TagService {
     }
 
     /**
-     * Deletes a tag from the system
+     * Deletes a tag from the system.
      * @param tagName name of tag to be deleted.
+     * @param user User which is trying to delete tag.
      * @return true if tag was successfully removed.
      * @throws TagNotFoundException if no tag with tag name was found.
      */
-    public boolean deleteTag(String tagName) throws TagNotFoundException {
-        return tagDao.deleteTag(getTag(tagName));
+    public boolean deleteTag(String tagName, User user) throws TagNotFoundException {
+        List<Project> projectsTagIsUsedIn = getAllProjectsTagIsUsedIn(tagName);
+        Tag tagToBeDeleted = getTag(tagName);
+        List<Tag> tagList = new ArrayList<>(Collections.singletonList(tagToBeDeleted));
+        if(!projectsTagIsUsedIn.isEmpty()) {
+            for(Project project:projectsTagIsUsedIn) {
+                projectService.removeTag(project.getProjectId(), tagList, user);
+            }
+        }
+        return tagDao.deleteTag(tagToBeDeleted);
     }
 
     /**

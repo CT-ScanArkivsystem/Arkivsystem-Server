@@ -153,7 +153,7 @@ public class AdminController {
         } else {
             for(String tagName:tagNames) {
                 try {
-                    if (!tagService.deleteTag(tagName)) {
+                    if (!tagService.deleteTag(tagName, userService.getCurrentLoggedUser())) {
                         //Something went wrong when trying to delete the tag.
                         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
                     }
