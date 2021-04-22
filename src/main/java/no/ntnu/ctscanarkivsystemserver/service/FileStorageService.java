@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
 import javax.security.auth.Subject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ForbiddenException;
@@ -154,9 +155,15 @@ public class FileStorageService {
      * @throws IOException if loadFileAsBytes method failed to close stream.
      * @throws FileStorageException if file with imageName was not found.
      */
-    public byte[] getImageAsBytes(String imageName, Project project, String subFolder) throws IOException, FileStorageException {
+    public byte[] getImageAsBytes(String imageName, Project project, String subFolder, boolean thumbNail) throws IOException, FileStorageException {
         if(isFileAnImage(imageName)) {
-            return loadFileAsBytes(imageName, project, subFolder);
+            byte[] imageBytes = loadFileAsBytes(imageName, project, subFolder);
+            if(thumbNail) {
+                imageBytes = scaleImage(imageBytes, 0.5, getFileType(imageName));
+            } else if(getFileType(imageName).equals("IMA")) {
+                imageBytes = convertDicomToPng(imageBytes);
+            }
+            return imageBytes;
         } else {
             throw new IllegalArgumentException("File is not a image or the system does not support it. File name is: " + imageName);
         }
@@ -610,7 +617,7 @@ public class FileStorageService {
      * @return true if the file is a image the system supports.
      */
     private boolean isFileAnImage(String fileName) {
-        List<String> imageTypes = new ArrayList<>(Arrays.asList(".jpg", ".png", ".PNG", ".gif", ".raw", ".eps", ".bmp"));
+        List<String> imageTypes = new ArrayList<>(Arrays.asList(".jpg", ".png", ".PNG", ".gif", ".raw", ".eps", ".bmp", ".IMA"));
         for(String imageType:imageTypes) {
             if(fileName.contains(imageType)) {
                 return true;
@@ -619,24 +626,42 @@ public class FileStorageService {
         return false;
     }
 
-    private BufferedImage scale(BufferedImage source, double ratio) {
-        int w = (int) (source.getWidth() * ratio);
-        int h = (int) (source.getHeight() * ratio);
+    private byte[] scaleImage(byte[] imageBytes, double ratio, String imageFileType) throws IOException {
+        BufferedImage bufferedImage = ImageIO.read(new ByteArrayInputStream(imageBytes));
+        int w = (int) (bufferedImage.getWidth() * ratio);
+        int h = (int) (bufferedImage.getHeight() * ratio);
         BufferedImage bi = getCompatibleImage(w, h);
         Graphics2D g2d = bi.createGraphics();
-        double xScale = (double) w / source.getWidth();
-        double yScale = (double) h / source.getHeight();
+        double xScale = (double) w / bufferedImage.getWidth();
+        double yScale = (double) h / bufferedImage.getHeight();
         AffineTransform at = AffineTransform.getScaleInstance(xScale,yScale);
-        g2d.drawRenderedImage(source, at);
+        g2d.drawRenderedImage(bufferedImage, at);
         g2d.dispose();
-        return bi;
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ImageIO.write(bi, imageFileType, bos);
+        return bos.toByteArray();
     }
 
     private BufferedImage getCompatibleImage(int w, int h) {
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice gd = ge.getDefaultScreenDevice();
         GraphicsConfiguration gc = gd.getDefaultConfiguration();
-        BufferedImage image = gc.createCompatibleImage(w, h);
-        return image;
+        return gc.createCompatibleImage(w, h);
     }
-}
+
+    private byte[] convertTiffToPng(byte[] tiffBytes) throws IOException {
+        System.out.println("Length is: " + tiffBytes.length);
+        final BufferedImage tif = ImageIO.read(new ByteArrayInputStream(tiffBytes));
+        System.out.println("1");
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        System.out.println("2");
+        ImageIO.write(tif, "png", bos);
+        System.out.println("Length is: " + bos.toByteArray().length);
+        return bos.toByteArray();
+    }
+
+    private String convertTiffToPng(String fileName) {
+        fileName = fileName.split("\\.")[0];
+        System.out.println(fileName + ".png");
+        return fileName;
+    }

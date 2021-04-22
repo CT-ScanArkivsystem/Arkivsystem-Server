@@ -206,13 +206,13 @@ public class UserController {
     @ResponseBody
     @PostMapping(path = "/getImage")
     public ResponseEntity<byte[]> getImage(@RequestParam("imageName") String imageName, @RequestParam("projectId") UUID projectId,
-                                                 @RequestParam("subFolder") String subFolder) {
+                                                 @RequestParam("subFolder") String subFolder, @RequestParam("thumbNail") boolean thumbNail) {
         byte[] fileBytes;
         try {
             Project projectToDownloadImageFrom = projectService.getProject(projectId);
             if(!projectToDownloadImageFrom.getIsPrivate() || projectService.hasSpecialPermission(projectToDownloadImageFrom, userService.getCurrentLoggedUser())
                     || projectService.isUserPermittedToChangeProject(projectToDownloadImageFrom, userService.getCurrentLoggedUser())) {
-                fileBytes = fileStorageService.getImageAsBytes(imageName, projectToDownloadImageFrom, subFolder);
+                fileBytes = fileStorageService.getImageAsBytes(imageName, projectToDownloadImageFrom, subFolder, thumbNail);
             } else {
                 //User is not permitted to see files on this project.
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
