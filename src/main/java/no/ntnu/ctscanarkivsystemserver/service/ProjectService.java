@@ -148,7 +148,7 @@ public class ProjectService {
      * @param user The logged in user
      * @return True if user has been successfully added, false otherwise
      * @throws ForbiddenException If user is not allowed to add members
-     * @throws IllegalArgumentException If user is already a member of the project.
+     * @throws IllegalArgumentException If user is already a member or owner of the project.
      * @throws UserNotFoundException If no user with email was found.
      */
     public boolean addMemberToProject(ProjectDTO projectDto, User user) throws ForbiddenException, IllegalArgumentException, UserNotFoundException {
@@ -158,7 +158,11 @@ public class ProjectService {
             if (!userToBeAdded.getRoles().get(0).getRoleName().equals("ROLE_" + Role.USER)) {
                 if (userIsOwnerOrAdmin(thisProject, user)) {
                     if (!thisProject.getProjectMembers().contains(userToBeAdded)) {
-                        return projectDao.addProjectMember(thisProject, userToBeAdded);
+                        if(!thisProject.getOwner().equals(userToBeAdded)) {
+                            return projectDao.addProjectMember(thisProject, userToBeAdded);
+                        } else {
+                            throw new IllegalArgumentException("User is already the owner of the project!");
+                        }
                     } else {
                         throw new IllegalArgumentException("User is already member of project.");
                     }
