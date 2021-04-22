@@ -2,7 +2,7 @@ package no.ntnu.ctscanarkivsystemserver.config;
 
 import com.ulisesbocchio.jasyptspringboot.annotation.EnableEncryptableProperties;
 import no.ntnu.ctscanarkivsystemserver.filter.JwtRequestFilter;
-import no.ntnu.ctscanarkivsystemserver.model.Role;
+import no.ntnu.ctscanarkivsystemserver.model.database.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -1,6 +1,8 @@
 package no.ntnu.ctscanarkivsystemserver.model;
 
 import lombok.Data;
+import no.ntnu.ctscanarkivsystemserver.model.database.Tag;
+import no.ntnu.ctscanarkivsystemserver.model.database.User;
 
 import java.util.Date;
 import java.util.List;

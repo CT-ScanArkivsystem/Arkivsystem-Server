@@ -1,4 +1,4 @@
-package no.ntnu.ctscanarkivsystemserver.model;
+package no.ntnu.ctscanarkivsystemserver.model.database;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;

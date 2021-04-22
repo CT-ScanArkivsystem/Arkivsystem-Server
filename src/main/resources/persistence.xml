@@ -3,7 +3,7 @@
   <persistence-unit name="mpconfig" transaction-type="JTA">
     <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
     <jta-data-source>java:app/jdbc/postgres-microprofile</jta-data-source>
-    <class>no.ntnu.ctscanarkivsystemserver.model.User</class>
+    <class>no.ntnu.ctscanarkivsystemserver.model.database.User</class>
     <properties>
       <property name="javax.persistence.schema-generation.database.action" value="create"/>
       <property name="javax.persistence.query.timeout" value="3000"/>

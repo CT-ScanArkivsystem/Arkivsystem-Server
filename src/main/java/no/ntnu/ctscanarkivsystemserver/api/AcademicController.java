@@ -2,6 +2,9 @@ package no.ntnu.ctscanarkivsystemserver.api;
 
 import no.ntnu.ctscanarkivsystemserver.exception.*;
 import no.ntnu.ctscanarkivsystemserver.model.*;
+import no.ntnu.ctscanarkivsystemserver.model.database.File;
+import no.ntnu.ctscanarkivsystemserver.model.database.Project;
+import no.ntnu.ctscanarkivsystemserver.model.database.Tag;
 import no.ntnu.ctscanarkivsystemserver.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -458,7 +461,7 @@ public class AcademicController {
      */
     @PutMapping(path = "/addFileTag")
     public ResponseEntity<File> addTagsToFile(@RequestParam("tagNames") List<String> tagNames, @RequestParam("projectId") UUID projectId,
-                                                @RequestParam("subFolder") String subFolder, @RequestParam("fileName") String fileName) {
+                                              @RequestParam("subFolder") String subFolder, @RequestParam("fileName") String fileName) {
         File fileToAddTagsTo;
         if(tagNames == null || projectId == null || subFolder == null || subFolder.trim().isEmpty()) {
             //Tag name cannot be empty and project id cannot be null!

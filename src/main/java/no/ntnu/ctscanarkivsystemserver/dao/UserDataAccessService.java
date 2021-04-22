@@ -1,7 +1,7 @@
 package no.ntnu.ctscanarkivsystemserver.dao;
 
-import no.ntnu.ctscanarkivsystemserver.model.Role;
-import no.ntnu.ctscanarkivsystemserver.model.User;
+import no.ntnu.ctscanarkivsystemserver.model.database.Role;
+import no.ntnu.ctscanarkivsystemserver.model.database.User;
 import no.ntnu.ctscanarkivsystemserver.model.UserDTO;
 import org.springframework.stereotype.Repository;
 

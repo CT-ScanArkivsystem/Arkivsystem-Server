@@ -1,9 +1,9 @@
 package no.ntnu.ctscanarkivsystemserver.dao;
 
 import no.ntnu.ctscanarkivsystemserver.exception.ProjectNotFoundException;
-import no.ntnu.ctscanarkivsystemserver.model.Project;
-import no.ntnu.ctscanarkivsystemserver.model.Tag;
-import no.ntnu.ctscanarkivsystemserver.model.User;
+import no.ntnu.ctscanarkivsystemserver.model.database.Project;
+import no.ntnu.ctscanarkivsystemserver.model.database.Tag;
+import no.ntnu.ctscanarkivsystemserver.model.database.User;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;

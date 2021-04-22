@@ -4,10 +4,10 @@ import no.ntnu.ctscanarkivsystemserver.dao.FileDao;
 import no.ntnu.ctscanarkivsystemserver.exception.MyFileNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.exception.TagExistsException;
 import no.ntnu.ctscanarkivsystemserver.exception.TagNotFoundException;
-import no.ntnu.ctscanarkivsystemserver.model.File;
+import no.ntnu.ctscanarkivsystemserver.model.database.File;
 import no.ntnu.ctscanarkivsystemserver.model.FileOTD;
-import no.ntnu.ctscanarkivsystemserver.model.Project;
-import no.ntnu.ctscanarkivsystemserver.model.Tag;
+import no.ntnu.ctscanarkivsystemserver.model.database.Project;
+import no.ntnu.ctscanarkivsystemserver.model.database.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
