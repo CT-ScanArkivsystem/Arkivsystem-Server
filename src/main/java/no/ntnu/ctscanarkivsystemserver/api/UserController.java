@@ -5,10 +5,7 @@ import no.ntnu.ctscanarkivsystemserver.exception.FileStorageException;
 import no.ntnu.ctscanarkivsystemserver.exception.ProjectNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.exception.UserNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.exception.TagNotFoundException;
-import no.ntnu.ctscanarkivsystemserver.model.FileOTD;
-import no.ntnu.ctscanarkivsystemserver.model.Project;
-import no.ntnu.ctscanarkivsystemserver.model.Tag;
-import no.ntnu.ctscanarkivsystemserver.model.User;
+import no.ntnu.ctscanarkivsystemserver.model.*;
 import no.ntnu.ctscanarkivsystemserver.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
@@ -340,8 +337,8 @@ public class UserController {
      *         If no projects was found in the database: 204-No Content.
      */
     @GetMapping(path = "/search")
-    public ResponseEntity<Map<UUID, List<String>>> searchForProject(@RequestParam("search") String searchWord, @RequestParam("tagFilter") List<String> filters) {
-        Map<UUID, List<String>> searchResult;
+    public ResponseEntity<List<ProjectSearchResult>> searchForProject(@RequestParam("search") String searchWord, @RequestParam("tagFilter") List<String> filters) {
+        List<ProjectSearchResult> searchResult;
         List<Tag> filterList = new ArrayList<>();
         if(filters != null && !filters.isEmpty()) {
             for (String filter : filters) {
