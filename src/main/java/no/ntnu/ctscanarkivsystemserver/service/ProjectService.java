@@ -14,6 +14,9 @@ import org.springframework.stereotype.Service;
 
 import javax.ws.rs.ForbiddenException;
 import java.io.FileNotFoundException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -482,6 +485,10 @@ public class ProjectService {
         if(project.getDescription().toLowerCase().contains(searchWord)) {
             resultInfo.add("description");
         }
+        String searchWordAsDate = convertDate(searchWord);
+        if(searchWordAsDate != null && project.getCreation().toString().equals(searchWordAsDate)) {
+            resultInfo.add("date");
+        }
         List<User> owner = new ArrayList<>();
         owner.add(project.getOwner());
         if(doesAtLeastOneUserContainWord(searchWord, owner)) {
@@ -567,5 +574,45 @@ public class ProjectService {
           }
         }
         return false;
+    }
+
+    /**
+     * Converts a date to "yyyy-MM-dd".
+     * @param date date to convert.
+     * @return converted date. Null if input is not a date.
+     */
+    private String convertDate(String date) {
+        if(date.length() == 10 && date.contains(".") || date.contains("-")) {
+            if(isDateValid(date, "yyyy.MM.dd")) {
+                String[] dateParts = date.split("\\.", -1);
+                return dateParts[0] + "-" + dateParts[1] + "-" + dateParts[2];
+            } else if(isDateValid(date, "yyyy-MM-dd")) {
+                return date;
+            } else if(isDateValid(date, "dd.MM.yyyy")) {
+                String[] dateParts = date.split("\\.", -1);
+                return dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0];
+            } else if(isDateValid(date, "dd-MM-yyyy")) {
+                String[] dateParts = date.split("-", -1);
+                return dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0];
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Checks if a date is valid.
+     * @param date date to see if is valid.
+     * @param formatOfDate date format to check with.
+     * @return true if date is valid.
+     */
+    private boolean isDateValid(String date, String formatOfDate) {
+        DateFormat dateFormat = new SimpleDateFormat((formatOfDate));
+        dateFormat.setLenient(false);
+        try {
+            dateFormat.parse(date);
+        } catch (ParseException e) {
+            return false;
+        }
+        return true;
     }
 }
