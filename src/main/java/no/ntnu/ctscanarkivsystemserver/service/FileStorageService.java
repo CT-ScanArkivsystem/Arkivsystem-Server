@@ -592,9 +592,9 @@ public class FileStorageService {
      * @return true if folder name is invalid.
      */
     public boolean isFolderNameInvalid(String name) {
-        if (name.matches(".*[/;,=].*") || name.contains("\\")) {
-            System.out.println("Illegal char in: " + name +
-                    "\nIllegal characters is: /;,.=\\?*:|\"<>");
+        if (name.matches(".*[;,.=?*:|<>].*") || name.contains("\\") || name.contains("\"")) {
+            System.out.println("Folder name ERROR: Illegal char in: " + name +
+                    "\nIllegal characters is: ;,.=\\?*:|\"<>");
             return true;
         }
         return false;
@@ -606,8 +606,8 @@ public class FileStorageService {
      * @return true if file name is invalid.
      */
     public boolean isFilenameInvalid(String filename) {
-        if (filename.matches(".*[/;,=].*") || filename.contains("\\") || filename.contains("..")) {
-            System.out.println("Illegal char in: " + filename +
+        if (filename.matches(".*[/;,=?*:|<>].*") || filename.contains("\\") || filename.contains("..") || filename.contains("\"")) {
+            System.out.println("File name ERROR: Illegal char in: " + filename +
                     "\nIllegal characters is: /;,=\\?*:|\"<>");
             return true;
         }
