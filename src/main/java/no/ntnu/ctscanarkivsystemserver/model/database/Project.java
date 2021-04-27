@@ -17,12 +17,13 @@ import java.util.UUID;
 @NamedQuery(name = Project.FIND_ALL_PROJECTS, query = "SELECT p FROM projects p ORDER BY p.projectName")
 @NamedQuery(name = Project.FIND_PROJECTS_BY_NAME, query = "SELECT p FROM projects p WHERE p.projectName LIKE: projectName")
 @NamedQuery(name = Project.FIND_PROJECTS_BY_UUID, query = "SELECT p FROM projects p WHERE p.projectId =: projectId")
-
+@NamedQuery(name = Project.FIND_MY_PROJECTS, query = "SELECT p FROM projects p JOIN p.projectMembers pm WHERE p.owner.userId =: id OR pm.userId =:id")
 public class Project {
 
     public static final String FIND_ALL_PROJECTS = "Project.findAllNames";
     public static final String FIND_PROJECTS_BY_NAME = "Project.findProjectsByName";
     public static final String FIND_PROJECTS_BY_UUID = "Project.findProjectsByUUID";
+    public static final String FIND_MY_PROJECTS = "Project.findMyProjects";
 
     @Id
     @Column(name="project_id")

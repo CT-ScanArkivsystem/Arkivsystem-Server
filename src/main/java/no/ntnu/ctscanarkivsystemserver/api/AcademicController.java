@@ -662,4 +662,24 @@ public class AcademicController {
             return ResponseEntity.ok(description);
         }
     }
+
+    /**
+     * Gets all projects the user owner or are member of.
+     * @return If successful: 200-Ok with all of the users projects.
+     *         If the user don't have any projects: 204-Mo Content.
+     */
+    @GetMapping(path = "/getMyProjects")
+    public ResponseEntity<List<Project>> getMyProjects() {
+        try {
+            List<Project> myProjects = projectService.getMyProjects(userService.getCurrentLoggedUser().getUserId());
+            if(myProjects.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+            } else {
+                return ResponseEntity.ok(myProjects);
+            }
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 }

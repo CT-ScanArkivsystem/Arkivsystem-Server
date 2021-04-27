@@ -615,4 +615,18 @@ public class ProjectService {
         }
         return true;
     }
+
+    /**
+     * Gets all projects the user owns or are member of.
+     * @param userId Id of the user.
+     * @return List of all projects the user owns or are member of without duplicates.
+     * @throws IllegalArgumentException If userId is null.
+     */
+    public List<Project> getMyProjects(UUID userId) throws IllegalArgumentException {
+        if(userId == null) {
+            throw new IllegalArgumentException("UserId cannot be null!");
+        } else {
+            return projectDao.getMyProjects(userId);
+        }
+    }
 }

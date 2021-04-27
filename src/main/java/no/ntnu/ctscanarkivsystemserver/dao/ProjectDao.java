@@ -11,8 +11,7 @@ import javax.persistence.LockModeType;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.transaction.Transactional;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * The data access service for the Project database.
@@ -112,6 +111,21 @@ public class ProjectDao {
             System.out.println("Found no project with id: " + uuid);
             throw new ProjectNotFoundException(uuid);
         }
+    }
+
+    /**
+     * Return a list of all the projects the user owns or are member of.
+     * This will also remove all duplicates.
+     * @param userId Id of user to get projects from.
+     * @return List of all projects user owns or are member of without duplicates.
+     */
+    public List<Project> getMyProjects(UUID userId) {
+        List<Project> myProjects = em.createNamedQuery(Project.FIND_MY_PROJECTS)
+                .setParameter("id", userId).getResultList();
+        Set<Project> myProjectWithoutDupes = new LinkedHashSet<>(myProjects);
+        myProjects.clear();
+        myProjects.addAll(myProjectWithoutDupes);
+        return myProjects;
     }
 
     /**
