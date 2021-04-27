@@ -12,7 +12,7 @@ import java.util.UUID;
 public class ProjectSearchResult {
     private String projectName;
     private UUID projectId;
-    private boolean isPrivate;
+    private Boolean isPrivate;
     private Date creation;
     private String ownerName;
     private List<String> resultInfo;
