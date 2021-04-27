@@ -199,9 +199,11 @@ public class UserController {
 
     /**
      * Gets an image from the file server.
+     * Note: scale does not work for image type gif.
      * @param imageName name of image including file type.
      * @param projectId id of project image is associated with.
      * @param subFolder Folder name of the sub-project.
+     * @param size Size to scale image to.
      * @return If successful: 200-OK with the image.
      *         If imageName does not include file type or is not a supported image: 400-Bad request
      *         If user or project does not exist: 404-Not Found.

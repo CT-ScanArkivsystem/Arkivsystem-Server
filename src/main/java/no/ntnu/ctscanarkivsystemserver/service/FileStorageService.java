@@ -158,7 +158,7 @@ public class FileStorageService {
     public byte[] getImageAsBytes(String imageName, Project project, String subFolder, int imgSize) throws IOException, FileStorageException {
         if (imageService.isFileAnImage(imageName)) {
             byte[] imageBytes = loadFileAsBytes(imageName, project, subFolder);
-            if (imgSize != 0) {
+            if (imgSize != 0 && !getFileType(imageName).equals("gif")) {
                 imageBytes = imageService.scaleImage(imageBytes, getFileType(imageName), imgSize);
             }
             return imageBytes;
