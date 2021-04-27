@@ -42,13 +42,21 @@ public class ImageService {
      * @return Scaled image to width as byte array.
      * @throws IOException If reading image fails.
      */
-    public byte[] scaleImage(byte[] imageBytes, String imageFileType, Integer width) throws IOException{
-        ByteArrayOutputStream thumbOutput = new ByteArrayOutputStream();
-        BufferedImage thumbImg;
-        BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageBytes));
-        thumbImg = Scalr.resize(img, Scalr.Method.AUTOMATIC, Scalr.Mode.AUTOMATIC, width, Scalr.OP_ANTIALIAS);
-        ImageIO.write(thumbImg, imageFileType, thumbOutput);
-        return thumbOutput.toByteArray();
+    public byte[] scaleImage(byte[] imageBytes, String imageFileType, Integer width) throws IOException {
+        try {
+            ByteArrayOutputStream thumbOutput = new ByteArrayOutputStream();
+            BufferedImage thumbImg;
+            BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageBytes));
+            thumbImg = Scalr.resize(img, Scalr.Method.AUTOMATIC, Scalr.Mode.AUTOMATIC, width, Scalr.OP_ANTIALIAS);
+            ImageIO.write(thumbImg, imageFileType, thumbOutput);
+            return thumbOutput.toByteArray();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            //ImageIO has a bug when it tries to read some gifs ArrayIndexOutOfBoundsException will be thrown.
+            //With message: Index 4096 out of bounds for length 4096
+            System.out.println("ArrayIndexOutOfBoundsException: " + e.getMessage());
+            System.out.println("Image scaling failed and image is returned in original size instead. Image type was: " + imageFileType);
+            return imageBytes;
+        }
     }
 
     /**
