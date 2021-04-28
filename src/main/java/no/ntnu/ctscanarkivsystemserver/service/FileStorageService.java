@@ -274,7 +274,7 @@ public class FileStorageService {
             smbFile = new SmbFile(url + "/" + directoryPath + "/", getContextWithCred());
             for (SmbFile fileInDir : smbFile.listFiles()) {
                 if (fileInDir.getName().contains(".") || !ignoreFolders) {
-                    filesInDir.add(fileInDir.getName());
+                    filesInDir.add(fileInDir.getName().replace("/", ""));
                 }
             }
         } catch (SmbException e) {
