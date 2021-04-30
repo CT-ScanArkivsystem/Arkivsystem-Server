@@ -1,7 +1,7 @@
 package no.ntnu.ctscanarkivsystemserver.dao;
 
-import no.ntnu.ctscanarkivsystemserver.model.File;
-import no.ntnu.ctscanarkivsystemserver.model.Tag;
+import no.ntnu.ctscanarkivsystemserver.model.database.File;
+import no.ntnu.ctscanarkivsystemserver.model.database.Tag;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;

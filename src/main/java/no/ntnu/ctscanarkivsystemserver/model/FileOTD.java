@@ -2,6 +2,7 @@ package no.ntnu.ctscanarkivsystemserver.model;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import no.ntnu.ctscanarkivsystemserver.model.database.Tag;
 
 import java.util.List;
 

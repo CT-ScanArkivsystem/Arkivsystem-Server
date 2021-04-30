@@ -1,5 +1,7 @@
 package no.ntnu.ctscanarkivsystemserver.model;
 
+import no.ntnu.ctscanarkivsystemserver.model.database.Role;
+import no.ntnu.ctscanarkivsystemserver.model.database.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

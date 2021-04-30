@@ -2,6 +2,9 @@ package no.ntnu.ctscanarkivsystemserver.api;
 
 import no.ntnu.ctscanarkivsystemserver.exception.*;
 import no.ntnu.ctscanarkivsystemserver.model.*;
+import no.ntnu.ctscanarkivsystemserver.model.database.File;
+import no.ntnu.ctscanarkivsystemserver.model.database.Project;
+import no.ntnu.ctscanarkivsystemserver.model.database.Tag;
 import no.ntnu.ctscanarkivsystemserver.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -434,6 +437,9 @@ public class AcademicController {
         } catch (FileStorageException | DirectoryCreationException e) {
             System.out.println(e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.badRequest().build();
         }
         return ResponseEntity.ok(notAddedFiles);
     }
@@ -455,7 +461,7 @@ public class AcademicController {
      */
     @PutMapping(path = "/addFileTag")
     public ResponseEntity<File> addTagsToFile(@RequestParam("tagNames") List<String> tagNames, @RequestParam("projectId") UUID projectId,
-                                                @RequestParam("subFolder") String subFolder, @RequestParam("fileName") String fileName) {
+                                              @RequestParam("subFolder") String subFolder, @RequestParam("fileName") String fileName) {
         File fileToAddTagsTo;
         if(tagNames == null || projectId == null || subFolder == null || subFolder.trim().isEmpty()) {
             //Tag name cannot be empty and project id cannot be null!
@@ -654,6 +660,26 @@ public class AcademicController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         } else {
             return ResponseEntity.ok(description);
+        }
+    }
+
+    /**
+     * Gets all projects the user owner or are member of.
+     * @return If successful: 200-Ok with all of the users projects.
+     *         If the user don't have any projects: 204-Mo Content.
+     */
+    @GetMapping(path = "/getMyProjects")
+    public ResponseEntity<List<Project>> getMyProjects() {
+        try {
+            List<Project> myProjects = projectService.getMyProjects(userService.getCurrentLoggedUser().getUserId());
+            if(myProjects.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+            } else {
+                return ResponseEntity.ok(myProjects);
+            }
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }

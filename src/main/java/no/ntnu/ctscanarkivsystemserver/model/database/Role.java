@@ -1,4 +1,4 @@
-package no.ntnu.ctscanarkivsystemserver.model;
+package no.ntnu.ctscanarkivsystemserver.model.database;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

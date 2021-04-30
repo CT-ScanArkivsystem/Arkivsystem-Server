@@ -9,7 +9,7 @@ import jcifs.smb.*;
 import no.ntnu.ctscanarkivsystemserver.config.FileStorageProperties;
 import no.ntnu.ctscanarkivsystemserver.exception.DirectoryCreationException;
 import no.ntnu.ctscanarkivsystemserver.exception.FileStorageException;
-import no.ntnu.ctscanarkivsystemserver.model.Project;
+import no.ntnu.ctscanarkivsystemserver.model.database.Project;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,10 +21,9 @@ import javax.security.auth.Subject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ForbiddenException;
 import java.io.*;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -41,6 +40,8 @@ import java.util.zip.ZipOutputStream;
 @Service
 public class FileStorageService {
 
+    private final ImageService imageService;
+
     private final String DOCUMENT_PATH;
     private final String IMAGE_PATH;
     private final String LOG_PATH;
@@ -54,7 +55,7 @@ public class FileStorageService {
     private final String url;
 
     @Autowired
-    public FileStorageService(FileStorageProperties fileStorageProperties) {
+    public FileStorageService(FileStorageProperties fileStorageProperties, ImageService imageService) {
         this.fileStorageLocation = fileStorageProperties.getUploadDir();
         this.DOCUMENT_PATH = fileStorageProperties.getDocumentDir();
         this.IMAGE_PATH = fileStorageProperties.getImageDir();
@@ -65,6 +66,7 @@ public class FileStorageService {
         this.password = fileStorageProperties.getPass();
         this.domain = fileStorageProperties.getDomain();
         this.url = fileStorageProperties.getUrl();
+        this.imageService = imageService;
     }
 
     /**
@@ -81,15 +83,15 @@ public class FileStorageService {
      * @param files files to store.
      * @param project project linked to files.
      * @param subFolder Project sub-folder to store files in.
-     * @throws FileStorageException if storing of files failed.
-     * @throws DirectoryCreationException if creation of directories failed.
      * @return list of all files which was not added.
+     * @throws FileStorageException       if storing of files failed.
+     * @throws DirectoryCreationException if creation of directories failed.
      */
     public List<String> storeFile(MultipartFile[] files, Project project, String subFolder) throws FileStorageException, DirectoryCreationException {
         List<String> notAddedFiles = new ArrayList<>();
         subFolder = backslashToStartOfString(subFolder);
         createProjectDirectories(project, subFolder);
-        for(MultipartFile file:files) {
+        for (MultipartFile file : files) {
             if (file != null && file.getOriginalFilename() != null) {
                 try {
                     // Check if the file's name contains invalid characters
@@ -97,7 +99,7 @@ public class FileStorageService {
                         throw new FileStorageException("Sorry! Filename contains invalid path sequence " + getFileName(file));
                     }
                     String notAddedFile = storeFileInDirectory(file, fileStorageLocation + dateNameToPath(project) + subFolder);
-                    if(notAddedFile != null) {
+                    if (notAddedFile != null) {
                         notAddedFiles.add(notAddedFile);
                     }
                 } catch (Exception ex) {
@@ -115,8 +117,8 @@ public class FileStorageService {
      * @param project Project file is associated with.
      * @param subFolder Folder of sub-project to get file from.
      * @return file content as a byte array.
-     * @throws IOException if this method failed to close stream.
-     * @throws FileStorageException if this method failed to setup connection or get file.
+     * @throws IOException           if this method failed to close stream.
+     * @throws FileStorageException  if this method failed to setup connection or get file.
      * @throws FileNotFoundException if file with fileName was not found.
      */
     public byte[] loadFileAsBytes(String fileName, Project project, String subFolder) throws IOException, FileStorageException, FileNotFoundException {
@@ -129,14 +131,14 @@ public class FileStorageService {
             inputStream = new SmbFileInputStream(smbFile);
             bytes = IOUtils.toByteArray(inputStream);
         } catch (SmbException e) {
-          throw new FileNotFoundException(e.getMessage());
+            throw new FileNotFoundException(e.getMessage());
         } catch (Exception e) {
             throw new FileStorageException(e.getMessage());
         } finally {
-            if(smbFile != null) {
+            if (smbFile != null) {
                 smbFile.close();
             }
-            if(inputStream != null) {
+            if (inputStream != null) {
                 inputStream.close();
             }
         }
@@ -144,20 +146,42 @@ public class FileStorageService {
     }
 
     /**
+     * Gets a image as a byte array.
+     * @param imageName name of image file including file type.
+     * @param project   Project image is associated with.
+     * @param subFolder Folder of sub-project to get image from.
+     * @param imgSize Size of returned image. If 0 image will be returned in original size.
+     * @return image content as a byte array.
+     * @throws IOException          if loadFileAsBytes method failed to close stream.
+     * @throws FileStorageException if file with imageName was not found.
+     */
+    public byte[] getImageAsBytes(String imageName, Project project, String subFolder, int imgSize) throws IOException, FileStorageException {
+        if (imageService.isFileAnImage(imageName)) {
+            byte[] imageBytes = loadFileAsBytes(imageName, project, subFolder);
+            if (imgSize != 0 && !getFileType(imageName).equals("gif")) {
+                imageBytes = imageService.scaleImage(imageBytes, getFileType(imageName), imgSize);
+            }
+            return imageBytes;
+        } else {
+            throw new IllegalArgumentException("File is not a image or the system does not support it. File name is: " + imageName);
+        }
+    }
+
+    /**
      * Get all file names in a directory.
      * Valid arguments is: documents, images, logs, dicom, tiff and all.
      * @param directory directory to get all file names from.
-     * @param project project associated with directory you want to get file names from.
+     * @param project   project associated with directory you want to get file names from.
      * @param subFolder Folder of sub-project to get file names from.
      * @return list of file names from directory.
-     * @throws FileNotFoundException if directory was not found.
-     * @throws FileStorageException if getting file names failed.
-     * @throws BadRequestException if directory is not a valid directory.
+     * @throws FileNotFoundException    if directory was not found.
+     * @throws FileStorageException     if getting file names failed.
+     * @throws BadRequestException      if directory is not a valid directory.
      * @throws IllegalArgumentException if project is null or directory is empty.
      */
     public List<String> getAllFileNames(String directory, Project project, String subFolder) throws FileNotFoundException, FileStorageException, BadRequestException, IllegalArgumentException {
         List<String> filesInDir = new ArrayList<>();
-        if(directory.trim().isEmpty() || project == null || subFolder.trim().isEmpty()) {
+        if (directory.trim().isEmpty() || project == null || subFolder.trim().isEmpty()) {
             throw new IllegalArgumentException("Project is null, directory string is empty or subFolder is empty.");
         } else {
             //To make variable not case sensitive.
@@ -190,7 +214,7 @@ public class FileStorageService {
                 List<String> allDirs = createProjectDirList(project, subFolder);
                 //Removing dir Archives.
                 allDirs.remove(fileStorageLocation);
-                for(String dir:allDirs) {
+                for (String dir : allDirs) {
                     filesInDir.addAll(getAllFileNamesInDirectory(dir, true));
                 }
                 break;
@@ -210,8 +234,8 @@ public class FileStorageService {
      * @throws FileNotFoundException if directory was not found.
      */
     public boolean doesFileExist(String fileName, Project project, String subFolder) throws FileNotFoundException {
-        for(String file:getAllFileNames("all", project, subFolder)) {
-            if(file.equals(fileName)) {
+        for (String file : getAllFileNames("all", project, subFolder)) {
+            if (file.equals(fileName)) {
                 return true;
             }
         }
@@ -223,12 +247,12 @@ public class FileStorageService {
      * Note: This will also return all files in the project folder.
      * @param project project to get sub-project folders from.
      * @return List of all sub-project folders.S
-     * @throws FileStorageException if directory was not found.
-     * @throws FileNotFoundException if something went wrong when trying to get directory.
+     * @throws FileStorageException     if directory was not found.
+     * @throws FileNotFoundException    if something went wrong when trying to get directory.
      * @throws IllegalArgumentException if project is null.
      */
     public List<String> getAllProjectSubFolders(Project project) throws FileStorageException, FileNotFoundException, IllegalArgumentException {
-        if(project == null) {
+        if (project == null) {
             throw new IllegalArgumentException("Project cannot be null!");
         } else {
             return getAllFileNamesInDirectory(fileStorageLocation + dateNameToPath(project), false);
@@ -241,16 +265,16 @@ public class FileStorageService {
      * @param ignoreFolders if true this will not return any folders.
      * @return list with all files in a directory.
      * @throws FileNotFoundException if directory was not found.
-     * @throws FileStorageException if something went wrong when trying to get files in directory or directory.
+     * @throws FileStorageException  if something went wrong when trying to get files in directory or directory.
      */
     private List<String> getAllFileNamesInDirectory(String directoryPath, boolean ignoreFolders) throws FileNotFoundException, FileStorageException {
         SmbFile smbFile = null;
         List<String> filesInDir = new ArrayList<>();
         try {
             smbFile = new SmbFile(url + "/" + directoryPath + "/", getContextWithCred());
-            for(SmbFile fileInDir:smbFile.listFiles()) {
-                if(fileInDir.getName().contains(".") || !ignoreFolders) {
-                    filesInDir.add(fileInDir.getName());
+            for (SmbFile fileInDir : smbFile.listFiles()) {
+                if (fileInDir.getName().contains(".") || !ignoreFolders) {
+                    filesInDir.add(fileInDir.getName().replace("/", ""));
                 }
             }
         } catch (SmbException e) {
@@ -258,7 +282,7 @@ public class FileStorageService {
         } catch (Exception e) {
             throw new FileStorageException(e.getMessage());
         } finally {
-            if(smbFile != null) {
+            if (smbFile != null) {
                 smbFile.close();
             }
         }
@@ -294,6 +318,9 @@ public class FileStorageService {
             case "png":
             case "PNG":
             case "gif":
+            case "raw":
+            case "eps":
+            case "bmp":
                 fileLocation += IMAGE_PATH;
                 break;
 
@@ -307,13 +334,13 @@ public class FileStorageService {
      * Save the file into the correct directory depending on the file type.
      * @param file to save.
      * @param path to project folder.
-     * @throws FileStorageException if something went wrong when trying to save file.
-     * @throws IOException if saveFile failed to close outputStream.
      * @return null if file was successfully saved else return name of file.
+     * @throws FileStorageException if something went wrong when trying to save file.
+     * @throws IOException          if saveFile failed to close outputStream.
      */
-    private String storeFileInDirectory(MultipartFile file, String path) throws FileStorageException, IOException{
+    private String storeFileInDirectory(MultipartFile file, String path) throws FileStorageException, IOException {
         String notAddedFile = null;
-        if(file.getOriginalFilename() != null) {
+        if (file.getOriginalFilename() != null) {
             String fileType = getFileType(file.getOriginalFilename());
             switch (fileType) {
                 case "IMA":
@@ -333,6 +360,9 @@ public class FileStorageService {
                 case "png":
                 case "PNG":
                 case "gif":
+                case "raw":
+                case "eps":
+                case "bmp":
                     notAddedFile = saveFile(file, path + IMAGE_PATH);
                     break;
 
@@ -349,16 +379,16 @@ public class FileStorageService {
      * Save a file into the given path.
      * @param file to save into the given path.
      * @param path of where to save the given file.
-     * @throws FileStorageException if something went wrong when trying to save file.
-     * @throws IOException if outputStream failed to close.
      * @return null if file was successfully saved else return name of file.
+     * @throws FileStorageException if something went wrong when trying to save file.
+     * @throws IOException          if outputStream failed to close.
      */
     private String saveFile(MultipartFile file, String path) throws FileStorageException, IOException {
         String notCreatedFile = null;
         SmbFile smbFile = null;
         SmbFileOutputStream outputStream = null;
         try {
-            if(doesFileExist(file, path)) {
+            if (doesFileExist(file, path)) {
                 notCreatedFile = getFileName(file);
                 System.out.println("File already exist!");
             } else {
@@ -369,10 +399,10 @@ public class FileStorageService {
         } catch (Exception e) {
             throw new FileStorageException(e.getMessage());
         } finally {
-            if(smbFile != null) {
+            if (smbFile != null) {
                 smbFile.close();
             }
-            if(outputStream != null) {
+            if (outputStream != null) {
                 outputStream.close();
             }
         }
@@ -416,7 +446,7 @@ public class FileStorageService {
      * @return true if file name contains "." and is not empty after.
      */
     public boolean doesFileNameContainType(String fileName) {
-        if(fileName.contains(".")) {
+        if (fileName.contains(".")) {
             return !getFileType(fileName).trim().isEmpty();
         } else {
             return false;
@@ -444,7 +474,7 @@ public class FileStorageService {
     private void createProjectDirectories(Project project, String subFolder) throws DirectoryCreationException {
         List<String> directoriesToMake = createProjectDirList(project, subFolder);
 
-        for(String dirPath:directoriesToMake) {
+        for (String dirPath : directoriesToMake) {
             try (SmbFile smbFile = new SmbFile(url + "/" + dirPath, getContextWithCred())) {
                 if (!smbFile.exists()) {
                     smbFile.mkdir();
@@ -493,9 +523,9 @@ public class FileStorageService {
      */
     private CIFSContext getContextWithCred() throws CIFSException {
         Properties prop = new Properties();
-        prop.put( "jcifs.smb.client.enableSMB2", "true");
-        prop.put( "jcifs.smb.client.disableSMB1", "false");
-        prop.put( "jcifs.traceResources", "true" );
+        prop.put("jcifs.smb.client.enableSMB2", "true");
+        prop.put("jcifs.smb.client.disableSMB1", "false");
+        prop.put("jcifs.traceResources", "true");
         Configuration config = new PropertyConfiguration(prop);
         CIFSContext baseContext = new BaseContext(config);
         return baseContext.withCredentials(new Kerb5Authenticator(new Subject(), domain, userName, password));
@@ -506,10 +536,15 @@ public class FileStorageService {
      * does not have one already.
      * @param string string to add backslash to.
      * @return string with backslash.
+     * @throws IllegalArgumentException If param is null or empty.
      */
-    private String backslashToStartOfString(String string) {
-        if(!string.substring(1).equals("/")) {
-            string = "/" + string;
+    private String backslashToStartOfString(String string) throws IllegalArgumentException {
+        if(string == null || string.isEmpty()) {
+            throw new IllegalArgumentException("Cannot add back slash to empty or null string!");
+        } else {
+            if (!string.substring(1).equals("/")) {
+                string = "/" + string;
+            }
         }
         return string;
     }
@@ -518,8 +553,8 @@ public class FileStorageService {
      * Package all files in param into a zip and return them as a byte array.
      * Source: https://www.baeldung.com/java-compress-and-uncompress
      * @param filesToZip list of file names to download.
-     * @param project project to download files from.
-     * @param subFolder sub project folder files are in.
+     * @param project    project to download files from.
+     * @param subFolder  sub project folder files are in.
      * @return all files in a zip as a byte array.
      * @throws IOException if a file was not found.
      */
@@ -543,8 +578,8 @@ public class FileStorageService {
      * @return true if all file names contain file type.
      */
     public boolean doesAllFileNamesContainType(List<String> fileNames) {
-        for(String fileName:fileNames) {
-            if(!doesFileNameContainType(fileName)) {
+        for (String fileName : fileNames) {
+            if (!doesFileNameContainType(fileName)) {
                 return false;
             }
         }
@@ -557,9 +592,9 @@ public class FileStorageService {
      * @return true if folder name is invalid.
      */
     public boolean isFolderNameInvalid(String name) {
-        if(name.matches(".*[/;,=].*") || name.contains("\\")) {
-            System.out.println("Illegal char in: " + name +
-                    "\nIllegal characters is: /;,.=\\?*:|\"<>");
+        if (name.matches(".*[;,.=?*:|<>].*") || name.contains("\\") || name.contains("\"") || name.contains("//")) {
+            System.out.println("Folder name ERROR: Illegal char in: " + name +
+                    "\nIllegal characters is: ;,.=\\?*:|\"<> or multiple /");
             return true;
         }
         return false;
@@ -571,9 +606,9 @@ public class FileStorageService {
      * @return true if file name is invalid.
      */
     public boolean isFilenameInvalid(String filename) {
-        if(filename.matches(".*[/;,=].*") || filename.contains("\\") || filename.contains("..")) {
-            System.out.println("Illegal char in: " + filename +
-                    "\nIllegal characters is: /;,=\\?*:|\"<>");
+        if (filename.matches(".*[/;,=?*:|<>].*") || filename.contains("\\") || filename.contains("..") || filename.contains("\"")) {
+            System.out.println("File name ERROR: Illegal char in: " + filename +
+                    "\nIllegal characters is: /;,=\\?*:|\"<> or multiple .");
             return true;
         }
         return false;

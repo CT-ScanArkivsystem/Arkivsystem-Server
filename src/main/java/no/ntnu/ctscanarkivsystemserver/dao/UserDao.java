@@ -1,6 +1,6 @@
 package no.ntnu.ctscanarkivsystemserver.dao;
 
-import no.ntnu.ctscanarkivsystemserver.model.User;
+import no.ntnu.ctscanarkivsystemserver.model.database.User;
 import no.ntnu.ctscanarkivsystemserver.model.UserDTO;
 
 import java.util.List;

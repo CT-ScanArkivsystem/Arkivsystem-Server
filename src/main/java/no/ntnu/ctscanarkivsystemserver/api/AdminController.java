@@ -1,12 +1,10 @@
 package no.ntnu.ctscanarkivsystemserver.api;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import no.ntnu.ctscanarkivsystemserver.exception.EmailExistsException;
 import no.ntnu.ctscanarkivsystemserver.exception.TagNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.exception.UserNotFoundException;
 import no.ntnu.ctscanarkivsystemserver.model.DateDTO;
-import no.ntnu.ctscanarkivsystemserver.model.ProjectDTO;
-import no.ntnu.ctscanarkivsystemserver.model.User;
+import no.ntnu.ctscanarkivsystemserver.model.database.User;
 import no.ntnu.ctscanarkivsystemserver.model.UserDTO;
 import no.ntnu.ctscanarkivsystemserver.service.ServerService;
 import no.ntnu.ctscanarkivsystemserver.service.TagService;
@@ -16,7 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -156,7 +153,7 @@ public class AdminController {
         } else {
             for(String tagName:tagNames) {
                 try {
-                    if (!tagService.deleteTag(tagName)) {
+                    if (!tagService.deleteTag(tagName, userService.getCurrentLoggedUser())) {
                         //Something went wrong when trying to delete the tag.
                         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
                     }
