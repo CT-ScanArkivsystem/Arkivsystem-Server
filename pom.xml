@@ -42,11 +42,6 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.8.1</version>
-        </dependency>
         <!-- For @Data, @AllArgs and @NoArgs -->
       <dependency>      
             <groupId>org.projectlombok</groupId>
