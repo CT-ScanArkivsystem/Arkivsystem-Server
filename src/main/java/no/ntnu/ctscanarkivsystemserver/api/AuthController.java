@@ -60,7 +60,6 @@ public class AuthController {
 
         // If a cookie with sameSite is ever needed, the Cookie cannot be used due
         // to it being old and SameSite being rather new. Use something like:
-        // response.setHeader("Set-Cookie", "jwt=Bearer " + jwt + "; HttpOnly; SameSite=lax; path=/; domain=localhost");
         Cookie cookie = new Cookie("jwt", URLEncoder.encode("Bearer " + jwt, "UTF-8"));
         cookie.setMaxAge(jwtLifetime.intValue());
         cookie.setPath("/");
@@ -74,7 +73,6 @@ public class AuthController {
 
     @GetMapping(path = "/logout")
     public ResponseEntity<?> logout(HttpServletResponse response) {
-        System.out.println("Inside /logout");
         response.setContentType("text/html");
         Cookie cookie = new Cookie("jwt", "");
         cookie.setMaxAge(0);
