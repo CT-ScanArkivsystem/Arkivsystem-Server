@@ -154,6 +154,8 @@ public class FileStorageService {
             String smbUrl = url + "/" + getFileLocation(fileName, project, subFolder) + "/" + fileName;
             logger.info("loadFileAsBytes() - smbURL = " + smbUrl);
             smbFile = new SmbFile(smbUrl, getContextWithCred());
+            logger.info("An SmbFile-instance created. toString on the instance: "
+                + smbFile.toString());
             inputStream = new SmbFileInputStream(smbFile);
             bytes = IOUtils.toByteArray(inputStream);
         } catch (SmbException e) {
@@ -297,7 +299,9 @@ public class FileStorageService {
         SmbFile smbFile = null;
         List<String> filesInDir = new ArrayList<>();
         try {
-            smbFile = new SmbFile(url + "/" + directoryPath + "/", getContextWithCred());
+            String smbFileUrl = url + "/" + directoryPath + "/";
+            logger.info("getAllFileNamesInDirectory() called. smbFileUrl = " + smbFileUrl);
+            smbFile = new SmbFile(smbFileUrl, getContextWithCred());
             for (SmbFile fileInDir : smbFile.listFiles()) {
                 if (fileInDir.getName().contains(".") || !ignoreFolders) {
                     filesInDir.add(fileInDir.getName().replace("/", ""));
@@ -416,9 +420,13 @@ public class FileStorageService {
         try {
             if (doesFileExist(file, path)) {
                 notCreatedFile = getFileName(file);
+                logger.warn("File already exist! Filename: " + notCreatedFile);
                 System.out.println("File already exist!");
             } else {
-                smbFile = new SmbFile(url + "/" + path + "/" + getFileName(file), getContextWithCred());
+                logger.info("Saving file. Calling saveFile().");
+                String smbFileURL = url + "/" + path + "/" + getFileName(file);
+                logger.info("smbFileURL: " + smbFileURL);
+                smbFile = new SmbFile(smbFileURL, getContextWithCred());
                 outputStream = new SmbFileOutputStream(smbFile);
                 outputStream.write(file.getBytes());
             }
@@ -500,8 +508,11 @@ public class FileStorageService {
     private void createProjectDirectories(Project project, String subFolder) throws DirectoryCreationException {
         List<String> directoriesToMake = createProjectDirList(project, subFolder);
 
+        logger.info("createProjectDirectories() called:");
         for (String dirPath : directoriesToMake) {
-            try (SmbFile smbFile = new SmbFile(url + "/" + dirPath, getContextWithCred())) {
+            String smbFileUrl = url + "/" + dirPath;
+            logger.info("Trying to create the following directory: " + smbFileUrl);
+            try (SmbFile smbFile = new SmbFile(smbFileUrl, getContextWithCred())) {
                 if (!smbFile.exists()) {
                     smbFile.mkdir();
                 }
