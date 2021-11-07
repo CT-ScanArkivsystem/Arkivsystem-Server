@@ -4,6 +4,7 @@ import no.ntnu.ctscanarkivsystemserver.config.Properties;
 import no.ntnu.ctscanarkivsystemserver.model.AuthenticationRequest;
 import no.ntnu.ctscanarkivsystemserver.service.UserService;
 import no.ntnu.ctscanarkivsystemserver.util.JwtUtil;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * The job of this class is to be the endpoint for all authentication and authorization
  * requests which is accessible for all user. (With or without an account)
@@ -29,6 +33,7 @@ public class AuthController {
 
     private final String domain;
     private final Long jwtLifetime;
+    Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @Autowired
     private AuthenticationManager authManager;
@@ -43,11 +48,18 @@ public class AuthController {
     public AuthController(Properties properties) {
         this.domain = properties.getDomain();
         this.jwtLifetime = properties.getJwtLifetimeInMin();
+        logger.info("AuthController-instance instanciated: "
+                        + "Domain: " + this.domain
+                        + " jwtLifeTime: " + this.jwtLifetime);
     }
 
     @PostMapping(path = "/login")
     public ResponseEntity<?> login(@RequestBody AuthenticationRequest authenticationRequest, HttpServletResponse response) throws BadCredentialsException, UnsupportedEncodingException {
         try {
+            logger.info("Login request:\n Username: "
+                + authenticationRequest.getUsername()
+                + " Password: "
+                + authenticationRequest.getPassword());
             authManager.authenticate(
                     new UsernamePasswordAuthenticationToken(authenticationRequest.getUsername(), authenticationRequest.getPassword())
             );
