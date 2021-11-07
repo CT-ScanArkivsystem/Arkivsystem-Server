@@ -6,12 +6,14 @@ import jcifs.Configuration;
 import jcifs.config.PropertyConfiguration;
 import jcifs.context.BaseContext;
 import jcifs.smb.*;
+import no.ntnu.ctscanarkivsystemserver.api.AuthController;
 import no.ntnu.ctscanarkivsystemserver.config.FileStorageProperties;
 import no.ntnu.ctscanarkivsystemserver.exception.DirectoryCreationException;
 import no.ntnu.ctscanarkivsystemserver.exception.FileStorageException;
 import no.ntnu.ctscanarkivsystemserver.model.database.Project;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -26,6 +28,8 @@ import java.util.*;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import org.slf4j.Logger;
 
 /**
  * This class has the job of handling files and creating project directories.
@@ -54,6 +58,9 @@ public class FileStorageService {
     private final String domain;
     private final String url;
 
+    //Logger
+    private Logger logger = LoggerFactory.getLogger(FileStorageService.class);
+
     @Autowired
     public FileStorageService(FileStorageProperties fileStorageProperties, ImageService imageService) {
         this.fileStorageLocation = fileStorageProperties.getUploadDir();
@@ -67,6 +74,21 @@ public class FileStorageService {
         this.domain = fileStorageProperties.getDomain();
         this.url = fileStorageProperties.getUrl();
         this.imageService = imageService;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("FileStorageService-instance created.\n");
+        sb.append("URL: " + this.url + "\n");
+        sb.append("Domain: " + this.domain + "\n");
+        sb.append("userName: " + this.userName + "\n");
+        sb.append("password: " + this.password + "\n");
+        sb.append("DOCUMENT_PATH: " + this.DOCUMENT_PATH + "\n");
+        sb.append("IMAGE_PATH: " + this.IMAGE_PATH + "\n");
+        sb.append("LOG_PATH: " + this.LOG_PATH + "\n");
+        sb.append("DICOM_PATH: " + this.DICOM_PATH + "\n");
+        sb.append("TIFF_PATH: " + this.TIFF_PATH + "\n");
+
+        logger.info(sb.toString());
+
     }
 
     /**
@@ -96,6 +118,7 @@ public class FileStorageService {
                 try {
                     // Check if the file's name contains invalid characters
                     if (isFilenameInvalid(getFileName(file))) {
+                        logger.error("Sorry! Filename contains invalid path sequence " + getFileName(file));
                         throw new FileStorageException("Sorry! Filename contains invalid path sequence " + getFileName(file));
                     }
                     String notAddedFile = storeFileInDirectory(file, fileStorageLocation + dateNameToPath(project) + subFolder);
@@ -103,6 +126,7 @@ public class FileStorageService {
                         notAddedFiles.add(notAddedFile);
                     }
                 } catch (Exception ex) {
+                    logger.error("Could not store file " + getFileName(file) + ". Please try again!\nException Message: " + ex.getMessage());
                     throw new FileStorageException("Could not store file " + getFileName(file) + ". Please try again!\nMessage: "
                             + ex.getMessage(), ex);
                 }
@@ -127,7 +151,9 @@ public class FileStorageService {
         subFolder = backslashToStartOfString(subFolder);
         byte[] bytes;
         try {
-            smbFile = new SmbFile(url + "/" + getFileLocation(fileName, project, subFolder) + "/" + fileName, getContextWithCred());
+            String smbUrl = url + "/" + getFileLocation(fileName, project, subFolder) + "/" + fileName;
+            logger.info("loadFileAsBytes() - smbURL = " + smbUrl);
+            smbFile = new SmbFile(smbUrl, getContextWithCred());
             inputStream = new SmbFileInputStream(smbFile);
             bytes = IOUtils.toByteArray(inputStream);
         } catch (SmbException e) {
