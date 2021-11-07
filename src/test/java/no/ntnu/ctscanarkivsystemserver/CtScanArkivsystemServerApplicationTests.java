@@ -3,10 +3,10 @@ package no.ntnu.ctscanarkivsystemserver;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+//@SpringBootTest
 class CtScanArkivsystemServerApplicationTests {
 
-    @Test
+    //@Test
     void contextLoads() {
     }
 
