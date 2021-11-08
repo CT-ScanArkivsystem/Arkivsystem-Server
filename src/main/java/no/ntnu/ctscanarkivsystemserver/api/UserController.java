@@ -10,6 +10,8 @@ import no.ntnu.ctscanarkivsystemserver.model.database.Project;
 import no.ntnu.ctscanarkivsystemserver.model.database.Tag;
 import no.ntnu.ctscanarkivsystemserver.model.database.User;
 import no.ntnu.ctscanarkivsystemserver.service.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
@@ -24,6 +26,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+
 @RequestMapping("/user")
 @RestController
 public class UserController {
@@ -35,6 +39,9 @@ public class UserController {
     private final FileStorageService fileStorageService;
     //For files in database.
     private final FileService fileService;
+
+    //Logger
+    Logger logger = LoggerFactory.getLogger(UserController.class);
 
     @Autowired
     public UserController(UserService userService, ProjectService projectService, TagService tagService,
@@ -48,9 +55,11 @@ public class UserController {
 
     @GetMapping(path = "/allUsers")
     public ResponseEntity<?> getAllUsers() {
-        System.out.println("Getting all users!");
+        //System.out.println("Getting all users!");
+        logger.info("/allUsers calling UserController.getAllUsers().....");
         List<User> allUsers = userService.getAllUsers();
         if (allUsers == null || allUsers.isEmpty()) {
+            logger.info("No users found.");
             return ResponseEntity.notFound().build();
         } else {
             return ResponseEntity.ok(allUsers);
@@ -65,9 +74,11 @@ public class UserController {
     @GetMapping(path = "/currentUser")
     public ResponseEntity<?> currentUser() {
         try {
+            logger.info("/currentUser calling currentUser()...");
             return ResponseEntity.ok(userService.getCurrentLoggedUser());
         } catch (UserNotFoundException e) {
-            System.out.println("No user found.");
+            //System.out.println("No user found.");
+            logger.info("No current user was found");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
@@ -79,7 +90,9 @@ public class UserController {
     @GetMapping(path = "/getAllProjects")
     public ResponseEntity<List<Project>> getAllProject() {
         List<Project> allProjects = projectService.getAllProjects();
+        logger.info("/getAllProjects calling getAllProjects()...");
         if(allProjects == null || allProjects.isEmpty()) {
+            logger.info("No projects were found");
             return ResponseEntity.notFound().build();
         } else {
             return ResponseEntity.ok(allProjects);

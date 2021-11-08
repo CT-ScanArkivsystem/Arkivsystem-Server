@@ -6,6 +6,7 @@ import no.ntnu.ctscanarkivsystemserver.model.database.File;
 import no.ntnu.ctscanarkivsystemserver.model.database.Project;
 import no.ntnu.ctscanarkivsystemserver.model.database.Tag;
 import no.ntnu.ctscanarkivsystemserver.service.*;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,8 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import org.slf4j.Logger;
 
 /**
  * The job of this class is to be the endpoint for all requests limited
@@ -32,6 +35,8 @@ public class AcademicController {
     private final UserService userService;
     private final FileStorageService fileStorageService;
     private final FileService fileService;
+
+    private Logger logger = LoggerFactory.getLogger(AcademicController.class);
 
     @Autowired
     public AcademicController(ProjectService projectService, TagService tagService, UserService userService,
@@ -64,16 +69,20 @@ public class AcademicController {
             try {
                 result = projectService.createProject(projectDto, userService.getCurrentLoggedUser());
             } catch (ProjectNameExistsException e) {
-                System.out.println(e.getMessage());
+                //System.out.println(e.getMessage());
+                logger.warn(e.getMessage());
                 return ResponseEntity.status(HttpStatus.CONFLICT).build();
             } catch (NullPointerException e) {
-                System.out.println(e.getMessage());
+                //System.out.println(e.getMessage());
+                logger.error(e.getMessage());
                 return ResponseEntity.badRequest().build();
             }
             if (result == null) {
-                System.out.println("Something went wrong while attempting to create project");
+                //System.out.println("Something went wrong while attempting to create project");
+                logger.warn("Something went wrong while attempting to create project. null was returned from calling projectService.createProject()");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
             } else {
+                logger.info("Project created successfully: " + projectDto.toString());
                 return ResponseEntity.ok(result);
             }
         }
@@ -425,6 +434,10 @@ public class AcademicController {
         }
         try {
             Project projectToUploadFilesTo = projectService.getProject(projectId);
+            logger.info("/uploadFiles calls AcademicController.uploadFiles().");
+            logger.info("    Subfolder: " + subFolder);
+            logger.info("    Project: " + projectToUploadFilesTo.getProjectId() + " "
+                + projectToUploadFilesTo.getProjectName());
             if(projectService.isUserPermittedToChangeProject(projectToUploadFilesTo, userService.getCurrentLoggedUser())) {
                 notAddedFiles = fileStorageService.storeFile(files, projectToUploadFilesTo, subFolder);
             } else {
@@ -435,10 +448,12 @@ public class AcademicController {
             //No project was found with id.
             return ResponseEntity.notFound().build();
         } catch (FileStorageException | DirectoryCreationException e) {
-            System.out.println(e.getMessage());
+            //System.out.println(e.getMessage());
+            logger.warn(e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         } catch (IllegalArgumentException e) {
-            System.out.println(e.getMessage());
+            //System.out.println(e.getMessage());
+            logger.warn(e.getMessage());
             return ResponseEntity.badRequest().build();
         }
         return ResponseEntity.ok(notAddedFiles);

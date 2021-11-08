@@ -33,7 +33,7 @@ public class AuthController {
 
     private final String domain;
     private final Long jwtLifetime;
-    Logger logger = LoggerFactory.getLogger(AuthController.class);
+    private Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @Autowired
     private AuthenticationManager authManager;
