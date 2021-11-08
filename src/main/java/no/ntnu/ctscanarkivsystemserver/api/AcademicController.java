@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.ws.rs.ForbiddenException;
@@ -455,6 +456,9 @@ public class AcademicController {
             //System.out.println(e.getMessage());
             logger.warn(e.getMessage());
             return ResponseEntity.badRequest().build();
+        } catch (MaxUploadSizeExceededException muex) {
+            logger.warn("The maximum upload size of a file was exceeded.\n" + muex.getMessage());
+            return ResponseEntity.status(HttpStatus.INSUFFICIENT_STORAGE).build();
         }
         return ResponseEntity.ok(notAddedFiles);
     }
